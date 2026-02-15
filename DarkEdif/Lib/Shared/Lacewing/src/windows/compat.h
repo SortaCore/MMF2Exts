@@ -1,11 +1,11 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
  * Copyright (C) 2011, 2012 James McLaughlin et al.
- * Copyright (C) 2012-2022 Darkwire Software.
+ * Copyright (C) 2012-2026 Darkwire Software.
  * All rights reserved.
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
 
 #ifndef IPV6_V6ONLY
@@ -36,11 +36,50 @@ fn_getaddrinfo compat_getaddrinfo ();
 typedef INT (WSAAPI * fn_freeaddrinfo) (struct addrinfo *);
 fn_freeaddrinfo compat_freeaddrinfo ();
 
+typedef INT (WSAAPI * fn_WSASendMsg) (SOCKET Handle,
+	LPWSAMSG lpMsg,
+	DWORD dwFlags,
+	LPDWORD lpNumberOfBytesSent,
+	LPWSAOVERLAPPED lpOverlapped,
+	LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine);
+fn_WSASendMsg compat_WSASendMsg ();
+
+typedef INT(WSAAPI* fn_WSARecvMsg) (SOCKET Handle,
+	LPWSAMSG lpMsg,
+	LPDWORD lpNumberOfBytesRecvd,
+	LPWSAOVERLAPPED lpOverlapped,
+	LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine);
+fn_WSARecvMsg compat_WSARecvMsg();
+
 typedef __time64_t (__stdcall * fn_mkgmtime64) (struct tm *);
 fn_mkgmtime64 compat_mkgmtime64 ();
 
 typedef BOOL (WINAPI * fn_GetFileSizeEx) (HANDLE, PLARGE_INTEGER);
 fn_GetFileSizeEx compat_GetFileSizeEx ();
+
+typedef BOOL (WINAPI* fn_CancelIoEx)(HANDLE, LPOVERLAPPED);
+fn_CancelIoEx compat_CancelIoEx ();
+
+typedef HRESULT(WINAPI * fn_SetThreadDescription)(HANDLE, PCWSTR);
+fn_SetThreadDescription compat_SetThreadDescription();
+
+typedef void (WINAPI* param_IPINTERFACE_CHANGE_CALLBACK) (
+	PVOID CallerContext, void* Row, int NotificationType
+);
+typedef DWORD (WINAPI* fn_NotifyIpInterfaceChange)(
+	ADDRESS_FAMILY Family,
+	param_IPINTERFACE_CHANGE_CALLBACK Callback,
+	void* CallerContext,
+	BOOLEAN InitialNotification,
+	HANDLE* NotificationHandle
+);
+
+fn_NotifyIpInterfaceChange compat_NotifyIpInterfaceChange();
+
+typedef DWORD (WINAPI* fn_CancelMibChangeNotify2)
+	(HANDLE notifHandle);
+
+fn_CancelMibChangeNotify2 compat_CancelMibChangeNotify2();
 
 #if defined(_WIN32)
 #if __cplusplus

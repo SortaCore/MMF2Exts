@@ -30,7 +30,7 @@ typedef short OINUM;
 
 // Eventgroup structure, before conditions and actions
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-typedef struct tagEVG 
+typedef struct tagEVG
 	{
 		short	evgSize;				// 0 Size of the group (<=0)
 		BYTE	evgNCond;				// 2 Number of conditions
@@ -75,7 +75,7 @@ typedef		eventGroup	*		LPEVG;
 
 #define     EVENTOPTION_BREAKCHILD  0x0001
 
-typedef struct tagEVT 
+typedef struct tagEVT
 	{
 		short	evtSize;				// 0 Size of the event
 		union
@@ -117,10 +117,10 @@ typedef	event	*	LPEVT;
 #define		EVFLAGS_BAD				0x40
 #define		EVFLAGS_BADOBJECT		0x80
 #define		EVFLAGS_DEFAULTMASK		(EVFLAGS_ALWAYS+EVFLAGS_REPEAT+EVFLAGS_DEFAULT+EVFLAGS_DONEBEFOREFADEIN+EVFLAGS_NOTDONEINSTART)
-#define		ACTFLAGS_REPEAT			0x0001
+//#define		ACTFLAGS_REPEAT			0x0001
 
 // For flags II
-// -------------                    
+// -------------
 #define		EVFLAG2_NOT			0x0001
 #define		EVFLAG2_NOTABLE		0x0002
 #define		EVFLAGS_NOTABLE		(EVFLAG2_NOTABLE<<8)
@@ -128,9 +128,10 @@ typedef	event	*	LPEVT;
 #define		EVFLAGS_TODELETE	0x0008
 #define		EVFLAGS_NEWSOUND	0x0010
 #define		EVFLAG2_MASK		(EVFLAG2_NOT|EVFLAG2_NOTABLE|EVFLAGS_MONITORABLE)
+#define 	EVFLAG2_NOOBJECTINTERDEPENDENCE	0x20
 
 // MACRO: Returns the code for an extension
-#define		EXTCONDITIONNUM(i)		(-((short)(i>>16))-1)           
+#define		EXTCONDITIONNUM(i)		(-((short)(i>>16))-1)
 #define		EXTACTIONNUM(i)			((short)(i>>16))
 #define		GetEventCode(p)			(p&0xFFFF0000)
 #define		EVGDELTA(a, b)			((DWORD)((char*)a-(char*)b))
@@ -142,8 +143,8 @@ typedef	event	*	LPEVT;
 
 // PARAM Structure
 // ~~~~~~~~~~~~~~~
-typedef struct eventParam 
-	{	
+typedef struct eventParam
+	{
 		short		evpSize;
 		short		evpCode;
 		union	{
@@ -173,7 +174,7 @@ typedef	eventParam	*			fpevp;
 #define		EVPNEXT(p)		   		((LPEVP)((char*)p+p->evpSize))
 #define		EVTNEXT(p)		   		((LPEVT)((char*)p+p->evtSize))
 #define		EVTPARAMS(p) 			((LPEVP)(p->evtCode.evtLCode.evtCode<0 ? (char*)p+CND_SIZE : (char*)p+ACT_SIZE ))
-#define		EXTCONDITIONNUM(i)		(-((short)(i>>16))-1)           
+#define		EXTCONDITIONNUM(i)		(-((short)(i>>16))-1)
 #define		EXTACTIONNUM(i)			((short)(i>>16))
 
 // Operators / expressions parameters
@@ -187,18 +188,18 @@ typedef	eventParam	*			fpevp;
 #define		EXPPARAM_FLAG			5
 #define		EXP_STOP				-1
 #define		OPERATOR_START			0x00000000
-#define		EXPL_END				0x00000000	
+#define		EXPL_END				0x00000000
 #define		EXPL_PLUS				0x00020000
 #define		EXPL_MOINS				0x00040000
 #define		EXPL_MULT				0x00060000
-#define		EXPL_DIV				0x00080000                                         
+#define		EXPL_DIV				0x00080000
 #define		EXPL_MOD				0x000A0000
 #define		EXPL_POW				0x000C0000
 #define		EXPL_AND				0x000E0000
 #define		EXPL_OR					0x00100000
 #define		EXPL_XOR				0x00120000
 #define		OPERATOR_END			0x00140000
-typedef struct tagEXP 
+typedef struct tagEXP
 	{
 		union
 		{
@@ -213,7 +214,7 @@ typedef struct tagEXP
 			} expSCode;
 		} expCode;
 		short	expSize;
-		union	
+		union
 		{
 			struct {
 				short	expOi;
@@ -294,20 +295,28 @@ public:
 	NSString* m_name;
 	BOOL m_bOR;
     int m_fastLoopIndex;
-    
+
 	CPosOnLoop(NSString* pName, int fastLoopIndex)
 	{
 		m_name = pName;
-		m_length = 1;
-		m_deltas = (LPDWORD)malloc( (m_length * 2 + 1 )* sizeof(DWORD));
-		m_position = 0;
 		m_bOR = FALSE;
         m_fastLoopIndex = fastLoopIndex;
-	}
+
+        m_length = 1;
+        m_deltas = (LPDWORD)malloc( (m_length * 2 + 1 )* sizeof(DWORD));
+        m_position = 0;
+    }
 	~CPosOnLoop()
 	{
 		free(m_deltas);
 	}
+    void ResetDeltas()
+    {
+        free(m_deltas);
+        m_length = 1;
+        m_deltas = (LPDWORD)malloc( (m_length * 2 + 1 )* sizeof(DWORD));
+        m_position = 0;
+    }
 	void AddOnLoop(DWORD delta1, BOOL delta2)
 	{
 		if (m_position == m_length)
@@ -319,6 +328,10 @@ public:
 		m_deltas[m_position * 2 + 1] = delta2;
 		m_position++;
 		m_deltas[m_position * 2] = 0xFFFFFFFF;
+	}
+	BOOL hasEventOffsets()
+	{
+		return (m_position != 0);
 	}
 };
 
@@ -345,7 +358,7 @@ typedef struct eventOffsets {
 #define	CND_STARTCHILDEVENT		((-43<<8)|255)
 #define CNDL_STARTCHILDEVENT	((-43<<16)|65535)
 #define	CND_ENDCHILDEVENT		((-42<<8)|255)
-#define CNDL_ENDCHILDEVENT		((-42<<16)|65535)
+#define CNDL_ENDCHILDEVENT		((-42* 65536)|65535)
 #define CND_ISPROFILING			((-41<<8)|255)
 #define CNDL_ISPROFILING		((-41<<16)|65535)
 #define CND_RUNNINGAS			((-40<<8)|255)
@@ -370,7 +383,7 @@ typedef struct eventOffsets {
 #define CND_OR				((-24<<8)|255)
 #define CNDL_OR				((-24<<16)|65535)
 #define CND_GROUPSTART		((-23<<8)|255)
-#define CNDL_GROUPSTART		((-23<<16)|65535)
+#define CNDL_GROUPSTART		((-23* 65536)|65535)
 #define CND_CLIPBOARD		((-22<<8)|255)
 #define CND_ONCLOSE			((-21<<8)|255)
 #define CNDL_ONCLOSE		((-21<<16)|65535)
@@ -390,21 +403,21 @@ typedef struct eventOffsets {
 #define	CND_GROUPACTIVATED	((-12<<8)|255)
 #define	CNDL_GROUPACTIVATED	((-12<<16)|65535)
 #define	CND_ENDGROUP		((-11<<8)|255)
-#define CNDL_ENDGROUP		((-11<<16)|65535)
+#define CNDL_ENDGROUP		((-11* 65536)|65535)
 #define	CND_GROUP			((-10<<8)|255)
-#define CNDL_GROUP			((-10<<16)|65535)
+#define CNDL_GROUP			((-10* 65536)|65535)
 #define	CND_REMARK			((-9<<8)|255)
 #define CNDL_REMARK			((-9<<16)|65535)
 #define	CND_COMPAREG		((-8<<8)|255)
 #define	CNDL_COMPAREG		((-8<<16)|65535)
 #define	CND_NOTALWAYS		((-7<<8)|255)
-#define	CNDL_NOTALWAYS		((-7<<16)|65535)
+#define	CNDL_NOTALWAYS		((-7*65536)|65535)
 #define	CND_ONCE			((-6<<8)|255)
-#define CNDL_ONCE			((-6<<16)|65535)
+#define CNDL_ONCE			((-6*65536)|65535)
 #define	CND_REPEAT			((-5<<8)|255)
-#define CNDL_REPEAT			((-5<<16)|65535)
+#define CNDL_REPEAT			((-5*65536)|65535)
 #define	CND_NOMORE			((-4<<8)|255)
-#define CNDL_NOMORE			((-4<<16)|65535)
+#define CNDL_NOMORE			((-4*65536)|65535)
 #define	CND_COMPARE			((-3<<8)|255)
 #define	CND_NEVER			((-2<<8)|255)
 #define CNDL_NEVER			((-2<<16)|65535)
@@ -615,7 +628,7 @@ enum {
 #define	EXP_VIRGULE			((-3<<8)|255)
 #define	EXPL_VIRGULE		((-3<<16)|65535)
 
-// SPEAKER Conditions / Actions 
+// SPEAKER Conditions / Actions
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // #define		TYPE_SPEAKER	  		-2
 //(TYPE_SPEAKER&255)=254
@@ -714,7 +727,7 @@ enum {
 #define	EXP_GETCHANNELFREQ		((11<<8)|254)
 
 
-// GAME Conditions / Actions 
+// GAME Conditions / Actions
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //#define		TYPE_GAME		  		-3
 //(TYPE_GAME&255)=253
@@ -798,7 +811,7 @@ enum {
 #define EXP_FRAMEEFFECTPARAM	((18<<8)|253)
 
 
-// TIMER Conditions / Actions 
+// TIMER Conditions / Actions
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #define	CND_EVERY2       	((-8<<8)|(OBJ_TIMER&255))
 #define CND_TIMEREQUALS		((-7<<8)|(OBJ_TIMER&255))
@@ -838,13 +851,13 @@ enum {
 #define	CNDL_ANYKEY			((-9<<16)|(OBJ_KEYBOARD&0xFFFF))
 #define	CND_MKEYDEPRESSED	((-8<<8)|(OBJ_KEYBOARD&255))
 #define	CND_MCLICKONOBJECT	((-7<<8)|(OBJ_KEYBOARD&255))
-#define	CNDL_MCLICKONOBJECT	((-7<<16)|(OBJ_KEYBOARD&0xFFFF))
+#define	CNDL_MCLICKONOBJECT	((-7*65536)|(OBJ_KEYBOARD&0xFFFF))
 #define	CND_MCLICKINZONE 	((-6<<8)|(OBJ_KEYBOARD&255))
 #define	CNDL_MCLICKINZONE 	((-6<<16)|(OBJ_KEYBOARD&0xFFFF))
 #define	CND_MCLICK	 		((-5<<8)|(OBJ_KEYBOARD&255))
 #define	CNDL_MCLICK	 		((-5<<16)|(OBJ_KEYBOARD&0xFFFF))
 #define	CND_MONOBJECT		((-4<<8)|(OBJ_KEYBOARD&255))
-#define	CNDL_MONOBJECT		((-4<<16)|(OBJ_KEYBOARD&0xFFFF))
+#define	CNDL_MONOBJECT		((-4*65536)|(OBJ_KEYBOARD&0xFFFF))
 #define	CND_MINZONE			((-3<<8)|(OBJ_KEYBOARD&255))
 #define	CND_KBKEYDEPRESSED 	((-2<<8)|(OBJ_KEYBOARD&255))
 #define	CND_KBPRESSKEY   	((-1<<8)|(OBJ_KEYBOARD&255))
@@ -856,7 +869,7 @@ enum {
 #define	EXP_MOUSEWHEELDELTA	((2<<8)|(OBJ_KEYBOARD&255))
 
 
-// PLAYERS Conditions / Actions 
+// PLAYERS Conditions / Actions
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #define	CND_JOYPUSHED		((-6<<8)|(OBJ_PLAYER&255))
 #define	CND_NOMORELIVE		((-5<<8)|(OBJ_PLAYER&255))
@@ -886,7 +899,7 @@ enum {
 #define	EXP_GETPLAYERNAME	((4<<8)|(OBJ_PLAYER&255))
 #define	NUM_JOYPRESSED		-4
 
-// CREATE Conditions / Actions 
+// CREATE Conditions / Actions
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #define	CND_CHOOSEALLINLINE	((-23<<8)|(OBJ_CREATE&255))
 #define	CND_CHOOSEFLAGRESET	((-22<<8)|(OBJ_CREATE&255))
@@ -914,12 +927,22 @@ enum {
 #define	ACTL_CREATEBYNAME		((1<<16)|(OBJ_CREATE&0xFFFF))
 #define	ACT_CREATE				((0<<8)|(OBJ_CREATE&255))
 #define	EXP_CRENUMBERALL		((0<<8)|(OBJ_CREATE&255))
+#define	EXP_LASTFIXEDVALUE		((1<<8)|(OBJ_CREATE&255))
 #define	NUM_END				-2
 #define	NUM_START			-1
 
 // COMMON CONDITIONS FOR NORMAL OBJECTS
 //////////////////////////////////////////
 #define	EVENTS_EXTBASE				80
+
+#define	CNDIDX_EXTONLOOP_INTERNAL_FIRST	(52)					// 1-based index of first available common condition
+#define	CNDIDX_EXTONLOOP_INTERNAL_LAST	(EVENTS_EXTBASE)		// 1-based index of last common condition
+#define CNDIDX_EXTONLOOP_INTERNAL_MAXNUMBER (CNDIDX_EXTONLOOP_INTERNAL_LAST + 1 - CNDIDX_EXTONLOOP_INTERNAL_FIRST)
+
+// For Active objects their internal oneach conditions continue after the normal conditions of the object
+#define NUMBER_OF_ACTIVEOBJECT_CONDITIONS		4
+#define	CNDIDX_EXTONLOOP_INTERNAL_LAST_ONLYACTIVEOBJECTS	199 + EVENTS_EXTBASE	// conditions below CNDIDX_EXTONLOOP_INTERNAL_LAST_ONLYACTIVEOBJECTS are reserved for internal oneach conditions for active objects
+#define CNDIDX_EXTONLOOP_INTERNAL_MAXNUMBER_ONLYACTIVEOBJECTS (CNDIDX_EXTONLOOP_INTERNAL_LAST_ONLYACTIVEOBJECTS + 1 - NUMBER_OF_ACTIVEOBJECT_CONDITIONS - CNDIDX_EXTONLOOP_INTERNAL_FIRST)
 
 #define	CND_EXTISCOLLIDINGAT        (-50<<8)
 #define	CNDL_EXTISCOLLIDINGAT       (-50<<16)
@@ -976,13 +999,13 @@ enum {
 #define	CND_EXTCMPY   		        (-16<<8)
 #define	CND_EXTCMPSPEED             (-15<<8)
 #define	CND_EXTCOLLISION   	        (-14<<8)
-#define	CNDL_EXTCOLLISION   	    (-14<<16)
+#define	CNDL_EXTCOLLISION   	    (-14 * 65536)
 #define	CND_EXTCOLBACK              (-13<<8)
-#define	CNDL_EXTCOLBACK             (-13<<16)
+#define	CNDL_EXTCOLBACK             (-13* 65536)
 #define	CND_EXTOUTPLAYFIELD         (-12<<8)
-#define	CNDL_EXTOUTPLAYFIELD        (-12<<16)
+#define	CNDL_EXTOUTPLAYFIELD        (-12* 65536)
 #define	CND_EXTINPLAYFIELD          (-11<<8)
-#define	CNDL_EXTINPLAYFIELD         (-11<<16)
+#define	CNDL_EXTINPLAYFIELD         (-11* 65536)
 #define	CND_EXTISOUT	            (-10<<8)
 #define	CNDL_EXTISOUT	            (-10<<16)
 #define	CND_EXTISIN                 (-9 <<8)
@@ -992,7 +1015,7 @@ enum {
 #define	CND_EXTBOUNCING	            (-6 <<8)
 #define	CND_EXTREVERSED             (-5 <<8)
 #define	CND_EXTISCOLLIDING          (-4 <<8)
-#define	CNDL_EXTISCOLLIDING         (-4 <<16)
+#define	CNDL_EXTISCOLLIDING         (-4 * 65536)
 #define	CND_EXTANIMPLAYING          (-3 <<8)
 #define	CND_EXTANIMENDOF        	(-2 <<8)
 #define	CNDL_EXTANIMENDOF        	(-2 <<16)
@@ -1026,7 +1049,7 @@ enum {
 #define	ACT_EXTFORCEDIR		        (18<<8)
 #define	ACT_EXTFORCESPEED	        (19<<8)
 #define	ACTL_EXTFORCESPEED	        (19<<16)
-#define	ACT_EXTRESTANIM		        (20<<8)         
+#define	ACT_EXTRESTANIM		        (20<<8)
 #define	ACT_EXTRESTDIR		        (21<<8)
 #define	ACT_EXTRESTSPEED	        (22<<8)
 #define	ACT_EXTSETDIR				(23<<8)
@@ -1095,6 +1118,7 @@ enum {
 #define ACT_EXTSETANGULARVELOCITY	(75<<8)
 #define ACT_EXTFOREACH				(76<<8)
 #define ACT_EXTFOREACH2				(77<<8)
+#define ACTL_EXTFOREACH2			(77<<16)
 #define ACT_EXTSTOPFORCE			(78<<8)
 #define ACT_EXTSTOPTORQUE			(79<<8)
 #define ACT_EXTSETDENSITY			(80<<8)			// NOT USED IN PHYSCS ACTI0N MENU
@@ -1151,7 +1175,7 @@ enum {
 #define EXP_NUMBEROFSELECTED		(45<<8)
 #define EXP_EXTINSTANCEDATA			(46<<8)
 
-// TEXT Conditions / Actions 
+// TEXT Conditions / Actions
 ////////////////////////////////////////////
 #define	ACT_STRDESTROY	  	 (( (EVENTS_EXTBASE+0)<<8)|3)
 #define	ACT_STRDISPLAY		 (( (EVENTS_EXTBASE+1)<<8)|3)
@@ -1168,7 +1192,7 @@ enum {
 #define	EXP_STRGETNUMERIC	 (( (EVENTS_EXTBASE+3)<<8)|3)
 #define EXP_STRGETNPARA		 (( (EVENTS_EXTBASE+4)<<8)|3)
 
-// SPRITES Conditions / Actions 
+// SPRITES Conditions / Actions
 /////////////////////////////////////////////
 #define	CND_CMPSCALEY	   	(((-EVENTS_EXTBASE-4)<<8)|2)
 #define	CNDL_CMPSCALEY	   	(((-EVENTS_EXTBASE-4)<<16)|2)
@@ -1193,7 +1217,7 @@ enum {
 #define EXP_GETSCALEY		(((EVENTS_EXTBASE+2)<<8)|2)
 #define EXP_GETANGLE		(((EVENTS_EXTBASE+3)<<8)|2)
 
-// COUNTERS Conditions / Actions 
+// COUNTERS Conditions / Actions
 //////////////////////////////////////////////
 #define	CND_CCOUNTER	   	(((-EVENTS_EXTBASE-1)<<8)|7)
 #define	ACT_CSETVALUE		(( (EVENTS_EXTBASE+0)<<8)|7)
@@ -1209,7 +1233,7 @@ enum {
 #define	EXP_CGETCOLOR1		(( (EVENTS_EXTBASE+3)<<8)|7)
 #define	EXP_CGETCOLOR2		(( (EVENTS_EXTBASE+4)<<8)|7)
 
-// QUESTIONS Conditions / Actions 
+// QUESTIONS Conditions / Actions
 ///////////////////////////////////////////////
 #define	CND_QEQUAL			(((-EVENTS_EXTBASE-3)<<8)|4)
 #define	CNDL_QEQUAL			(((-EVENTS_EXTBASE-3)<<16)|4)
@@ -1220,7 +1244,7 @@ enum {
 #define	ACT_QASK		    (( (EVENTS_EXTBASE+0)<<8)|4)
 
 
-// Formatted text Conditions / actions / expressions 
+// Formatted text Conditions / actions / expressions
 //////////////////////////////////////////////////////////////////
 #define	ACT_RTFSETXPOS					(((EVENTS_EXTBASE+0)<<8)|(OBJ_RTF&0x00FF))
 #define	ACT_RTFSETYPOS					(((EVENTS_EXTBASE+1)<<8)|(OBJ_RTF&0x00FF))
@@ -1323,7 +1347,7 @@ enum {
 
 // -------------------------------- Objects
 // W-Offset list OI
-// W-Number 
+// W-Number
 // W-TYPE *** Version > FVERSION_NEWOBJECTS
 #define		PARAM_OBJECT			1
 #define		PS_OBJ					6
@@ -1375,7 +1399,7 @@ typedef		SoundParam *		LPSND;
 #define		PS_MUS					sizeof(SoundParam)
 
 
-// POSITION PARAM Structure 
+// POSITION PARAM Structure
 // ~~~~~~~~~~~~~~~~~~~~~~~~
 typedef struct tagPPA {
 	short		posOINUMParent;			//0
@@ -1391,13 +1415,13 @@ typedef struct tagPPA {
 } PositionParam;
 typedef	PositionParam *			 	LPPOS;
 
-// CREATE PARAM Structure 
+// CREATE PARAM Structure
 // ~~~~~~~~~~~~~~~~~~~~~~
 typedef struct tagCDP {
 	PositionParam   cdpPos;			// Position structure
 	short			cdpHFII;		// FrameItemInstance number
 	short			cdpOi;			// OI of the object to create
-	//	DWORD  			cdpFII;			
+	//	DWORD  			cdpFII;
 	DWORD			cdpFree;
 } CreateDuplicateParam;
 typedef	CreateDuplicateParam * 		LPCDP;
@@ -1429,6 +1453,7 @@ typedef	ShootParam 	* 					LPSHT;
 // -------------------------------- Nothing
 // W-
 #define		PARAM_NOP				11
+#define		PARAM_SHORT				11
 #define		PS_NOP					2
 
 // -------------------------------- Player
@@ -1456,7 +1481,7 @@ typedef	ShootParam 	* 					LPSHT;
 #define		PARAM_POSITION	  		16
 #define		PS_POS				   	sizeof(PositionParam)
 
-// -------------------------------- Joystick Direcion 
+// -------------------------------- Joystick Direcion
 // W- Direction
 #define		PARAM_JOYDIRECTION 		17
 #define		PS_JOY				   	2
@@ -1466,7 +1491,7 @@ typedef	ShootParam 	* 					LPSHT;
 #define		PARAM_SHOOT				18
 #define		PS_SHT				   	sizeof(ShootParam)
 
-// -------------------------------- Playfield Zone 
+// -------------------------------- Playfield Zone
 #define		PARAM_ZONE				19
 #define		PS_ZNE					8
 
@@ -1486,7 +1511,7 @@ typedef	ShootParam 	* 					LPSHT;
 // W1- 0 (au moins!)
 #define		PARAM_COMPARAISON	   	23
 
-// -------------------------------- Text color 
+// -------------------------------- Text color
 // L0- RGB
 // L0- Identificateur!
 #define		PARAM_COLOUR		   	24
@@ -1497,7 +1522,7 @@ typedef	ShootParam 	* 					LPSHT;
 #define		PARAM_BUFFER4		   	25
 #define		PS_BU4  			   	4
 
-// -------------------------------- Storyboard frame number 
+// -------------------------------- Storyboard frame number
 // W0-
 #define		PARAM_FRAME			   	26
 #define		PS_FRA  			   	2
@@ -1505,7 +1530,7 @@ typedef	ShootParam 	* 					LPSHT;
 // -------------------------------- Number of loops for a sample
 #define		PARAM_SAMLOOP		   	27
 #define		PS_SLOOP				2
-// -------------------------------- Number of loops for a music 
+// -------------------------------- Number of loops for a music
 #define		PARAM_MUSLOOP		   	28
 #define		PS_MLOOP				2
 // -------------------------------- Direction
@@ -1525,7 +1550,7 @@ typedef	ShootParam 	* 					LPSHT;
 // -------------------------------- External program
 #define		PARAM_PROGRAM			33
 //#define		PS_PRG					sizeof(prgParam)
-#define		PRGFLAGS_WAIT			0x0001                                                    
+#define		PRGFLAGS_WAIT			0x0001
 #define		PRGFLAGS_HIDE			0x0002
 
 typedef struct tagPRG {
@@ -1536,7 +1561,7 @@ typedef struct tagPRG {
 typedef		prgParam *              LPPRG;
 #define		PS_PRG					sizeof(prgParam)
 
-// -------------------------------- Global variable number 
+// -------------------------------- Global variable number
 #define		OLDPARAM_VARGLO			34
 //#define		PS_VGLO					4
 
@@ -1561,17 +1586,17 @@ typedef struct tagGRP {
 	short		grpFlags;					// Active / Unactive?
 	short		grpId;						// Group identifier
 	char		grpTitle[GROUP_MAXTITLE];	// Title
-	char		grpPassword[GROUP_MAXPASSWORD];		// Protection 
+	char		grpPassword[GROUP_MAXPASSWORD];		// Protection
 	DWORD		grpChecksum;				// Checksum
 } paramGroup;
 #define		PS_GRP				sizeof(paramGroup)
 typedef struct tagOLDGRP {
-	short		grpFlags;					
-	short		grpId;					
+	short		grpFlags;
+	short		grpId;
 	char		grpTitle[GROUP_MAXTITLE];
 } paramOldGroup;
 #define		PS_OLDGRP			sizeof(paramOldGroup)
-typedef		paramGroup *		LPGRP;	
+typedef		paramGroup *		LPGRP;
 
 #define		GRPFLAGS_INACTIVE		0x0001
 #define		GRPFLAGS_CLOSED			0x0002
@@ -1585,7 +1610,7 @@ typedef struct tagGRPLIST {
 	LPEVG		glEvg;
 	short		glId;
 } groupList;
-typedef		groupList *		LPGL;	
+typedef		groupList *		LPGL;
 
 typedef struct tagGroupFind {
 	short id;
@@ -1668,7 +1693,7 @@ typedef struct tagGroupFind {
 // -------------------------------- Extensions parameters
 #define		PARAM_EXTENSION			55
 #define		PARAM_EXTMAXSIZE		512
-typedef struct 
+typedef struct
 	{
 		short pextSize;
 		short pextType;
@@ -1704,7 +1729,7 @@ typedef		MvtParam *			LPMVTP;
 typedef struct tagPRG2 {
 	short	prgFlags;				// Default flags
 } prgParam2;
-typedef		prgParam2 *			LPPRG2;	
+typedef		prgParam2 *			LPPRG2;
 #define		PS_PRG2					sizeof(prgParam2)
 
 // -------------------------------- Alterable strings
@@ -1759,7 +1784,7 @@ typedef		prgParam2 *			LPPRG2;
 #define        MULTIVAR_MAXVALUE            4
 
 typedef struct evoValue {
-    
+
     int valIndex;
     DWORD valCompareOp;
     union {
@@ -1770,16 +1795,18 @@ typedef struct evoValue {
 
 typedef struct multipleFlagAndVariableParam {
     DWORD    flags;                // what the structure contains: MULTIVARF_VALUE1 | etc.
-    
+
     DWORD    flagMasks;            // object flags
     DWORD    flagValues;            // flag values
-    
+
     evoValue    values[MULTIVAR_MAXVALUE];
-    
+
 } multipleFlagAndVariableParam;
 
 // Nested event
 #define PARAM_CHILDEVENT	69
+
+#define PARAM_ZONE_EXPRESSION	72
 
 typedef struct childEventParam {
 	DWORD	evgOffsetList;		// offset of eventOffsets list in eventPointers
@@ -1789,7 +1816,7 @@ typedef struct childEventParam {
 //////////////////////////////////////////////////////////////////////////////
 // Condition/action jumps
 @class CRun;
-@class CObject;	
+@class CObject;
 
 typedef BOOL (*CALLCOND1_ROUTINE)(LPEVT pe, CRun* rhPtr, CObject* pHo);
 typedef BOOL (*CALLCOND2_ROUTINE)(LPEVT pe, CRun* rhPtr);
@@ -1833,9 +1860,11 @@ typedef struct tagForEach
 	OINUM oi;
 	int index;
 	NSString* name;
+	int nID;
 	int number;
 	BOOL stop;
 	BOOL toDelete;
+	BOOL named;
 	LPHO objects[STEPFOREACH];
 }ForEach;
 typedef	ForEach*	LPFOREACH;
@@ -1920,7 +1949,7 @@ BOOL eva1MClickOnObject(event* pe, CRun* rhPtr, LPHO pHo);
 BOOL eva2MClickOnObject(event* pe, CRun* rhPtr, LPHO pHo);
 BOOL evaMOnObject(event* pe, CRun* rhPtr, LPHO pHo);
 BOOL evaOnMousePressed(event* pe, CRun* rhPtr, LPHO pHo);
-BOOL mouseInZone(LPSHORT pZone, CRun* rhPtr);
+BOOL mouseInZone(int* pZone, CRun* rhPtr);
 BOOL eva1MClickInZone(event* pe, CRun* rhPtr, LPHO pHO);
 BOOL eva2MClickInZone(event* pe, CRun* rhPtr, LPHO pHo);
 BOOL evaMInZone(event* pe, CRun* rhPtr, LPHO pHo);
@@ -1985,6 +2014,11 @@ void actPauseAnyKey(event* pe, CRun* rhPtr);
 void actSaveFrame(event* pe, CRun* rhPtr);
 void actLoadFrame(event* pe, CRun* rhPtr);
 void actLoadApplication(event* pe, CRun* rhPtr);
+void actSetFrameEffect(event*pe, CRun* rhPtr);
+void actSetFrameEffectParam(event*pe, CRun* rhPtr);
+void actSetFrameEffectParamTexture(event*pe, CRun* rhPtr);
+void actSetFrameAlphaCoef(event*pe, CRun* rhPtr);
+void actSetFrameRGBCoef(event*pe, CRun* rhPtr);
 void actPlayDemo(event*pe, CRun* rhPtr);
 void expGam_NPlayer(CRun* rhPtr);
 void expGam_PlayWidth(CRun* rhPtr);
@@ -2020,6 +2054,7 @@ BOOL evaNumOfAllZone_old(event* pe, CRun* rhPtr, LPHO pHo);
 void actCreateObject(event* pe, CRun* rhPtr);
 void actCreateObjectExp(event* pe, CRun* rhPtr);
 void expCre_NumberAll(CRun* rhPtr);
+void expCre_LastFixedValue(CRun* rhPtr);
 void expPla_GetScore(CRun* rhPtr);
 void expPla_GetLives(CRun* rhPtr);
 void actPla_SetScore(event* pe, CRun* rhPtr);
@@ -2094,6 +2129,8 @@ void expSys_GlobalValue(CRun* rhPtr);
 void expSys_GlobalValueNamed(CRun* rhPtr);
 void expSys_GlobalString(CRun* rhPtr);
 void expSys_GlobalStringNamed(CRun* rhPtr);
+void expSys_StringReplace(CRun* rhPtr);
+//void expSys_StringRegex(CRun* rhPtr);
 void actExecuteChildEvents(event* pe, CRun* rhPtr);
 LPEVG InactGroup(LPEVG evgPtr);
 LPEVG ActGroup(LPEVG evgPtr);
@@ -2374,6 +2411,7 @@ void actClrFlag(event* pe, CRun* rhPtr);
 void actSetInkEffect(event* pe, CRun* rhPtr);
 void actSetEffect(event* pe, CRun* rhPtr);
 void actSetEffectParam(event* pe, CRun* rhPtr);
+void actSetEffectParamTexture(event* pe, CRun* rhPtr);
 void actSetSemiTransparency(event* pe, CRun* rhPtr);
 void actSetAlphaCoef(event* pe, CRun* rhPtr);
 void actSetRGBCoef(event* pe, CRun* rhPtr);
@@ -2555,6 +2593,9 @@ void actCreateByName(event* pe, CRun* rhPtr);
 void actCreateByNameExp(event* pe, CRun* rhPtr);
 void REXP_RANDOMRANGE(CRun* rhPtr);
 void REXP_RANGE(CRun* rhPtr);
+void expSys_sign(CRun* rhPtr);
+void expSys_lerp(CRun* rhPtr);
+void expSys_invLerp(CRun* rhPtr);
 void REXP_EXTANGLE(CRun* rhPtr);
 void REXP_EXTDISTANCE(CRun* rhPtr);
 void REXP_ANGLE(CRun* rhPtr);
@@ -2576,9 +2617,10 @@ void RACT_EXTSETELASTICITY(event* pe, CRun* rhPtr);
 void RACT_EXTSETFRICTION(event* pe, CRun* rhPtr);
 void RACT_EXTFOREACH2(event* pe, CRun* rhPtr);
 void RACT_EXTFOREACH(event* pe, CRun* rhPtr);
-void addForEach(NSString* pName, LPHO pHo, OINUM oil, CRun* rhPtr);
+void addForEach(NSString* pName, int nID, LPHO pHo, OINUM oil, CRun* rhPtr);
 BOOL RCND_EXTONLOOP2(event* pe, CRun* rhPtr);
 BOOL RCND_EXTONLOOP(event* pe, CRun* rhPtr, CObject* pHo);
+BOOL RCND_EXTONLOOP_INTERNAL(event* pe, CRun* rhPtr, CObject* pHo);
 void REXP_EXTLOOPINDEX(CRun* rhPtr);
 void endForEach(CRun* rhPtr);
 BOOL RCND_EXTONLOOP2(event* pe, CRun* rhPtr, CObject* pHo);

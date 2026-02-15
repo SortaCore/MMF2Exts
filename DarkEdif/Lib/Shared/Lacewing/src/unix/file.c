@@ -1,11 +1,11 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
  * Copyright (C) 2012 James McLaughlin.
- * Copyright (C) 2012-2022 Darkwire Software.
+ * Copyright (C) 2012-2026 Darkwire Software.
  * All rights reserved.
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
 
 #include "../common.h"
@@ -28,6 +28,8 @@ void lwp_file_init (lw_file ctx, lw_pump pump)
 lw_file lw_file_new (lw_pump pump)
 {
 	lw_file ctx = (lw_file)malloc (sizeof (*ctx));
+	if (!ctx)
+		return NULL;
 	lwp_file_init (ctx, pump);
 
 	return ctx;
@@ -40,12 +42,12 @@ lw_file lw_file_new_open (lw_pump pump,
 	lw_file ctx = lw_file_new (pump);
 
 	if (!ctx)
-	  return 0;
+		return 0;
 
 	if (!lw_file_open (ctx, filename, mode))
 	{
-	  lw_stream_delete ((lw_stream) ctx);
-	  return 0;
+		lw_stream_delete ((lw_stream) ctx);
+		return 0;
 	}
 
 	return ctx;
@@ -59,40 +61,40 @@ static int get_flags (const char * mode)
 
 	switch (*mode ++)
 	{
-	  case 'r':
-		 flags = O_RDONLY;
-		 break;
+		case 'r':
+			flags = O_RDONLY;
+			break;
 
-	  case 'w':
-		 flags = O_WRONLY | O_CREAT | O_TRUNC;
-		 break;
+		case 'w':
+			flags = O_WRONLY | O_CREAT | O_TRUNC;
+			break;
 
-	  case 'a':
-		 flags = O_WRONLY | O_CREAT | O_APPEND;
-		 break;
+		case 'a':
+			flags = O_WRONLY | O_CREAT | O_APPEND;
+			break;
 
-	  default:
-		 return -1;
+		default:
+			return -1;
 	};
 
 	if (*mode == 'b')
-	  ++ mode;
+		++ mode;
 
 	if (*mode == '+')
 	{
-	  flags |= O_RDWR;
-	  ++ mode;
+		flags |= O_RDWR;
+		++ mode;
 	}
 
 	if (*mode == 'b')
-	  ++ mode;
+		++ mode;
 
 	if (*mode == 'x')
 	{
-	  if (flags & O_RDONLY)
-		 return -1;
+		if (flags & O_RDONLY)
+			return -1;
 
-	  flags |= O_EXCL;
+		flags |= O_EXCL;
 	}
 
 	return flags;
@@ -122,7 +124,7 @@ lw_bool lw_file_open (lw_file ctx,
 		return lw_false;
 	}
 
-	lw_fdstream_set_fd ((lw_fdstream) ctx, fd, 0, lw_true, lw_false);
+	lw_fdstream_set_fd ((lw_fdstream) ctx, fd, lw_true, lw_false);
 
 	if (lw_fdstream_valid ((lw_fdstream) ctx))
 	{
@@ -146,8 +148,8 @@ lw_bool lw_file_open_temp (lw_file ctx)
 
 	while (i < sizeof (random))
 	{
-	  sprintf (name + strlen (name), "%02x", random [i]);
-	  ++ i;
+		sprintf (name + strlen (name), "%02x", random [i]);
+		++ i;
 	}
 
 	lwp_trace ("Opening temp file: %s", name);

@@ -1,4 +1,4 @@
-#include "Common.h"
+#include "Common.hpp"
 
 int Extension::Add(int First, int Second)
 {

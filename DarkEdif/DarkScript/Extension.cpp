@@ -1,5 +1,4 @@
-
-#include "Common.h"
+#include "Common.hpp"
 
 
 ///
@@ -7,37 +6,25 @@
 ///
 
 #ifdef _WIN32
-Extension::Extension(RUNDATA* _rdPtr, EDITDATA* edPtr, CreateObjectInfo* cobPtr) :
-	rdPtr(_rdPtr), rhPtr(_rdPtr->rHo.AdRunHeader), Runtime(&_rdPtr->rHo), FusionDebugger(this)
+Extension::Extension(RunObject* const _rdPtr, const EDITDATA* const edPtr, const CreateObjectInfo* const cobPtr) :
+	rdPtr(_rdPtr), rhPtr(_rdPtr->get_rHo()->get_AdRunHeader()), Runtime(this), FusionDebugger(this)
 #elif defined(__ANDROID__)
-Extension::Extension(RuntimeFunctions& runFuncs, EDITDATA* edPtr, jobject javaExtPtr) :
-	runFuncs(runFuncs), javaExtPtr(javaExtPtr, "Extension::javaExtPtr from Extension ctor"), Runtime(runFuncs, this->javaExtPtr), FusionDebugger(this)
+Extension::Extension(const EDITDATA* const edPtr, const jobject javaExtPtr, const CreateObjectInfo* const cobPtr) :
+	javaExtPtr(javaExtPtr, "Extension::javaExtPtr from Extension ctor"),
+	Runtime(this, this->javaExtPtr), FusionDebugger(this)
 #else
-Extension::Extension(RuntimeFunctions& runFuncs, EDITDATA* edPtr, void* objCExtPtr) :
-	runFuncs(runFuncs), objCExtPtr(objCExtPtr), Runtime(runFuncs, this->objCExtPtr), FusionDebugger(this)
+Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const CreateObjectInfo* const cobPtr) :
+	objCExtPtr(objCExtPtr), Runtime(this, objCExtPtr), FusionDebugger(this)
 #endif
 {
-	// Yves on 27/10/2021. Current build is beta 298.3:
-	// https://community.clickteam.com/threads/108993-Application-crashed-in-some-cases-when-calling-an-event-via-expression?p=769763&viewfull=1#post769763
-	// GenerateEvent does not support running from expressions
-	// To fix the crash, save rdPtr->rHo.hoAdRunHeader->rh4.rh4ExpToken before calling CallEvent and restore it just after:
-	// Code:
-	//	 LPRH pRh = rdPtr->rHo.hoAdRunHeader;
-	// expression*	saveExpToken = pRh->rh4.rh4ExpToken;
-	// CallEvent(ONFUNC);
-	// pRh->rh4.rh4ExpToken = saveExpToken;
-	// I'll add this code to GenerateEvent in the next build.
-	//
-	// Phi on 05/06/2022: I added it to GenerateEvent in the mainstream DarkEdif.
-
-    /*
-        Link all your action/condition/expression functions to their IDs to match the
-        IDs in the JSON here
-    */
+	/*
+		Link all your action/condition/expression functions to their IDs to match the
+		IDs in the JSON here
+	*/
 
 	// Actions
 
-    LinkAction(0, Template_SetFuncSignature);
+	LinkAction(0, Template_SetFuncSignature);
 	LinkAction(1, Template_SetDefaultReturnI);
 	LinkAction(2, Template_SetDefaultReturnF);
 	LinkAction(3, Template_SetDefaultReturnS);
@@ -46,11 +33,11 @@ Extension::Extension(RuntimeFunctions& runFuncs, EDITDATA* edPtr, void* objCExtP
 	LinkAction(6, Template_Param_SetDefaultValueF);
 	LinkAction(7, Template_Param_SetDefaultValueS);
 	LinkAction(8, Template_Param_SetDefaultValueN);
-	LinkAction(9, Template_SetScopedVarOnStartI );
+	LinkAction(9, Template_SetScopedVarOnStartI);
 	LinkAction(10, Template_SetScopedVarOnStartF);
 	LinkAction(11, Template_SetScopedVarOnStartS);
 	LinkAction(12, Template_CancelScopedVarOnStart);
-	LinkAction(13, Template_SetGlobalID)
+	LinkAction(13, Template_SetGlobalID);
 	LinkAction(14, Template_SetEnabled);
 	LinkAction(15, Template_RedirectFunction);
 	LinkAction(16, Template_Loop);
@@ -68,7 +55,7 @@ Extension::Extension(RuntimeFunctions& runFuncs, EDITDATA* edPtr, void* objCExtP
 	LinkAction(28, RunningFunc_SetReturnI);
 	LinkAction(29, RunningFunc_SetReturnF);
 	LinkAction(30, RunningFunc_SetReturnS);
-	LinkAction(31, RunningFunc_ScopedVar_SetI)
+	LinkAction(31, RunningFunc_ScopedVar_SetI);
 	LinkAction(32, RunningFunc_ScopedVar_SetF);
 	LinkAction(33, RunningFunc_ScopedVar_SetS);
 	LinkAction(34, RunningFunc_Params_Loop);
@@ -82,7 +69,7 @@ Extension::Extension(RuntimeFunctions& runFuncs, EDITDATA* edPtr, void* objCExtP
 
 	// Conditions
 
-    LinkCondition(0, AlwaysTrue); // OnDarkScriptError
+	LinkCondition(0, OnDarkScriptError); // Made this mandatory; I've had too many people not reading the errors
 	LinkCondition(1, OnFunction);
 	LinkCondition(2, OnForeachFunction);
 	LinkCondition(3, OnFunctionAborted);
@@ -96,6 +83,7 @@ Extension::Extension(RuntimeFunctions& runFuncs, EDITDATA* edPtr, void* objCExtP
 	LinkCondition(11, Logging_OnAnyFunction);
 	LinkCondition(12, Logging_OnAnyFunctionCompletedOK);
 	LinkCondition(13, Logging_OnAnyFunctionAborted);
+	LinkCondition(14, IsLastRepeatOfFunction);
 
 
 	// Expressions
@@ -147,14 +135,13 @@ Extension::Extension(RuntimeFunctions& runFuncs, EDITDATA* edPtr, void* objCExtP
 	LinkExpression(40, TestFunc);
 
 	// Used to make sure if we're doing a foreach, make sure we don't call a DarkScript function on another frame
-	fusionFrameNum = rhPtr->App->nCurrentFrame;
-
+	fusionFrameNum = Runtime.GetCurrentFusionFrameNumber();
 
 	// Copy all object properties from EDITDATA to Extension
 	globalID = edPtr->Props.GetPropertyStr("Global ID"sv);
 
 	const std::tstring strictProp = edPtr->Props.GetPropertyStr("Conversion strictness level"sv);
-	conversionStrictness = strictProp == _T("Exact"sv) ? ConversionStrictness::Exact :
+	conversionStrictness =
 		strictProp == _T("Exact"sv) ? ConversionStrictness::Exact :
 		strictProp == _T("Float <-> Integer OK"sv) ? ConversionStrictness::Numeric :
 		strictProp == _T("Any conversion (e.g. \"1\" -> 1.0)"sv) ? ConversionStrictness::AnyWithAborts :
@@ -171,9 +158,22 @@ Extension::Extension(RuntimeFunctions& runFuncs, EDITDATA* edPtr, void* objCExtP
 	createErrorOverridingScopedVars = edPtr->Props.IsPropChecked("Create an error when overriding scoped values"sv);
 	preventAllRecursion = edPtr->Props.IsPropChecked("Prevent any recursion"sv);
 	runAbortsOnDestination = edPtr->Props.IsPropChecked("Run errors/aborts on called extension"sv);
-	allowForeachSingular = edPtr->Props.IsPropChecked("Allow singular objects in qualifier foreach"sv);
+	allowQualifierToTriggerSingularForeach = edPtr->Props.IsPropChecked("Allow qualifier objects to trigger singular foreach"sv);
+	allowSingularToTriggerQualifierForeach = edPtr->Props.IsPropChecked("Allow singular objects to trigger qualifier foreach"sv);
 	inheritParametersAsScopedVariables = edPtr->Props.IsPropChecked("Inherit parameters as scoped variables"sv);
 
+	const std::tstring allowNoReturnProp = edPtr->Props.GetPropertyStr("Allow no return value when"sv);
+	whenAllowNoRVSet =
+		allowNoReturnProp == _T("Never"sv) ? AllowNoReturnValue::Never :
+		allowNoReturnProp == _T("Foreach, delayed only"sv) ? AllowNoReturnValue::ForeachDelayedActionsOnly :
+		allowNoReturnProp == _T("Anonymous, foreach, delayed only"sv) ? AllowNoReturnValue::AnonymousForeachDelayedActions :
+		allowNoReturnProp == _T("All functions"sv) ? AllowNoReturnValue::AllFunctions : (AllowNoReturnValue)-1;
+	if ((int)whenAllowNoRVSet == -1)
+		DarkEdif::MsgBox::Error(_T("Property error"), _T("Unrecognised allow no return value property value \"%s\"."), allowNoReturnProp.c_str());
+
+	// Strange combo; we don't make an outright error though, because we can still use the value
+	if (funcsMustHaveTemplate && whenAllowNoRVSet == AllowNoReturnValue::AnonymousForeachDelayedActions)
+		LOGW(_T("\"Allow no return value set\" property is set to \"%s\", but allowing anonymous functions are turned off.\n"), allowNoReturnProp.c_str());
 
 	const std::tstring globalScoped = edPtr->Props.GetPropertyStr("Global scoped vars"sv);
 	// TODO: Loop global scoped ^ and insert
@@ -181,7 +181,7 @@ Extension::Extension(RuntimeFunctions& runFuncs, EDITDATA* edPtr, void* objCExtP
 	GlobalData* gc = NULL;
 	std::tstring key = _T("DarkScript"s) + globalID;
 	if (!globalID.empty())
-		gc = (GlobalData*)Runtime.ReadGlobal(key.c_str());
+		gc = ReadGlobalDataByID(globalID);
 	if (gc == NULL)
 	{
 		globals = new GlobalData();
@@ -195,38 +195,104 @@ Extension::Extension(RuntimeFunctions& runFuncs, EDITDATA* edPtr, void* objCExtP
 	}
 	globals->exts.push_back(this);
 
+	// Should we error here? It's a property default as true, though.
+	if (globalID.empty() && (keepTemplatesAcrossFrames || keepGlobalScopedVarsAcrossFrames))
+		LOGW(_T("Warning: Got a DarkScript with a \"keep across frames\" property checked, but no global ID given, so they won't be kept.\n"));
+
+	// Claim ownership of the templates inherited from another frame
+	if (keepTemplatesAcrossFrames && globals->exts.size() == 1)
+	{
+		for (auto& f : globals->functionTemplates)
+			if (f->ext == NULL && f->globalID.empty())
+				f->ext = this;
+
+		// And update all globals that are linked to this global's templates so they have an ext to run on
+		for (auto& g : globals->updateTheseGlobalsWhenMyExtCycles)
+		{
+			for (auto& f : g->functionTemplates)
+				if (f->ext == NULL && f->globalID == globalID)
+					f->ext = this;
+		}
+	}
+
 	// This can be set to false, then generate event, to find all events that have On Function conditions.
-	// Of course, it won't detect group events inside deactivated groups.
+	// This will allow caching a list of all On Function events -> function names, saving time on comparing line by line.
+	// Of course, it won't detect group events inside deactivated groups, so maybe it's best we manually loop events instead of triggering.
 	selfAwareness = true;
 }
 
 Extension::~Extension()
 {
+	// Move any template set to run this template to next available ext, or to null;
+	// on new ext made with this global ID, it will claim all templates that have a differing global ID
+	const auto MoveRef = [this](Extension::GlobalData * globa) {
+		assert(globa != NULL);
+		Extension* const nextExt = globa->exts.empty() ? NULL : globa->exts[0];
+		for (const auto& f : globa->functionTemplates)
+		{
+			if (f->ext == this && (f->globalID.empty() || f->globalID == globalID))
+				f->ext = nextExt;
+		}
+	};
+
 	globals->exts.erase(std::find(globals->exts.cbegin(), globals->exts.cend(), this));
-
 	if (!globals->exts.empty())
-		return; // only last ext cleans up
+	{
+		if (this->keepTemplatesAcrossFrames)
+		{
+			// We can't run these functions anymore, let next ext take over
+			MoveRef(globals);
 
-	// not a shared object; we can clear everything
+			// The templates that were set up to run these functions via this ext, no longer can either
+			for (auto& g : globals->updateTheseGlobalsWhenMyExtCycles)
+				MoveRef(g);
+		}
+
+		return; // only last ext cleans up
+	}
+
+	// not a shared object; it's local, we can clear everything
 	if (globalID.empty())
 	{
+		// But make sure our "globals" doesn't get notified by other functions
+		for (const auto& f : globals->functionTemplates)
+		{
+			if (f->ext != this && !f->globalID.empty())
+			{
+				auto g = ReadGlobalDataByID(f->globalID);
+				if (!g)
+					continue;
+
+				const auto e = std::find(g->updateTheseGlobalsWhenMyExtCycles.cbegin(), g->updateTheseGlobalsWhenMyExtCycles.cend(), globals);
+				if (e != g->updateTheseGlobalsWhenMyExtCycles.cend())
+					g->updateTheseGlobalsWhenMyExtCycles.erase(e);
+			}
+		}
+
 		delete globals;
 		return;
 	}
 
-	// should this ever be true
+	// Should this ever be true?
 	if (!globals->runningFuncs.empty())
 		DarkEdif::MsgBox::Error(_T("Extension dtor"), _T("Unexpectedly, functions were still executing during exit."));
 
 	globals->pendingFuncs.erase(std::remove_if(globals->pendingFuncs.begin(), globals->pendingFuncs.end(),
 		[](const auto& pf) { return !pf->keepAcrossFrames; }), globals->pendingFuncs.end());
 
-	// Check function templates should be cleared on end
+	// We can no longer run these functions, and if some other DS has linked, we can't leave them with our invalid template->ext
+	MoveRef(globals);
+
+	// Check function declaration should be cleared on end
 	if (!this->keepTemplatesAcrossFrames)
 		globals->functionTemplates.clear();
 	if (!this->keepGlobalScopedVarsAcrossFrames)
 		globals->scopedVars.clear();
 	globals->curFrameOnFrameEnd = curFrame;
+
+	// The templates that were set up to run these functions via this ext, no longer can
+	for (auto& f : globals->updateTheseGlobalsWhenMyExtCycles)
+		MoveRef(f);
 }
 
 
@@ -235,7 +301,7 @@ REFLAG Extension::Handle()
 	++curFrame;
 	const auto now = std::chrono::system_clock::now();
 
-	for (size_t i = 0; i < globals->pendingFuncs.size(); i++)
+	for (std::size_t i = 0; i < globals->pendingFuncs.size(); ++i)
 	{
 		if (globals->pendingFuncs[i]->useTicks ? globals->pendingFuncs[i]->runAtTick <= curFrame : globals->pendingFuncs[i]->runAtTime < now)
 		{
@@ -247,7 +313,7 @@ REFLAG Extension::Handle()
 			curDelayedFunc = pf;
 			pf->funcToRun->runLocation = Sub_GetLocation(23);
 			pf->funcToRun->isVoidRun = true;
-			ExecuteFunction(NULL, pf->funcToRun);
+			ExecuteFunction(nullptr, pf->funcToRun);
 			pf->funcToRun->runLocation.clear();
 			if (--pf->numRepeats < 0 || !pf->funcToRun->active)
 			{
@@ -269,38 +335,21 @@ REFLAG Extension::Handle()
 	return globals->pendingFuncs.empty() ? REFLAG::ONE_SHOT : REFLAG::NONE;
 }
 
-
-REFLAG Extension::Display()
-{
-    /*
-       If you return REFLAG_DISPLAY in Handle() this routine will run.
-    */
-
-    // Ok
-    return REFLAG::NONE;
-}
-
-short Extension::FusionRuntimePaused()
+void Extension::FusionRuntimePaused()
 {
 	if (globals->exts[0] == this && !globals->pendingFuncs.empty())
 		globals->runtimepausedtime = decltype(globals->runtimepausedtime)::clock::now();
-
-    // Ok
-    return 0;
 }
 
-short Extension::FusionRuntimeContinued()
+void Extension::FusionRuntimeContinued()
 {
 	if (globals->exts[0] == this && !globals->pendingFuncs.empty())
 	{
 		const auto diff = decltype(globals->runtimepausedtime)::clock::now() - globals->runtimepausedtime;
-		for each (auto& f in globals->pendingFuncs)
+		for (auto& f : globals->pendingFuncs)
 			if (!f->useTicks)
 				f->runAtTime += diff;
 	}
-
-    // Ok
-    return 0;
 }
 
 

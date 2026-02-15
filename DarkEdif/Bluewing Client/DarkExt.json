@@ -5,7 +5,7 @@
 		"About": {
 			"Name": "Lacewing Blue Client",
 			"Author": "Darkwire Software",
-			"Copyright": "Copyright \u00A9 2023 by Darkwire Software",
+			"Copyright": "Copyright \u00A9 2026 by Darkwire Software",
 			"Comment": "Multiplayer client, for use over LAN or internet. \"Bluewing\" recreation of Lacewing Relay Client. (b%i, %s)",
 			"Help": "Help/Lacewing Help.chm",
 			"URL": "https://dark-wire.com/relay/"
@@ -13,6 +13,7 @@
 		"ActionMenu": [
 			[ 73, "Connect" ],
 			[ 1, "Disconnect" ],
+			[ 77, "Scan for LAN servers" ],
 			"---",
 			[ 2, "Set name" ],
 			"---",
@@ -103,6 +104,9 @@
 				"---",
 				[ 68, "Move cursor" ]
 			],
+			[ "Firewall hole punching",
+				[ 76, "Set local port for next connect"]
+			],
 			"---",
 			[ 75, "Set kill connection when disowned" ],
 
@@ -117,6 +121,10 @@
 				[ 42, "Is connected" ],
 				"---",
 				[ 3, "On disconnect" ]
+			],
+			[ "Network scan",
+				[ 76, "On LAN server scan reply"],
+				[ 77, "On LAN server scan done" ]
 			],
 			[ "Channel listing",
 				[ 26, "On list received" ],
@@ -239,6 +247,11 @@
 			[ "Connection",
 				[ 38, "Host IP address" ],
 				[ 39, "Host port" ]
+			],
+			[ "Network scan reply",
+				[ 61, "Server IP" ],
+				[ 62, "Server version" ],
+				[ 63, "Server welcome message" ]
 			],
 			[ "Channel listing",
 				[ 12, "Get name [ Channel listing loop ]" ],
@@ -704,6 +717,19 @@
 				"Parameters": [
 					[ "Integer", "Kill connection when last Bluewing destroyed? (0 or 1)" ]
 				]
+			},
+			{
+				"Title": "Set local port for next connect to %0",
+				"Parameters": [
+					[ "Integer", "Local port to connect from (1 to 65535, 1025+ recommended)" ]
+				]
+			},
+			{
+				"Title": "Run scan for LAN servers on port %0, scan for %1 milliseconds",
+				"Parameters": [
+					[ "Integer", "Server port (1 - 65535)" ],
+					[ "Integer", "Timeout in milliseconds (recommended: 5000)" ]
+				]
 			}
 		],
 		"Conditions": [
@@ -809,7 +835,7 @@
 			{
 				"Title": "%o : On number message from server on subchannel %0 (blasted)",
 				"Triggered": true,
-				"Parameters":  [
+				"Parameters": [
 					[ "Integer", "Subchannel (-1 for any)" ]
 				]
 			},
@@ -1128,6 +1154,14 @@
 					[ "Integer", "Peer ID to test" ],
 					[ "Text", "Channel name to test (use \"\" for currently selected)" ]
 				]
+			},
+			{
+				"Title": "%o : On LAN server scan reply",
+				"Triggered": true
+			},
+			{
+				"Title": "%o : On LAN server scan end",
+				"Triggered": true
 			}
 		],
 		"Expressions": [
@@ -1425,6 +1459,18 @@
 					[ "Text", "Text to test" ],
 					[ "Text", "Codepoint allowlist to test against" ]
 				]
+			},
+			{
+				"Title": "NetScanServerIP$(",
+				"Returns": "Text"
+			},
+			{
+				"Title": "NetScanServerVersion$(",
+				"Returns": "Text"
+			},
+			{
+				"Title": "NetScanServerWelcomeMessage$(",
+				"Returns": "Text"
 			}
 		],
 		"Properties": [
@@ -1470,6 +1516,12 @@
 				"Info": "CAN INTERFERE WITH GLOBAL SETTING. By default, kill the connection if all owning Lacewing Blue Clients are destroyed.",
 				"Type": "Checkbox",
 				"DefaultState": false
+			},
+			{
+				"Title": "Expect LAN use on Android",
+				"Info": "Checks for Android 16+ LAN access permission when building for Android.",
+				"Type": "Checkbox",
+				"DefaultState": true
 			}
 		]
 	}

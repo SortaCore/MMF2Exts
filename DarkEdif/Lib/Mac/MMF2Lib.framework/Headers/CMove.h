@@ -2,11 +2,11 @@
 *
 * This source code is part of the iOS exporter for Clickteam Multimedia Fusion 2
 * and Clickteam Fusion 2.5.
-* 
-* Permission is hereby granted to any person obtaining a legal copy 
-* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source 
-* code for debugging, optimizing, or customizing applications created with 
-* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5. 
+*
+* Permission is hereby granted to any person obtaining a legal copy
+* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source
+* code for debugging, optimizing, or customizing applications created with
+* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5.
 * Any other use of this source code is prohibited.
 *
 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -32,18 +32,18 @@
 #define MVOPT_8DIR_STICK 0x01
 extern char Joy2Dir[];
 
-@interface CMove : NSObject 
+@interface CMove : NSObject
 {
-@public 
+@public
 	CObject* hoPtr;
     int rmAcc;						/// Current acceleration
-    int rmDec;						/// Current Decelaration 
+    int rmDec;						/// Current Decelaration
     short rmCollisionCount;			/// Collision counter
     int rmStopSpeed;				/// If stopped: speed to take again
     int rmAccValue;					/// Acceleration calculation
     int rmDecValue;					/// Deceleration calculation
 	unsigned char rmOpt;
-	
+
 }
 -(void)kill;
 -(BOOL)newMake_Move:(int)speed withDir:(int)angle;

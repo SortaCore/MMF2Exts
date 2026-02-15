@@ -1,4 +1,14 @@
-#include "Common.h"
+#include "Common.hpp"
+#ifdef _WIN32
+#include <WinSock2.h>
+#include <ws2def.h>
+#include <ws2ipdef.h>
+#include <IPHlpApi.h>
+#include <netioapi.h>
+#pragma comment(lib, "iphlpapi.lib")
+#elif defined(__APPLE__)
+#import <SystemConfiguration/SystemConfiguration.h>
+#endif
 
 const TCHAR* Extension::Error()
 {
@@ -14,14 +24,14 @@ int Extension::Frame_IndexFromName(const TCHAR * name)
 {
 	if (name[0] == _T('\0'))
 	{
-		MakeError("Frame_IndexFromName: frame \"%s\" not found.", name);
+		MakeError(_T("Frame_IndexFromName: frame \"%s\" not found."), name);
 		return -1;
 	}
 
 	auto res = std::find_if(frameNames.cbegin(), frameNames.cend(), [=](const std::tstring& n) { return !_tcsicmp(n.c_str(), name); });
 	if (res == frameNames.cend())
 	{
-		MakeError("Frame_IndexFromName: frame \"%s\" not found.", name);
+		MakeError(_T("Frame_IndexFromName: frame \"%s\" not found."), name);
 		return -1;
 	}
 
@@ -33,18 +43,18 @@ const TCHAR * Extension::Frame_NameFromIndex(int index)
 {
 	if (index < 0)
 	{
-		MakeError("Frame_NameFromIndex was passed a negative index (%i).", index);
+		MakeError(_T("Frame_NameFromIndex was passed a negative index (%i)."), index);
 		return Runtime.CopyString(_T(""));
 	}
 	if (index == 0)
 	{
-		MakeError("Frame_NameFromIndex was passed 0 as index, but the index parameter is 1-based.");
+		MakeError(_T("Frame_NameFromIndex was passed 0 as index, but the index parameter is 1-based."));
 		return Runtime.CopyString(_T(""));
 	}
 
 	if ((size_t)index > frameNames.size())
 	{
-		MakeError("Frame_NameFromIndex was passed a index that was too high (max is %zu, you passed %i).",
+		MakeError(_T("Frame_NameFromIndex was passed a index that was too high (max is %zu, you passed %i)."),
 			frameNames.size(), index);
 		return Runtime.CopyString(_T(""));
 	}
@@ -111,14 +121,14 @@ std::uint32_t Extension::Disk_GetAvailableSpaceOfDriveInMB(const TCHAR* path)
 	ULARGE_INTEGER size;
 	if (GetDiskFreeSpaceEx(drive.c_str(), &size, NULL, NULL) == FALSE)
 	{
-		MakeError("Couldn't look up size of drive \"%s\", error %u: %s.", path, GetLastError(), GetLastErrorAsString().c_str());
+		MakeError(_T("Couldn't look up size of drive \"%s\", error %u: %hs."), path, GetLastError(), GetLastErrorAsString().c_str());
 		return -1;
 	}
 
 	return (std::uint32_t)(size.QuadPart / DIV);
 
 dieearly:
-	MakeError("Couldn't look up avilable space in drive \"%s\", unexpected path format. Expecting \"X:\\\", or \"\\\\servername\\foldername\\\". Path must end with a \"\\\".", path);
+	MakeError(_T(R"(Couldn't look up available space in drive "%s", unexpected path format. Expecting "X:\", or "\\servername\foldername\". Path must end with a "\".)"), path);
 	return -1;
 
 #elif defined(__ANDROID__)
@@ -135,11 +145,11 @@ dieearly:
 	if (res == -1)
 	{
 		res = errno;
-		MakeError("Couldn't look up avilable space of path %s, error num %d: %s.", path, res, strerror(res));
+		MakeError("Couldn't look up available space of path %s, error num %d: %s.", path, res, strerror(res));
 		return -1;
 	}
 
-	LOGI("Note: Result of statvfs for path \"%s\": blocks = %lu, bsize = %lu, frsize = %lu, bfree = %lu, bavail = %lu. Available: %lu bytes.\n",
+	LOGD("Note: Result of statvfs for path \"%s\": blocks = %lu, bsize = %lu, frsize = %lu, bfree = %lu, bavail = %lu. Available: %lu bytes.\n",
 		path, data.f_blocks, data.f_bsize, data.f_frsize, data.f_bfree, data.f_bavail, data.f_bfree * data.f_frsize);
 	std::uint64_t freeSpace = ((((std::uint64_t)data.f_bfree) * data.f_frsize) / DIV);
 	if (freeSpace > INT32_MAX)
@@ -200,14 +210,14 @@ std::uint32_t Extension::Disk_GetTotalCapacityOfDriveInMB(const TCHAR * path)
 	ULARGE_INTEGER size;
 	if (GetDiskFreeSpaceEx(drive.c_str(), NULL, &size, NULL) == FALSE)
 	{
-		MakeError("Couldn't look up total size of drive \"%s\", error %u: %s.", path, GetLastError(), GetLastErrorAsString().c_str());
+		MakeError(_T("Couldn't look up total size of drive \"%s\", error %u: %hs."), path, GetLastError(), GetLastErrorAsString().c_str());
 		return -1;
 	}
 
 	return (std::uint32_t)(size.QuadPart / DIV);
 
 	dieearly:
-		MakeError("Couldn't look up total size of drive \"%s\", unexpected path format. Expecting \"X:\\\", or \"\\\\servername\\foldername\\\". Path must end with a \"\\\".", path);
+		MakeError(_T(R"(Couldn't look up total size of drive "%s", unexpected path format. Expecting "X:\", or "\\servername\foldername\". Path must end with a "\".)"), path);
 		return -1;
 
 #elif defined(__ANDROID__) || defined(__APPLE__)
@@ -247,10 +257,6 @@ std::uint32_t Extension::Disk_GetTotalCapacityOfDriveInMB(const TCHAR * path)
 #endif
 }
 
-#ifdef _WIN32
-extern AltVals* RunObject_GetVals(RunObject* ro);
-#endif
-
 #include <iomanip>
 
 const TCHAR* Extension::GetAltValsFromObjName(const TCHAR* objectName, int altValueIndex, int numDecimalDigits)
@@ -259,61 +265,52 @@ const TCHAR* Extension::GetAltValsFromObjName(const TCHAR* objectName, int altVa
 
 	if (!objectNameStr[0])
 	{
-		MakeError("Cannot supply a blank object name as parameter.");
+		MakeError(_T("Cannot supply a blank object name as parameter."));
 		return Runtime.CopyString(_T("<ERROR>"));
 	}
 	if (altValueIndex <= 0)
 	{
-		MakeError("Alterable values range from index 0+, but you supplied index %i.", altValueIndex);
+		MakeError(_T("Alterable values range from index 0+, but you supplied index %i."), altValueIndex);
 		return Runtime.CopyString(_T("<ERROR>"));
 	}
 	if (!DarkEdif::IsFusion25 && altValueIndex > 25)
 	{
-		MakeError("Alterable values range from index 0-25 in Fusion 2.0, but you supplied index %i.", altValueIndex);
+		MakeError(_T("Alterable values range from index 0-25 in Fusion 2.0, but you supplied index %i."), altValueIndex);
 		return Runtime.CopyString(_T("<ERROR>"));
 	}
 
 
 #ifdef _WIN32
 	std::tstring objectNameStrLengthLimited(objectNameStr);
-	objectNameStrLengthLimited.resize(std::size(rhPtr->Frame->oiList[0].name) - 1);
+	objectNameStrLengthLimited.resize(OINAME_SIZE - 1);
 
-	for (size_t i = 0; i < (size_t)rhPtr->NumberOi; i++)
+	for (auto oil : DarkEdif::AllOIListIterator(rhPtr))
 	{
-		// In case NumberOI no worky
-		if (!rhPtr->Frame->oiList[i].name[0])
-			break;
-
 		// Found object by name
-		if (!_tcsicmp(rhPtr->Frame->oiList[i].name, objectNameStrLengthLimited.c_str()))
+		if (!_tcsicmp(oil->get_name(), objectNameStrLengthLimited.c_str()))
 		{
 			std::vector<std::pair<std::int32_t, int>> longRes;
 			std::vector<std::pair<std::double_t, int>> doubleRes;
 
-			short j = rhPtr->Frame->oiList[i].Object;
-			while (j >= 0)
+			for (auto obj : DarkEdif::ObjectIterator(rhPtr, oil->get_Oi(), DarkEdif::Selection::All))
 			{
-				RunObject* theObject = (RunObject *)rhPtr->ObjectList[j].oblOffset;
-				if (!theObject)
-					continue;
-
-				AltVals* av = RunObject_GetVals(theObject);
+				AltVals* av = obj->get_rov();
 				if (!av)
 				{
-					MakeError("Object %s doesn't have alterable values.", objectNameStr.c_str());
+					MakeError(_T("Object %s doesn't have alterable values."), objectNameStr.c_str());
 					return Runtime.CopyString(_T("<ERROR>"));
 				}
 				// theObject->roc.val
-				if (DarkEdif::IsFusion25 && av->CF25.NumAltValues <= altValueIndex)
+				if (DarkEdif::IsFusion25 && av->GetAltValueCount() <= (std::size_t)altValueIndex)
 				{
-					MakeError("Object %s doesn't have alterable value at index %i; max available alt value index is %i.",
-						objectNameStr.c_str(), altValueIndex, av->CF25.NumAltValues - 1);
+					MakeError(_T("Object %s doesn't have alterable value at index %i; max available alt value index is %zu."),
+						objectNameStr.c_str(), altValueIndex, av->GetAltValueCount() - 1);
 					return Runtime.CopyString(_T("<ERROR>"));
 				}
 
 				// av->Free1
 				// int
-				auto cValue = DarkEdif::IsFusion25 ? av->CF25.Values[altValueIndex] : av->MMF2.rvpValues[altValueIndex];
+				auto cValue = av->GetAltValueAtIndex(altValueIndex);
 
 				enum types
 				{
@@ -322,33 +319,31 @@ const TCHAR* Extension::GetAltValsFromObjName(const TCHAR* objectName, int altVa
 					String,
 				};
 
-				if (cValue.m_type == types::Int)
+				if (cValue->m_type == types::Int)
 				{
-					auto k = std::find_if(longRes.begin(), longRes.end(), [=](const std::pair<std::int32_t, int>& a) {
-							return a.first == cValue.m_long;
+					auto k = std::find_if(longRes.begin(), longRes.end(), [&cValue](const std::pair<std::int32_t, int>& a) {
+							return a.first == cValue->m_long;
 					});
 					if (k == longRes.end())
-						longRes.push_back(std::make_pair(cValue.m_long, 1));
+						longRes.push_back(std::make_pair(cValue->m_long, 1));
 					else
 						++k->second;
 				}
-				else if (cValue.m_type == types::Double)
+				else if (cValue->m_type == types::Double)
 				{
-					auto k = std::find_if(doubleRes.begin(), doubleRes.end(), [=](const std::pair<double, int>& a) {
-						return a.first == cValue.m_double;
+					auto k = std::find_if(doubleRes.begin(), doubleRes.end(), [&cValue](const std::pair<double, int>& a) {
+						return a.first == cValue->m_double;
 					});
 					if (k == doubleRes.end())
-						doubleRes.push_back(std::make_pair(cValue.m_double, 1));
+						doubleRes.push_back(std::make_pair(cValue->m_double, 1));
 					else
 						++k->second;
 				}
 				else // string, etc?
 				{
-					MakeError("Alt value at index %i is type %i, unexpected.", cValue.m_type);
+					MakeError(_T("Alt value at index %i is type %u, unexpected."), altValueIndex, cValue->m_type);
 					return Runtime.CopyString(_T("<ERROR>"));
 				}
-
-				j = theObject->roHo.NumNext;
 			}
 
 			// Got 'em all
@@ -407,7 +402,7 @@ const TCHAR* Extension::GetAltValsFromObjName(const TCHAR* objectName, int altVa
 		}
 	}
 
-	MakeError("Object name %s not found in this frame.", objectNameStr.c_str());
+	MakeError(_T("Object name %s not found in this frame."), objectNameStr.c_str());
 	return Runtime.CopyString(_T("<none found>"));
 #else
 	MakeError("Lookup by alt value name not created for this platform.");
@@ -421,42 +416,42 @@ const TCHAR* Extension::GetAltStringsFromObjName(const TCHAR* objectName, int al
 
 	if (!objectNameStr[0])
 	{
-		MakeError("Cannot supply a blank object name as parameter.");
+		MakeError(_T("Cannot supply a blank object name as parameter."));
 		return Runtime.CopyString(_T("<ERROR>"));
 	}
 	if (altStringIndex <= 0)
 	{
-		MakeError("Alterable strings range from index 0+, but you supplied index %i.", altStringIndex);
+		MakeError(_T("Alterable strings range from index 0+, but you supplied index %i."), altStringIndex);
 		return Runtime.CopyString(_T("<ERROR>"));
 	}
 	if (!DarkEdif::IsFusion25 && altStringIndex > 25)
 	{
-		MakeError("Alterable strings range from index 0-25 in Fusion 2.0, but you supplied index %i.", altStringIndex);
+		MakeError(_T("Alterable strings range from index 0-25 in Fusion 2.0, but you supplied index %i."), altStringIndex);
 		return Runtime.CopyString(_T("<ERROR>"));
 	}
 	if (delimStr.empty())
 	{
-		MakeError("Delimiter cannot be blank. Use Newline$, \" \", etc.");
+		MakeError(_T("Delimiter cannot be blank. Use Newline$, \" \", etc."));
 		return Runtime.CopyString(_T("<ERROR>"));
 	}
 #ifdef _WIN32
 	bool isUnicode = mvIsUnicodeApp(Edif::SDK->mV, Edif::SDK->mV->RunApp);
 #else
-	bool isUnicode = true;
+	constexpr bool isUnicode = true;
 #endif
 
-#if _UNICODE
+#ifdef _UNICODE
 	// Unicode exts can only load in Unicode
 	if (!isUnicode)
 	{
-		MakeError("Alterable strings reading failed - Non-Unicode app using Unicode ext?!");
+		MakeError(_T("Alterable strings reading failed - Non-Unicode app using Unicode ext?!"));
 		return Runtime.CopyString(_T("<ERROR>"));
 	}
 #else
 	// While we could convert, Phi Object comes in Unicode flavour, so why are we using non-Unicode?
 	if (isUnicode)
 	{
-		MakeError("Alterable strings reading failed - Unicode app using non-Unicode ext.");
+		MakeError(_T("Alterable strings reading failed - Unicode app using non-Unicode ext."));
 		return Runtime.CopyString(_T("<ERROR>"));
 	}
 #endif
@@ -464,47 +459,37 @@ const TCHAR* Extension::GetAltStringsFromObjName(const TCHAR* objectName, int al
 	// Unicode exts can only load in Unicode
 	if (DarkEdif::IsFusion25 && !isUnicode)
 	{
-		MakeError("Copying alt strings failed - CF2.5 not using a Unicode app?!");
+		MakeError(_T("Copying alt strings failed - CF2.5 not using a Unicode app?!"));
 		return Runtime.CopyString(_T("<ERROR>"));
 	}
 
-#ifdef _WIN32
 	std::tstring objectNameStrLengthLimited(objectNameStr);
-	objectNameStrLengthLimited.resize(std::size(rhPtr->Frame->oiList[0].name) - 1);
+	objectNameStrLengthLimited.resize(OINAME_SIZE - 1);
 
-	for (size_t i = 0; i < (size_t)rhPtr->NumberOi; i++)
+	for (auto oi : DarkEdif::AllOIListIterator(rhPtr))
 	{
-		// In case NumberOI no worky
-		if (!rhPtr->Frame->oiList[i].name[0])
-			break;
-
 		// Found object by name
-		if (!_tcsicmp(rhPtr->Frame->oiList[i].name, objectNameStrLengthLimited.c_str()))
+		if (!_tcsicmp(oi->get_name(), objectNameStrLengthLimited.c_str()))
 		{
 			std::vector<std::pair<std::tstring, int>> stringRes;
 
-			short j = rhPtr->Frame->oiList[i].Object;
-			while (j >= 0)
+			for (auto theObject : DarkEdif::ObjectIterator(rhPtr, oi->get_Oi(), DarkEdif::Selection::All))
 			{
-				RunObject* theObject = (RunObject*)rhPtr->ObjectList[j].oblOffset;
-				if (!theObject)
-					continue;
-
-				AltVals* av = RunObject_GetVals(theObject);
+				AltVals* av = theObject->get_rov();
 				if (!av)
 				{
-					MakeError("Object %s doesn't have alterable values.", objectNameStr.c_str());
+					MakeError(_T("Object %s doesn't have alterable values."), objectNameStr.c_str());
 					return Runtime.CopyString(_T("<ERROR>"));
 				}
 				// theObject->roc.val
-				if (DarkEdif::IsFusion25 && av->CF25.NumAltStrings <= altStringIndex)
+				if (DarkEdif::IsFusion25 && av->GetAltStringCount() <= (std::size_t)altStringIndex)
 				{
-					MakeError("Object %s doesn't have an alterable string at index %i; max available alt string index is %i.",
-						objectNameStr.c_str(), altStringIndex, av->CF25.NumAltStrings - 1);
+					MakeError(_T("Object %s doesn't have an alterable string at index %i; max available alt string index is %zu."),
+						objectNameStr.c_str(), altStringIndex, av->GetAltStringCount() - 1);
 					return Runtime.CopyString(_T("<ERROR>"));
 				}
 
-				const TCHAR* strOrNull = DarkEdif::IsFusion25 ? av->CF25.Strings[altStringIndex] : av->MMF2.rvStrings[altStringIndex];
+				const TCHAR* strOrNull = av->GetAltStringAtIndex(altStringIndex);
 				std::tstring str(strOrNull ? strOrNull : _T(""));
 
 				if (str.empty())
@@ -517,8 +502,6 @@ const TCHAR* Extension::GetAltStringsFromObjName(const TCHAR* objectName, int al
 					else
 						++k->second;
 				}
-
-				j = theObject->roHo.NumNext;
 			}
 			// Got 'em all
 
@@ -542,12 +525,8 @@ const TCHAR* Extension::GetAltStringsFromObjName(const TCHAR* objectName, int al
 		}
 	}
 
-	MakeError("Object name %s not found in this frame.", objectNameStr.c_str());
+	MakeError(_T("Object name %s not found in this frame."), objectNameStr.c_str());
 	return Runtime.CopyString(_T("<none found>"));
-#else
-	MakeError("Lookup by alt value name not created for this platform.");
-	return Runtime.CopyString(_T("<not implemented>"));
-#endif
 }
 const TCHAR* Extension::GetFlagsFromObjName(const TCHAR* objectName, int flagIndex)
 {
@@ -555,85 +534,67 @@ const TCHAR* Extension::GetFlagsFromObjName(const TCHAR* objectName, int flagInd
 
 	if (!objectNameStr[0])
 	{
-		MakeError("Cannot supply a blank object name as parameter.");
+		MakeError(_T("Cannot supply a blank object name as parameter."));
 		return Runtime.CopyString(_T("<ERROR>"));
 	}
 	if (flagIndex < 0 || flagIndex > 31)
 	{
-		MakeError("Internal flags range from index 0 to 31, but you supplied index %i.", flagIndex);
+		MakeError(_T("Internal flags range from index 0 to 31, but you supplied index %i."), flagIndex);
 		return Runtime.CopyString(_T("<ERROR>"));
 	}
 
-#ifdef _WIN32
 	std::tstring objectNameStrLengthLimited(objectNameStr);
-	objectNameStrLengthLimited.resize(std::size(rhPtr->Frame->oiList[0].name) - 1);
+	objectNameStrLengthLimited.resize(OINAME_SIZE - 1);
 
-	for (size_t i = 0; i < (size_t)rhPtr->NumberOi; i++)
+	for (auto oi : DarkEdif::AllOIListIterator(rhPtr))
 	{
-		// In case NumberOI no worky
-		if (!rhPtr->Frame->oiList[i].name[0])
-			break;
+		if (_tcsicmp(oi->get_name(), objectNameStrLengthLimited.c_str()))
+			continue;
 
 		// Found object by name
-		if (!_tcsicmp(rhPtr->Frame->oiList[i].name, objectNameStrLengthLimited.c_str()))
+		std::size_t numTrueFlags = 0, numFalseFlags = 0;
+		for (auto theObject : DarkEdif::ObjectIterator(rhPtr, oi->get_Oi(), DarkEdif::Selection::All))
 		{
-			size_t numTrueFlags = 0, numFalseFlags = 0;
-
-			short j = rhPtr->Frame->oiList[i].Object;
-			while (j >= 0)
+			AltVals* av = theObject->get_rov();
+			if (!av)
 			{
-				RunObject* theObject = (RunObject*)rhPtr->ObjectList[j].oblOffset;
-				if (!theObject)
-					continue;
-
-				AltVals* av = RunObject_GetVals(theObject);
-				if (!av)
-				{
-					MakeError("Object %s doesn't have internal flags.", objectNameStr.c_str());
-					return Runtime.CopyString(_T("<ERROR>"));
-				}
-
-				if ((DarkEdif::IsFusion25 ? av->CF25.InternalFlags : av->MMF2.rvValueFlags) & (1 << flagIndex))
-					++numTrueFlags;
-				else
-					++numFalseFlags;
-
-				j = theObject->roHo.NumNext;
-			}
-			// Got 'em all
-
-			// No results?
-			if (numTrueFlags == 0 && numFalseFlags == 0)
-				return Runtime.CopyString(_T("<No object instances>"));
-
-			std::tstringstream result;
-
-			if (numFalseFlags > 0)
-			{
-				result << _T("false");
-				if (numFalseFlags > 1)
-					result << _T(" (x") << numFalseFlags << _T(")");
+				MakeError(_T("Object %s doesn't have internal flags."), objectNameStr.c_str());
+				return Runtime.CopyString(_T("<ERROR>"));
 			}
 
-			if (numTrueFlags > 0)
-			{
-				if (numFalseFlags > 0)
-					result << _T(", ");
-				result << _T("true");
-				if (numTrueFlags > 1)
-					result << _T(" (x") << numTrueFlags << _T(")");
-			}
-
-			return Runtime.CopyString(result.str().c_str());
+			if ((av->GetInternalFlags() & (1 << flagIndex)) != 0)
+				++numTrueFlags;
+			else
+				++numFalseFlags;
 		}
-	}
-#else // ANDROID
-	// TODO: Android implementation
-	MakeError("Function not implemented in Android/iOS.");
-	return Runtime.CopyString(_T("<not implemented>"));
-#endif
+		// Got 'em all
 
-	MakeError("Object name %s not found in this frame.", objectNameStr.c_str());
+		// No results?
+		if (numTrueFlags == 0 && numFalseFlags == 0)
+			return Runtime.CopyString(_T("<No object instances>"));
+
+		std::tstringstream result;
+
+		if (numFalseFlags > 0)
+		{
+			result << _T("false");
+			if (numFalseFlags > 1)
+				result << _T(" (x") << numFalseFlags << _T(")");
+		}
+
+		if (numTrueFlags > 0)
+		{
+			if (numFalseFlags > 0)
+				result << _T(", ");
+			result << _T("true");
+			if (numTrueFlags > 1)
+				result << _T(" (x") << numTrueFlags << _T(")");
+		}
+
+		return Runtime.CopyString(result.str().c_str());
+	}
+
+	MakeError(_T("Object name %s not found in this frame."), objectNameStr.c_str());
 	return Runtime.CopyString(_T("<none found>"));
 }
 
@@ -684,7 +645,7 @@ const TCHAR * Extension::GetLoopedACLEntry_AccountName()
 	TCHAR accNameBuff[MAX_SID_SIZE + 1];
 	if (!LookupAccountSid(NULL, sidPtr, accNameBuff, &accNameSize, ignoredDomain, &ignoredDomainSize, &ignoredPSIDNameUse))
 	{
-		MakeError("SID couldn't be mapped to an account name. Error %hs (%u).", GetLastErrorAsString().c_str(), GetLastError());
+		MakeError(_T("SID couldn't be mapped to an account name. Error %hs (%u)."), GetLastErrorAsString().c_str(), GetLastError());
 		return Runtime.CopyString(_T("Unknown account>"));
 	}
 
@@ -729,17 +690,248 @@ int Extension::GetLoopedACLEntry_AccessMask()
 float Extension::TestParamsFunc(int a, float b, const TCHAR* c, float d, int e, float f, const TCHAR* g, int h, float i,
 	const TCHAR* j, int k, float l, const TCHAR* m, float n, int o, const TCHAR* p)
 {
-	raise(SIGINT);
+	raise(SIGTRAP);
 	return a + b;
 }
 
 float Extension::ProximitySensor()
 {
 #ifdef _WIN32
-	MakeError("Proximity sensor is only available in Android and iOS.");
+	MakeError(_T("Proximity sensor is only available in Android and iOS."));
 	return 0.0f;
 #else
 	MakeError("Proximity sensor should be implemented in native-code wrapper in Android and iOS.");
 	return 0.0f;
+#endif
+}
+
+#if MacBuild
+extern "C" char* Phi_Object_getAppFolder();
+#endif
+
+static std::tstring rootPath, docsPath;
+const TCHAR* Extension::GetAppRoot(int flags)
+{
+	// types:
+	// ApplicationRoot (where exe is on drive)
+	// STDRT
+	// Temporary folder - destroyed by OS on app end
+	// MFA folder if Run App
+	// user's Documents folder
+	// Application root (where app package content starts)
+
+
+	if (rootPath.empty() && flags == 0)
+	{
+#ifdef _WIN32
+		std::tstring path(DarkEdif::GetRunningApplicationPath(DarkEdif::GetRunningApplicationPathType::AppFolderOnly));
+		path += _T('\\');
+		rootPath = path;
+#elif defined(__ANDROID__)
+		jclass envClass = threadEnv->FindClass("android/os/Environment");
+		jclass fileClass = threadEnv->FindClass("java/io/File");
+		jmethodID getExtStorageDirectoryMethod = threadEnv->GetStaticMethodID(envClass, "getExternalStorageDirectory", "()Ljava/io/File;");
+		jmethodID getPathMethod = threadEnv->GetMethodID(fileClass, "getPath", "()Ljava/lang/String;");
+		jobject extStorageFile = threadEnv->CallStaticObjectMethod(envClass, getExtStorageDirectoryMethod);
+		jstring extStoragePath = (jstring)threadEnv->CallObjectMethod(extStorageFile, getPathMethod);
+		const char* extStoragePathString = threadEnv->GetStringUTFChars(extStoragePath, NULL);
+		rootPath = extStoragePathString;
+		rootPath += '/';
+		threadEnv->ReleaseStringUTFChars(extStoragePath, extStoragePathString);
+#elif MacBuild
+		char* rootAppFolderPtr = Phi_Object_getAppFolder();
+		rootPath = rootAppFolderPtr;
+		rootPath += '/';
+		free(rootAppFolderPtr);
+
+		docsPath = getenv("HOME");
+		docsPath += "/Documents/";
+#else // iOS
+		rootPath = getenv("HOME");
+		rootPath += '/';
+		docsPath = rootPath + "Documents/";
+#endif
+	}
+
+#ifdef __APPLE__
+	if (flags != 0)
+		return Runtime.CopyString(docsPath.c_str());
+#endif
+	return Runtime.CopyString(rootPath.c_str());
+}
+
+#ifdef _WIN32
+BOOL getDevices(NDIS_PHYSICAL_MEDIUM type, std::vector<MIB_IF_ROW2>& vetIFRow)
+{
+	PMIB_IF_TABLE2 table = NULL;
+	if (GetIfTable2Ex(MibIfTableRaw, &table) != NOERROR || !table)
+		return FALSE;
+
+	for (ULONG i = 0; i < table->NumEntries; ++i)
+	{
+		MIB_IF_ROW2 row;
+		ZeroMemory(&row, sizeof(MIB_IF_ROW2));
+		row.InterfaceIndex = i;
+		if (GetIfEntry2(&row) == NOERROR && row.PhysicalMediumType == type)
+			vetIFRow.push_back(row);
+	}
+
+	FreeMibTable(table);
+	return TRUE;
+}
+
+BOOL isNetIFConnected(const MIB_IF_ROW2& row, IFTYPE Type)
+{
+	return (row.TunnelType == TUNNEL_TYPE_NONE &&
+		row.AccessType != NET_IF_ACCESS_LOOPBACK &&
+		row.Type == Type &&
+		row.InterfaceAndOperStatusFlags.HardwareInterface == TRUE &&
+		row.MediaConnectState == MediaConnectStateConnected);
+}
+
+static const TCHAR * const getWindowsNetworkType()
+{
+	std::vector<MIB_IF_ROW2> vectRow;
+	BOOL bRet = getDevices(NdisPhysicalMedium802_3, vectRow); // ETHERNET adapters
+	if (bRet)
+	{
+		for (auto it = vectRow.begin(); it != vectRow.end(); ++it)
+		{
+			// Ethernet or PPP (direct internet from wall plugged into PC)
+			if (isNetIFConnected(*it, IF_TYPE_ETHERNET_CSMACD) || isNetIFConnected(*it, IF_TYPE_PPP))
+				return _T("Wired");
+		}
+	}
+
+	vectRow.clear();
+	bRet = getDevices(NdisPhysicalMediumNative802_11, vectRow); //WLAN adapters
+	if (bRet)
+	{
+		for (auto it = vectRow.begin(); it != vectRow.end(); ++it)
+		{
+			// Note: in Windows XP, this is also MIB_IF_TYPE_ETHERNET
+			if (isNetIFConnected(*it, IF_TYPE_IEEE80211))
+				return _T("Wi-Fi");
+		}
+	}
+
+	return _T("Unknown");
+}
+#endif
+
+const TCHAR* Extension::GetNetworkType()
+{
+#ifdef _WIN32
+	return Runtime.CopyString(getWindowsNetworkType());
+#elif defined(__ANDROID__)
+	/* MMFRuntime is singleton static from MMFRuntime.inst
+	From there we getApplicationContext() on MMFRuntime
+	ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+	NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+	if (activeNetwork == null)
+	offline;
+	if (activeNetwork.getType() == ConnectivityManager.TYPE_WIFI) {
+		wifi;
+	if (activeNetwork.getType() == ConnectivityManager.TYPE_MOBILE) {
+		data;
+	ethernet; */
+
+	LOGD(_T("Grabbing Runtime class...\n"));
+
+	if (getActiveNetworkInfoMethod == NULL)
+	{
+		// Constant string, but we need it Java-ified
+		contextConnectivityString = global(threadEnv->NewStringUTF("connectivity"), "Context.CONNECTIVITY_SERVICE");
+
+		jclass runtimeClass = threadEnv->FindClass("Runtime/MMFRuntime");
+		JNIExceptionCheck();
+		jfieldID runtimeInstanceField = threadEnv->GetStaticFieldID(runtimeClass, "inst", "LRuntime/MMFRuntime;");
+		JNIExceptionCheck();
+		jobject runtimeInstance = threadEnv->GetStaticObjectField(runtimeClass, runtimeInstanceField);
+		JNIExceptionCheck();
+		// we now have inst, get the app context getApplicationContext()
+		jmethodID runtimeGetAppContextMethod = threadEnv->GetMethodID(runtimeClass, "getApplicationContext", "()Landroid/content/Context;");
+		JNIExceptionCheck();
+		jobject contextObj = threadEnv->CallObjectMethod(runtimeInstance, runtimeGetAppContextMethod);
+		JNIExceptionCheck();
+		jclass contextClass = threadEnv->GetObjectClass(contextObj);
+		JNIExceptionCheck();
+		// Get Context.CONNECTIVITY_SERVICE - "connectivity"
+		global<jstring> contextConnectivityString(threadEnv->NewStringUTF("connectivity"), "Context.CONNECTIVITY_SERVICE");
+		JNIExceptionCheck();
+
+		// Get Context.getSystemService
+		jmethodID getSystemServiceMethod = threadEnv->GetMethodID(contextClass, "getSystemService",
+			"(Ljava/lang/String;)Ljava/lang/Object;");
+		JNIExceptionCheck();
+		connectivityService = global(threadEnv->CallObjectMethod(contextObj, getSystemServiceMethod, contextConnectivityString.ref), "connectivityService");
+		JNIExceptionCheck();
+		jclass connectivityServiceClass = threadEnv->GetObjectClass(connectivityService);
+		JNIExceptionCheck();
+
+		// Get ConnectivityService.getActiveNetworkInfo
+		getActiveNetworkInfoMethod = threadEnv->GetMethodID(connectivityServiceClass, "getActiveNetworkInfo", "()Landroid/net/NetworkInfo;");
+		JNIExceptionCheck();
+	}
+	jobject activeNetworkInfo = threadEnv->CallObjectMethod(connectivityService, getActiveNetworkInfoMethod);
+	JNIExceptionCheck();
+	// active info is null if offline, we can't call GetClass on that
+	if (activeNetworkInfo == nullptr)
+		return Runtime.CopyString(_T("Offline"));
+
+	// And class may change if network changes, so we'll look this up every time, just in case?
+	// TODO: It might not change and we can cache this
+	jclass networkInfoClass = threadEnv->GetObjectClass(activeNetworkInfo);
+	JNIExceptionCheck();
+	jmethodID getTypeMethod = threadEnv->GetMethodID(networkInfoClass, "getType", "()I");
+	JNIExceptionCheck();
+	jint type = threadEnv->CallIntMethod(activeNetworkInfo, getTypeMethod);
+	JNIExceptionCheck();
+	enum NetworkTypes {
+		TYPE_MOBILE = 0,
+		TYPE_WIFI = 1,
+		TYPE_MOBILE_MMS = 2,
+		TYPE_MOBILE_SUPL = 3,
+		TYPE_MOBILE_DUN = 4,
+		TYPE_MOBILE_HIPRI = 5,
+		TYPE_WIMAX = 6,
+		TYPE_BLUETOOTH = 7,
+		TYPE_DUMMY = 8,
+		TYPE_ETHERNET = 13,
+		TYPE_VPN = 17
+	};
+	if (type == NetworkTypes::TYPE_ETHERNET)
+		return Runtime.CopyString(_T("Wired"));
+	if (type == NetworkTypes::TYPE_WIFI)
+		return Runtime.CopyString(_T("Wi-Fi"));
+	if (type == NetworkTypes::TYPE_MOBILE || (type >= NetworkTypes::TYPE_MOBILE_MMS && type <= NetworkTypes::TYPE_MOBILE_HIPRI))
+		return Runtime.CopyString(_T("Mobile"));
+	if (type == NetworkTypes::TYPE_BLUETOOTH)
+		return Runtime.CopyString(_T("Bluetooth"));
+	if (type == NetworkTypes::TYPE_VPN)
+		return Runtime.CopyString(_T("VPN"));
+	if (type == NetworkTypes::TYPE_WIMAX)
+		return Runtime.CopyString(_T("WiMax"));
+	return Runtime.CopyString(_T("Unknown"));
+#elif MacBuild==0 // apple
+	SCNetworkReachabilityRef reachability = SCNetworkReachabilityCreateWithName(NULL, "8.8.8.8");
+	SCNetworkReachabilityFlags flags;
+	BOOL success = SCNetworkReachabilityGetFlags(reachability, &flags);
+	CFRelease(reachability);
+	if (!success) {
+		return Runtime.CopyString("Unknown");
+	}
+	BOOL isReachable = ((flags & kSCNetworkReachabilityFlagsReachable) != 0);
+	BOOL needsConnection = ((flags & kSCNetworkReachabilityFlagsConnectionRequired) != 0);
+	BOOL isNetworkReachable = (isReachable && !needsConnection);
+
+	if (!isNetworkReachable)
+		return Runtime.CopyString("Offline");
+	if ((flags & kSCNetworkReachabilityFlagsIsWWAN) != 0)
+		return Runtime.CopyString("Mobile data");
+	return Runtime.CopyString("Wi-Fi");
+#else // Apple Mac
+	MakeError("Network type not implemented on Mac OS.");
+	return Runtime.CopyString("Unknown");
 #endif
 }

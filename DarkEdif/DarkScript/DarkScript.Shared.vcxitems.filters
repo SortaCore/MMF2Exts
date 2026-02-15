@@ -21,19 +21,19 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="$(MSBuildThisFileDirectory)Common.h">
+    <ClInclude Include="$(MSBuildThisFileDirectory)Common.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)Extension.h">
+    <ClInclude Include="$(MSBuildThisFileDirectory)Extension.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\DarkEdif.h">
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\DarkEdif.hpp">
       <Filter>Global to all extensions\Edif</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\Edif.h">
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\Edif.hpp">
       <Filter>Global to all extensions\Edif</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\ObjectSelection.h">
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\ObjectSelection.hpp">
       <Filter>Global to all extensions</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\json.hpp">
@@ -49,6 +49,9 @@
       <Filter>Global to all extensions\Edif</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\Strings.hpp">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\SurfaceMultiPlat.hpp">
       <Filter>Global to all extensions\Edif</Filter>
     </ClInclude>
   </ItemGroup>
@@ -85,6 +88,9 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)Functions.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\SurfaceMultiPlat.cpp">
+      <Filter>Global to all extensions\Edif</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

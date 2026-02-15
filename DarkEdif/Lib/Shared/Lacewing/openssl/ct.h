@@ -29,30 +29,30 @@ extern "C" {
 # define CT_V1_HASHLEN SHA256_DIGEST_LENGTH
 
 typedef enum {
-    CT_LOG_ENTRY_TYPE_NOT_SET = -1,
-    CT_LOG_ENTRY_TYPE_X509 = 0,
-    CT_LOG_ENTRY_TYPE_PRECERT = 1
+	CT_LOG_ENTRY_TYPE_NOT_SET = -1,
+	CT_LOG_ENTRY_TYPE_X509 = 0,
+	CT_LOG_ENTRY_TYPE_PRECERT = 1
 } ct_log_entry_type_t;
 
 typedef enum {
-    SCT_VERSION_NOT_SET = -1,
-    SCT_VERSION_V1 = 0
+	SCT_VERSION_NOT_SET = -1,
+	SCT_VERSION_V1 = 0
 } sct_version_t;
 
 typedef enum {
-    SCT_SOURCE_UNKNOWN,
-    SCT_SOURCE_TLS_EXTENSION,
-    SCT_SOURCE_X509V3_EXTENSION,
-    SCT_SOURCE_OCSP_STAPLED_RESPONSE
+	SCT_SOURCE_UNKNOWN,
+	SCT_SOURCE_TLS_EXTENSION,
+	SCT_SOURCE_X509V3_EXTENSION,
+	SCT_SOURCE_OCSP_STAPLED_RESPONSE
 } sct_source_t;
 
 typedef enum {
-    SCT_VALIDATION_STATUS_NOT_SET,
-    SCT_VALIDATION_STATUS_UNKNOWN_LOG,
-    SCT_VALIDATION_STATUS_VALID,
-    SCT_VALIDATION_STATUS_INVALID,
-    SCT_VALIDATION_STATUS_UNVERIFIED,
-    SCT_VALIDATION_STATUS_UNKNOWN_VERSION
+	SCT_VALIDATION_STATUS_NOT_SET,
+	SCT_VALIDATION_STATUS_UNKNOWN_LOG,
+	SCT_VALIDATION_STATUS_VALID,
+	SCT_VALIDATION_STATUS_INVALID,
+	SCT_VALIDATION_STATUS_UNVERIFIED,
+	SCT_VALIDATION_STATUS_UNKNOWN_VERSION
 } sct_validation_status_t;
 
 DEFINE_STACK_OF(SCT)
@@ -97,7 +97,7 @@ const CTLOG_STORE *CT_POLICY_EVAL_CTX_get0_log_store(const CT_POLICY_EVAL_CTX *c
 
 /* Sets the log store that is in use. It must outlive the CT_POLICY_EVAL_CTX. */
 void CT_POLICY_EVAL_CTX_set_shared_CTLOG_STORE(CT_POLICY_EVAL_CTX *ctx,
-                                               CTLOG_STORE *log_store);
+											   CTLOG_STORE *log_store);
 
 /*
  * Gets the time, in milliseconds since the Unix epoch, that will be used as the
@@ -129,11 +129,11 @@ SCT *SCT_new(void);
  * The caller is responsible for calling SCT_free when finished with the SCT.
  */
 SCT *SCT_new_from_base64(unsigned char version,
-                         const char *logid_base64,
-                         ct_log_entry_type_t entry_type,
-                         uint64_t timestamp,
-                         const char *extensions_base64,
-                         const char *signature_base64);
+						 const char *logid_base64,
+						 ct_log_entry_type_t entry_type,
+						 uint64_t timestamp,
+						 const char *extensions_base64,
+						 const char *signature_base64);
 
 /*
  * Frees the SCT and the underlying data structures.
@@ -188,7 +188,7 @@ __owur int SCT_set0_log_id(SCT *sct, unsigned char *log_id, size_t log_id_len);
  * Returns 1 on success, 0 otherwise.
  */
 __owur int SCT_set1_log_id(SCT *sct, const unsigned char *log_id,
-                           size_t log_id_len);
+						   size_t log_id_len);
 
 /*
  * Returns the timestamp for the SCT (epoch time in milliseconds).
@@ -234,7 +234,7 @@ void SCT_set0_extensions(SCT *sct, unsigned char *ext, size_t ext_len);
  * Returns 1 on success, 0 otherwise.
  */
 __owur int SCT_set1_extensions(SCT *sct, const unsigned char *ext,
-                               size_t ext_len);
+							   size_t ext_len);
 
 /*
  * Set *sig to point to the signature for the SCT. sig must not be NULL.
@@ -254,7 +254,7 @@ void SCT_set0_signature(SCT *sct, unsigned char *sig, size_t sig_len);
  * Returns 1 on success, 0 otherwise.
  */
 __owur int SCT_set1_signature(SCT *sct, const unsigned char *sig,
-                              size_t sig_len);
+							  size_t sig_len);
 
 /*
  * The origin of this SCT, e.g. TLS extension, OCSP response, etc.
@@ -288,7 +288,7 @@ void SCT_print(const SCT *sct, BIO *out, int indent, const CTLOG_STORE *logs);
  * came from, so that the log names can be printed.
  */
 void SCT_LIST_print(const STACK_OF(SCT) *sct_list, BIO *out, int indent,
-                    const char *separator, const CTLOG_STORE *logs);
+					const char *separator, const CTLOG_STORE *logs);
 
 /*
  * Gets the last result of validating this SCT.
@@ -313,7 +313,7 @@ __owur int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx);
  * Returns a negative integer if an error occurs.
  */
 __owur int SCT_LIST_validate(const STACK_OF(SCT) *scts,
-                             CT_POLICY_EVAL_CTX *ctx);
+							 CT_POLICY_EVAL_CTX *ctx);
 
 
 /*********************************
@@ -345,7 +345,7 @@ __owur int i2o_SCT_LIST(const STACK_OF(SCT) *a, unsigned char **pp);
  * not defined.
  */
 STACK_OF(SCT) *o2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
-                            size_t len);
+							size_t len);
 
 /*
  * Serialize (to DER format) a stack of SCTs and return the length.
@@ -372,7 +372,7 @@ __owur int i2d_SCT_LIST(const STACK_OF(SCT) *a, unsigned char **pp);
  * not defined.
  */
 STACK_OF(SCT) *d2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
-                            long len);
+							long len);
 
 /*
  * Serialize (to TLS format) an |sct| and write it to |out|.
@@ -417,7 +417,7 @@ CTLOG *CTLOG_new(EVP_PKEY *public_key, const char *name);
  * Should be deleted by the caller using CTLOG_free when no longer needed.
  */
 int CTLOG_new_from_base64(CTLOG ** ct_log,
-                          const char *pkey_base64, const char *name);
+						  const char *pkey_base64, const char *name);
 
 /*
  * Deletes a CT log instance and its fields.
@@ -428,7 +428,7 @@ void CTLOG_free(CTLOG *log);
 const char *CTLOG_get0_name(const CTLOG *log);
 /* Gets the ID of the CT log */
 void CTLOG_get0_log_id(const CTLOG *log, const uint8_t **log_id,
-                       size_t *log_id_len);
+					   size_t *log_id_len);
 /* Gets the public key of the CT log */
 EVP_PKEY *CTLOG_get0_public_key(const CTLOG *log);
 
@@ -452,8 +452,8 @@ void CTLOG_STORE_free(CTLOG_STORE *store);
  * Returns the CT log, or NULL if no match is found.
  */
 const CTLOG *CTLOG_STORE_get0_log_by_id(const CTLOG_STORE *store,
-                                        const uint8_t *log_id,
-                                        size_t log_id_len);
+										const uint8_t *log_id,
+										size_t log_id_len);
 
 /*
  * Loads a CT log list into a |store| from a |file|.

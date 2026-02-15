@@ -1,11 +1,11 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
  * Copyright (C) 2011, 2012, 2013 James McLaughlin et al.
- * Copyright (C) 2012-2022 Darkwire Software.
+ * Copyright (C) 2012-2026 Darkwire Software.
  * All rights reserved.
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
 
 #include "../common.h"
@@ -18,7 +18,14 @@ typedef struct _accept_overlapped
 {
 	OVERLAPPED overlapped;
 
+	// Regular client socket
 	SOCKET socket;
+	lw_bool is_hole_punch;	// If true, is a hole punch client
+	lw_bool is_accept;		// If true, is a regular client - punching variables are unused
+
+	// Punching client socket and its listening side
+	SOCKET punching_client_socket;
+	SOCKET punch_listening_server_socket;
 
 	struct _lw_addr addr;
 	char addr_buffer [(sizeof (struct sockaddr_storage) + 16) * 2];
@@ -51,6 +58,7 @@ struct _lw_server
 	lw_list (lw_server_client, clients);
 
 	void * tag;
+	lw_ui32 num_hole_punches_pending;
 };
 
 struct _lw_server_client
@@ -61,12 +69,16 @@ struct _lw_server_client
 
 	lw_bool on_connect_called;
 	lw_bool is_websocket;
+	// If true, we connected via hole_punch() e.g. connect(), rather than accept()
+	lw_bool is_hole_punch;
 
 	void* relay_tag;
 
 	/* IPv4 and IPv6 both accepted, but IPv4 is mapped to IPv6.
 	  When looking up string representation make sure to check. */
-	lw_addr addr;
+	lw_addr remote_addr;
+	lw_addr local_addr;
+	lw_ui32 ifidx;
 
 	lw_server_client * elem;
 
@@ -80,9 +92,17 @@ static void lw_server_dealloc(lw_server ctx)
 {
 	// No refs, so there should be no pending accepts
 	assert(list_length(ctx->pending_accepts) == 0);
-	list_clear(ctx->pending_accepts);
 
+	// TODO: LEAK: If we clear this, and ticker thread keeps going, the listen_socket_completion will trigger,
+	// but have overlapped pointer addressing freed memory.
+	// If we don't clear this, in single-threaded, server will leak the overlapped, and refcount will be > 0 during server delete.
+	// Current expectation is that we don't clear it, and let the listen handle that.
+	// list_clear (ctx->pending_accepts);
+	// We also cannot do lw_pump_remove here, as listen_socket_completion() will crash in process() due to watch->tag being invalid.
+	// We instead delete on delay, which is scuffed.
 	free(ctx);
+
+	lwp_deinit();
 }
 
 lw_server lw_server_new (lw_pump pump)
@@ -106,11 +126,214 @@ lw_server lw_server_new (lw_pump pump)
 void lw_server_delete (lw_server ctx)
 {
 	lw_server_unhost (ctx);
-	lwp_release(ctx, "server_new");
 
-	lwp_deinit ();
+	// This may not delete ctx if pending_accepts are processed on a separate ticker thread
+	if (!lwp_release(ctx, "server_new"))
+	{
+		lw_log_if_debug("server deleted with on-going refs: %d pending accepts",
+			list_length(ctx->pending_accepts)
+		);
+	}
 
 	//free (ctx);
+}
+
+lw_bool issue_accept(lw_server ctx, accept_overlapped addTo);
+typedef struct _lw_hole_punch_params {
+	lw_server server;
+	struct sockaddr_storage addr;
+	size_t addrlen;
+	lw_ui16 local_port;
+	lw_pump_watch watch;
+} lw_hole_punch_params;
+lw_bool add_client_internal(lw_server ctx, accept_overlapped overlapped,
+	struct sockaddr_storage* local_addr,
+	struct sockaddr_storage* remote_addr, lw_pump_watch watch);
+
+static void hole_punch_socket_first_data(void* tag, accept_overlapped overlapped, unsigned long bytes, int error)
+{
+	lw_log_if_debug("hole_punch_socket_first_data() running with %p, %p, %u, %i.\n", tag, overlapped, bytes, error);
+	lw_hole_punch_params* params = (lw_hole_punch_params *)tag;
+	//lw_pump_update_callbacks(params->server->pump, params->watch, params, NULL);
+	if (error != 0)
+	{
+		lw_error err = lw_error_new();
+		lw_error_add(err, error);
+		lw_error_addf(err, "Error hole punching");
+
+		if (params->server->on_error)
+			params->server->on_error(params->server, err);
+		lw_error_delete(err);
+//		lwp_close_socket(overlapped->socket);
+//		lwp_release(params->server, "hole punch");
+//		free(params);
+		return;
+	}
+
+	// local address is null because we don't know it yet: this is used by add_client_internal
+	// to tell this is hole punch client
+	add_client_internal(params->server, overlapped, NULL, &params->addr, params->watch);
+	lwp_release(params->server, "hole punch");
+	free(params);
+}
+void lw_server_hole_punch (lw_server ctx, lw_addr addr, lw_ui16 local_port)
+{
+	lw_log_if_debug("lw_server_hole_punch() from local port %hu, remote addr \"%s\".\n",
+		local_port, lw_addr_tostring(addr, lw_addr_tostring_flag_box_ipv6));
+	// We don't need a matching IP as IPv6 dual-stack local can connect to IPv4 remote
+	if (lwp_socket_addr(ctx->socket).ss_family != addr->info->ai_addr->sa_family)
+	{
+		lw_log_if_debug("Got mismatch of IP: server is %s, client is %s.",
+			lwp_socket_addr(ctx->socket).ss_family == AF_INET ? "IPv4" : "IPv6",
+			addr->info->ai_addr->sa_family == AF_INET ? "IPv4" : "IPv6");
+	}
+	lwp_retain(ctx, "hole punch");
+
+	lw_hole_punch_params* params = (lw_hole_punch_params*)lw_malloc_or_exit(sizeof(lw_hole_punch_params));
+	params->server = ctx;
+	params->addr = *(struct sockaddr_storage*)addr->info->ai_addr;
+	params->addrlen = addr->info->ai_addrlen;
+	params->local_port = local_port;
+	params->watch = NULL;
+
+	struct _accept_overlapped _overlapped = { 0 };
+	_overlapped.socket = INVALID_SOCKET;
+
+	list_push(struct _accept_overlapped, ctx->pending_accepts, _overlapped);
+	accept_overlapped overlapped = list_elem_back(struct _accept_overlapped, ctx->pending_accepts);
+	overlapped->is_hole_punch = lw_true;
+	overlapped->socket = overlapped->punching_client_socket =
+		overlapped->punch_listening_server_socket = INVALID_SOCKET;
+
+	char* errStr = NULL;
+	lw_bool fakeout = lw_true;
+	lw_bool forceipv6 = lw_false;
+	do {
+		lwp_socket* curSocket = fakeout ? &overlapped->punching_client_socket :
+			&overlapped->punch_listening_server_socket;
+		if ((*curSocket = WSASocket(params->addr.ss_family,
+			SOCK_STREAM,
+			IPPROTO_TCP,
+			0,
+			0,
+			WSA_FLAG_OVERLAPPED)) == INVALID_SOCKET)
+		{
+			errStr = "Creating TCP hole punch failed";
+			break;
+		}
+
+		// reuse addr on
+		char yes = 1;
+		lwp_setsockopt(*curSocket, SOL_SOCKET, SO_REUSEADDR, (const char*)&yes, sizeof(yes));
+		if (params->addr.ss_family == AF_INET6)
+			lwp_disable_ipv6_only(*curSocket);
+
+		struct sockaddr_storage s = { 0 };
+		s.ss_family = params->addr.ss_family;
+		// Port is at same offset in both sockaddr_in and sockaddr_in6
+		((struct sockaddr_in6*)&s)->sin6_port = htons((lw_ui16)params->local_port);
+		
+		if (bind(*curSocket, (struct sockaddr*)&s,
+			(int)(s.ss_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6))) == -1)
+		{
+			errStr = "bind on TCP hole punch failed";
+			break;
+		}
+
+		if (fakeout)
+		{
+
+			static BOOL(PASCAL FAR * lw_ConnectEx)
+				(
+					SOCKET s,
+					const struct sockaddr FAR * name,
+					int namelen,
+					PVOID lpSendBuffer,
+					DWORD dwSendDataLength,
+					LPDWORD lpdwBytesSent,
+					LPOVERLAPPED lpOverlapped
+					);
+
+			GUID ID = { 0x25a207b9,0xddf3,0x4660,
+			  {0x8e,0xe9,0x76,0xe5,0x8c,0x74,0x06,0x3e} };
+
+			DWORD bytes = 0;
+
+			WSAIoctl(*curSocket, SIO_GET_EXTENSION_FUNCTION_POINTER,
+				&ID, sizeof(ID), &lw_ConnectEx, sizeof(lw_ConnectEx),
+				&bytes, 0, 0);
+
+			assert(lw_ConnectEx);
+
+			// lwp_in6_to_in4()
+			s = params->addr;
+
+			BOOL b = lw_ConnectEx(*curSocket, (struct sockaddr*)&params->addr,
+				(int)params->addrlen,
+				0, 0, 0, &overlapped->overlapped);
+			if (b == FALSE && WSAGetLastError() != ERROR_IO_PENDING)
+			{
+				errStr = "connect on TCP hole punch failed";
+				break;
+			}
+			assert(!b); // true?! client connected super fast
+
+			Sleep(500);
+			fakeout = lw_false;
+			continue;
+		}
+
+		if (listen(overlapped->punch_listening_server_socket, 1) == -1)
+		{
+			lw_error error = lw_error_new();
+
+			lw_error_add(error, WSAGetLastError());
+			lw_error_addf(error, "Error listening");
+
+			if (ctx->on_error)
+				ctx->on_error(ctx, error);
+
+			lw_error_delete(error);
+			return;
+		}
+		
+		if (!issue_accept(params->server, overlapped))
+		{
+			lw_error error = lw_error_new();
+
+			lw_error_add(error, WSAGetLastError());
+			lw_error_addf(error, "Error posting accept");
+
+			if (ctx->on_error)
+				ctx->on_error(ctx, error);
+
+			lw_error_delete(error);
+			return;
+		}/*
+		lw_log_if_debug("Added an accept, overlap socket %d, punch listening %d, fake cli %d.\n",
+			(int)overlapped->socket, (int)overlapped->punch_listening_server_socket,
+			(int)overlapped->punching_client_socket);*/
+		params->watch = lw_pump_add(params->server->pump, (HANDLE)overlapped->punching_client_socket,
+			"TCP hole punch outgoing socket",
+			params, (lw_pump_callback)hole_punch_socket_first_data);
+		++params->server->num_hole_punches_pending;
+		break;
+	} while (1);
+
+	if (errStr)
+	{
+		lw_error err = lw_error_new();
+		lw_error_add(err, WSAGetLastError());
+		lw_error_addf(err, "%s", errStr);
+		if (overlapped->socket != -1)
+			lwp_close_socket(overlapped->socket);
+		if (params->server->on_error)
+			params->server->on_error(params->server, err);
+		lw_error_delete(err);
+		lwp_release(params->server, "hole punch");
+		list_elem_remove(overlapped);
+		free(params);
+	}
 }
 
 void lw_server_set_tag (lw_server ctx, void * tag)
@@ -122,18 +345,18 @@ void * lw_server_tag (lw_server ctx)
 {
 	return ctx->tag;
 }
-void on_ssl_error (lw_server_client client, lw_error error)
+void on_tls_error (lw_server_client client, lw_error error)
 {
-	lw_error_addf(error, "SSL error");
+	lw_error_addf(error, "TLS error");
 
 	if (client->server->on_error)
 		client->server->on_error(client->server, error);
 
-	// SSL errors are generally unrecoverable
+	// TLS errors are generally unrecoverable
 	lw_stream_close((lw_stream)client, lw_true);
 }
 
-lw_server_client lwp_server_client_new (lw_server ctx, SOCKET socket)
+lw_server_client lwp_server_client_new (lw_server ctx, SOCKET socket, lw_pump_watch watch)
 {
 	lw_server_client client = (lw_server_client) calloc (sizeof (*client), 1);
 
@@ -142,6 +365,7 @@ lw_server_client lwp_server_client_new (lw_server ctx, SOCKET socket)
 
 	client->server = ctx;
 	client->is_websocket = lw_false;
+	client->is_hole_punch = watch ? lw_true : lw_false;
 
 	lwp_fdstream_init ((lw_fdstream) client, ctx->pump);
 
@@ -153,11 +377,16 @@ lw_server_client lwp_server_client_new (lw_server ctx, SOCKET socket)
 
 	if (ctx->cert_loaded)
 	{
-	  lwp_serverssl_init (&client->ssl, ctx->ssl_creds, client);
-	  client->ssl.ssl.handle_error = on_ssl_error;
+		lwp_serverssl_init (&client->ssl, ctx->ssl_creds, client);
+		client->ssl.ssl.handle_error = on_tls_error;
 	}
 
-	lw_fdstream_set_fd ((lw_fdstream) client, (HANDLE) socket, 0, lw_true, lw_true);
+	// TODO: LEAK: watch can sometimes be null in caller, but fdstream init always makes one,
+	// do we cancel a watch?
+	assert(!client->fdstream.stream.watch);
+	if (watch)
+		client->fdstream.stream.watch = watch;
+	lw_fdstream_set_fd ((lw_fdstream) client, (HANDLE) socket, lw_true, lw_true);
 
 	return client;
 }
@@ -166,39 +395,54 @@ const int ideal_pending_accept_count = 32;
 
 lw_bool accept_completed(lw_server ctx, accept_overlapped overlapped, lw_bool release, lw_bool deleteSocket)
 {
+	assert(overlapped->socket != 0xDDDDDDDD);
 	if (deleteSocket)
 		closesocket(overlapped->socket);
+	const char * pend = overlapped->is_hole_punch ? "hole punch" : "pending accept";
+	always_log("Freeing accept_completed %s overlapped %p.\n", pend, overlapped);
 	list_elem_remove(overlapped); // frees overlapped
-	return release && lwp_release(ctx, "pending accept");
+	return release && lwp_release(ctx, pend);
 }
 
-static lw_bool issue_accept (lw_server ctx)
+static lw_bool issue_accept (lw_server ctx, accept_overlapped addTo)
 {
-	struct _accept_overlapped _overlapped = { 0 };
-	_overlapped.socket = INVALID_SOCKET;
+	accept_overlapped overlapped = addTo;
+	if (addTo == NULL)
+	{
+		struct _accept_overlapped _overlapped = { 0 };
+		_overlapped.socket = INVALID_SOCKET;
 
-	list_push (struct _accept_overlapped, ctx->pending_accepts, _overlapped);
-	accept_overlapped overlapped = list_elem_back (struct _accept_overlapped, ctx->pending_accepts);
+		list_push(struct _accept_overlapped, ctx->pending_accepts, _overlapped);
+		overlapped = list_elem_back(struct _accept_overlapped, ctx->pending_accepts);
+		overlapped->is_accept = lw_true;
+	}
+	always_log("issue_accept made overlapped %p, is accept %i.\n", overlapped, overlapped->is_accept ? 1 : 0);
+	lwp_socket serversock = overlapped->is_hole_punch ? overlapped->punch_listening_server_socket : ctx->socket;
+	assert(overlapped->is_hole_punch != overlapped->is_accept);
 
-	if ((overlapped->socket = WSASocket (lwp_socket_addr (ctx->socket).ss_family,
+	if ((overlapped->socket = WSASocket (lwp_socket_addr (serversock).ss_family,
 										SOCK_STREAM,
 										IPPROTO_TCP,
 										0,
 										0,
 										WSA_FLAG_OVERLAPPED)) == INVALID_SOCKET)
 	{
+		lw_log_if_debug("Error %d creating socket (is hole punch = %s), assuming it wll go to IOCP\n",
+			WSAGetLastError(),
+			overlapped->is_hole_punch ? "yes" : "no");
 	  list_elem_remove (overlapped);
 	  return lw_false;
 	}
 
-	lwp_disable_ipv6_only ((lwp_socket) overlapped->socket);
+	if (lwp_socket_addr (serversock).ss_family == AF_INET6)
+		lwp_disable_ipv6_only ((lwp_socket) overlapped->socket);
 
 	DWORD bytes_received;
 
 	/* TODO : Use AcceptEx to receive the first data? */
 
 	lwp_retain(ctx, "pending accept");
-	if (!AcceptEx (ctx->socket,
+	if (!AcceptEx (serversock,
 				  overlapped->socket,
 				  overlapped->addr_buffer,
 				  0,
@@ -207,16 +451,86 @@ static lw_bool issue_accept (lw_server ctx)
 				  &bytes_received,
 				  (OVERLAPPED *) overlapped))
 	{
-	  int error = WSAGetLastError ();
+		int error = WSAGetLastError ();
+		if (error != ERROR_IO_PENDING)
+		{
+			lw_log_if_debug("Error %d inside AcceptEx(), assuming it wll go to IOCP\n", error);
 
-	  if (error != ERROR_IO_PENDING)
-	  {
-		 accept_completed(ctx, overlapped, lw_true, lw_true);
-		 return lw_false;
-	  }
+			accept_completed(ctx, overlapped, lw_true, lw_true);
+			return lw_false;
+		}
+
+		// completed in async
+		lw_log_if_debug("AcceptEx done, hole punch = %s, using server sock %d, punching cli sock %d, current cli sock %d.\n",
+			overlapped->is_hole_punch ? "yes" : "no", (int)serversock,
+			(int)overlapped->punching_client_socket, (int)overlapped->socket);
 	}
 	// else completed in sync (still queued in IOCP)
 
+	return lw_true;
+}
+
+static lw_bool add_client_internal(lw_server ctx, accept_overlapped overlapped,
+	struct sockaddr_storage* local_addr,
+	struct sockaddr_storage* remote_addr,
+	lw_pump_watch watch)
+{
+	lwp_socket curSocket = overlapped->is_hole_punch ? overlapped->punching_client_socket : overlapped->socket;
+	lw_server_client client = lwp_server_client_new(ctx, curSocket, watch);
+
+	lwp_release(ctx, overlapped->is_hole_punch ? "hole punch" : "pending accept");
+
+	if (!client)
+	{
+		accept_completed(ctx, overlapped, lw_false, lw_true);
+		return lw_false;
+	}
+
+	struct sockaddr_storage ss, * realLocal = local_addr;
+
+	if (overlapped->is_hole_punch)
+	{
+		ss = lwp_socket_addr(curSocket);
+		realLocal = &ss;
+		client->is_hole_punch = lw_true;
+	}
+
+	client->local_addr = lwp_addr_new_sockaddr((struct sockaddr*)realLocal);
+	client->remote_addr = lwp_addr_new_sockaddr((struct sockaddr*)remote_addr);
+	client->ifidx = lwp_get_ifidx(realLocal);
+	lw_addr_tostring_flags flags = lw_addr_tostring_flag_box_ipv6;
+	lw_log_if_debug("%s first incoming TCP data. Socket ID %i (used %i), local address \"%s\", ifidx %u, remote address \"%s\".\n",
+		overlapped->is_hole_punch ? "Hole punch" : "Regular client",
+		(int)overlapped->socket, (int)curSocket,
+		lw_addr_tostring(client->local_addr, flags), client->ifidx,
+		lw_addr_tostring(client->remote_addr, flags));
+
+	accept_completed(ctx, overlapped, lw_false, lw_false);
+
+	lwp_retain(client, "on_connect");
+
+	client->on_connect_called = lw_true;
+
+	if (ctx->on_connect)
+		ctx->on_connect(ctx, client);
+
+	if (lwp_release(client, "on_connect"))
+	{
+		if (ctx->on_disconnect)
+			ctx->on_disconnect(ctx, client);
+		return lw_false;  /* client was deleted by connect hook; client->addr will be too */
+	}
+
+	list_push(lw_server_client, ctx->clients, client);
+	client->elem = list_elem_back(lw_server_client, ctx->clients);
+
+	if (ctx->on_data)
+	{
+		lwp_trace("*** READING on behalf of the handler, client %p", client);
+
+		lw_stream_add_hook_data((lw_stream)client, on_client_data, client);
+		lw_stream_read((lw_stream)client, -1);
+	}
 	return lw_true;
 }
 
@@ -233,8 +547,8 @@ static void listen_socket_completion (void * tag, OVERLAPPED * _overlapped,
 	}
 
 	while (list_length (ctx->pending_accepts) < (size_t)ideal_pending_accept_count)
-	  if (!issue_accept (ctx))
-		 break;
+		if (!issue_accept (ctx, NULL))
+			break;
 
 	setsockopt ((SOCKET) overlapped->socket, SOL_SOCKET,
 				SO_UPDATE_ACCEPT_CONTEXT,
@@ -245,56 +559,20 @@ static void listen_socket_completion (void * tag, OVERLAPPED * _overlapped,
 
 	GetAcceptExSockaddrs
 	(
-	  overlapped->addr_buffer,
-	  0,
+		overlapped->addr_buffer,
+		0,
 
-	  sizeof (struct sockaddr_storage) + 16,
-	  sizeof (struct sockaddr_storage) + 16,
+		sizeof (struct sockaddr_storage) + 16,
+		sizeof (struct sockaddr_storage) + 16,
 
-	  (struct sockaddr **) &local_addr,
-	  &local_addr_len,
+		(struct sockaddr **) &local_addr,
+		&local_addr_len,
 
-	  (struct sockaddr **) &remote_addr,
-	  &remote_addr_len
+		(struct sockaddr **) &remote_addr,
+		&remote_addr_len
 	);
 
-	lw_server_client client = lwp_server_client_new (ctx, overlapped->socket);
-	lwp_release(ctx, "pending accept");
-
-	if (!client)
-	{
-		accept_completed(ctx, overlapped, lw_false, lw_true);
-		return;
-	}
-
-	client->addr = lwp_addr_new_sockaddr ((struct sockaddr *) remote_addr);
-
-	accept_completed(ctx, overlapped, lw_false, lw_false);
-
-	lwp_retain (client, "on_connect");
-
-	client->on_connect_called = lw_true;
-
-	if (ctx->on_connect)
-	  ctx->on_connect (ctx, client);
-
-	if (lwp_release(client, "on_connect"))
-	{
-		if (ctx->on_disconnect)
-			ctx->on_disconnect(ctx, client);
-		return;  /* client was deleted by connect hook; client->addr will be too */
-	}
-
-	list_push (lw_server_client, ctx->clients, client);
-	client->elem = list_elem_back (lw_server_client, ctx->clients);
-
-	if (ctx->on_data)
-	{
-	  lwp_trace ("*** READING on behalf of the handler, client %p", client);
-
-	  lw_stream_add_hook_data ((lw_stream) client, on_client_data, client);
-	  lw_stream_read ((lw_stream) client, -1);
-	}
+	add_client_internal(ctx, overlapped, local_addr, remote_addr, NULL);
 }
 
 void lw_server_host (lw_server ctx, long port)
@@ -311,38 +589,56 @@ void lw_server_host_filter (lw_server ctx, lw_filter filter)
 {
 	lw_server_unhost (ctx);
 
+	// TODO: LEAK: investigate how fast we can clean up server's accepts without pending ones still making events in pump
+	if (list_length(ctx->pending_accepts) > 0)
+	{
+		lw_error error = lw_error_new();
+
+		lw_error_addf(error, "Cleanup of last host not complete; unable to host");
+
+		if (ctx->on_error)
+			ctx->on_error(ctx, error);
+
+		lw_error_delete(error);
+		return;
+	}
+
 	lw_error error = lw_error_new ();
+	lw_bool madeipv6;
 
 	if ((ctx->socket = lwp_create_server_socket
-			(filter, SOCK_STREAM, IPPROTO_TCP, error)) == -1)
+			(filter, SOCK_STREAM, IPPROTO_TCP, &madeipv6, error)) == -1)
 	{
-	  if (ctx->on_error)
-		 ctx->on_error (ctx, error);
+		lw_error_addf(error, "Creating TCP port");
+		if (ctx->on_error)
+			ctx->on_error (ctx, error);
 
-	  lw_error_delete (error);
-	  return;
+		lw_error_delete (error);
+		return;
 	}
+	lw_log_if_debug("Hosted TCP port for %s.\n", madeipv6 ? "IPv6 + mapped IPv4" : "IPv4");
 
 	if (listen (ctx->socket, SOMAXCONN) == -1)
 	{
-	  lw_error error = lw_error_new ();
+		lw_error error = lw_error_new ();
 
-	  lw_error_add (error, WSAGetLastError ());
-	  lw_error_addf (error, "Error listening");
+		lw_error_add (error, WSAGetLastError ());
+		lw_error_addf (error, "Error listening");
 
-	  if (ctx->on_error)
-		 ctx->on_error (ctx, error);
+		if (ctx->on_error)
+			ctx->on_error (ctx, error);
 
-	  lw_error_delete (error);
-	  return;
+		lw_error_delete (error);
+		return;
 	}
 
-	ctx->pump_watch = lw_pump_add
-	  (ctx->pump, (HANDLE) ctx->socket, ctx, listen_socket_completion);
+	char name[128];
+	lwp_snprintf(name, sizeof(name), "lw_server tcp port %li", lw_filter_local_port(filter));
+	ctx->pump_watch = lw_pump_add(ctx->pump, (HANDLE) ctx->socket, name, ctx, listen_socket_completion);
 
 	while (list_length (ctx->pending_accepts) < (size_t)ideal_pending_accept_count)
-	  if (!issue_accept (ctx))
-		 break;
+		if (!issue_accept (ctx, NULL))
+			break;
 
 	lw_error_delete (error);
 }
@@ -375,7 +671,7 @@ void lw_server_unhost (lw_server ctx)
 
 //	list_clear (ctx->pending_accepts);
 
-	lw_pump_post_remove (ctx->pump, ctx->pump_watch);
+	lw_pump_post_remove (ctx->pump, ctx->pump_watch, "lw_server_unhost");
 	ctx->pump_watch = NULL;
 }
 
@@ -493,10 +789,10 @@ lw_bool lw_server_load_sys_cert (lw_server ctx,
 	HCERTSTORE cert_store = CertOpenStore
 	(
 		(LPCSTR) 9, /* CERT_STORE_PROV_SYSTEM_A */
-	  0,
 		0,
-	  location_id | CERT_STORE_READONLY_FLAG,
-	 store_name
+		0,
+		location_id | CERT_STORE_READONLY_FLAG,
+		store_name
 	);
 
 	if (!cert_store)
@@ -606,12 +902,12 @@ lw_bool lw_server_load_sys_cert (lw_server ctx,
 			if (!tm || strftime(buff, sizeof(buff), "%I:%M:%S%p on %A %d %B %Y AD", tm) < 0)
 				always_log("time conversion failed, error %d", errno);
 			else
-				always_log("SSL certificate will expire at %s (local time).", buff);
+				always_log("TLS certificate will expire at %s (local time).", buff);
 
 			if (difftime(tmt, time(NULL)) < 0)
 			{
 				lw_error error = lw_error_new();
-				lw_error_addf(error, "SSL certificate expired already, at %s (local time)", buff);
+				lw_error_addf(error, "TLS certificate expired already, at %s (local time)", buff);
 
 				if (ctx->on_error)
 					ctx->on_error(ctx, error);
@@ -680,7 +976,7 @@ static lw_error read_cert_file(CRYPT_DATA_BLOB * res, const char* filenameUTF8, 
 		if (textual == lw_false)
 			break;
 
-		DWORD expDERSize;
+		DWORD expDERSize = 0;
 		if (!CryptStringToBinaryA(res->pbData, res->cbData, CRYPT_STRING_BASE64HEADER,
 			NULL, &expDERSize, NULL, NULL))
 		{
@@ -732,7 +1028,7 @@ lw_bool lw_server_load_cert_file (lw_server ctx,
 	if (passphrase && passphrase[0] == '\0')
 		passphrase = NULL;
 
-	// Certificates for SSL are managed in three+ layers. Each layer confirms the next one is valid.
+	// Certificates for SSL are managed in a chain of three+ links. Each link confirms the next one is valid.
 	// The root certificate is stored in OS and/or browser, updated regularly and held by the largest security companies.
 	// The intermediate certificate(s) is the resellers and middle-men. There can be more than one of these.
 	// The top-level or end certificate is your personal one.
@@ -980,6 +1276,8 @@ lw_bool lw_server_load_cert_file (lw_server ctx,
 
 				// PFXImportCertStore is Unicode only
 				wchar_t * passphrase_wchar = passphrase ? lw_char_to_wchar(passphrase, -1) : NULL;
+				// despite SAL annotation, PFXImportCertStore docs allow null passphrase
+				#pragma warning (suppress: 6387)
 				cert_store = PFXImportCertStore(&pfx, passphrase_wchar, 0);
 				if (passphrase_wchar)
 				{
@@ -1084,12 +1382,12 @@ lw_bool lw_server_load_cert_file (lw_server ctx,
 		if (!tm || strftime(buff, sizeof(buff), "%I:%M:%S%p on %A %d %B %Y AD", tm) < 0)
 			always_log("time conversion failed, error %d", errno);
 		else
-			always_log("SSL certificate will expire at %s (local time).", buff);
+			always_log("TLS certificate will expire at %s (local time).", buff);
 
 		if (difftime(tmt, time(NULL)) < 0)
 		{
 			lw_error error = lw_error_new();
-			lw_error_addf(error, "SSL certificate expired already, at %s (local time)", buff);
+			lw_error_addf(error, "TLS certificate expired already, at %s (local time)", buff);
 
 			if (ctx->on_error)
 				ctx->on_error(ctx, error);
@@ -1140,10 +1438,22 @@ lw_bool lw_server_client_is_websocket (lw_server_client client)
 {
 	return client->is_websocket;
 }
-
-lw_addr lw_server_client_addr (lw_server_client client)
+lw_bool lw_server_client_is_hole_punch(lw_server_client client)
 {
-	return client->addr;
+	return client->is_hole_punch;
+}
+
+lw_addr lw_server_client_remote_addr (lw_server_client client)
+{
+	return client->remote_addr;
+}
+lw_addr lw_server_client_local_addr (lw_server_client client)
+{
+	return client->local_addr;
+}
+lw_ui32 lw_server_client_ifidx (lw_server_client client)
+{
+	return client->ifidx;
 }
 
 void * lw_server_client_get_relay_tag (lw_server_client client)
@@ -1216,8 +1526,12 @@ void on_client_close (lw_stream stream, void * tag)
 	  lwp_serverssl_cleanup (&client->ssl);
 	}
 
-	lw_addr_delete (client->addr);
-	client->addr = NULL;
+	lw_addr_delete(client->local_addr);
+	client->local_addr = NULL;
+	client->ifidx = 0;
+
+	lw_addr_delete(client->remote_addr);
+	client->remote_addr = NULL;
 
 	lw_stream_delete ((lw_stream) client);
 

@@ -1,11 +1,11 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
  * Copyright (C) 2011, 2012, 2013 James McLaughlin.
- * Copyright (C) 2012-2022 Darkwire Software.
+ * Copyright (C) 2012-2026 Darkwire Software.
  * All rights reserved.
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
 #pragma once
 
@@ -29,10 +29,16 @@
 	  #define _CRT_NONSTDC_NO_WARNINGS
 	#endif
 
+	// These deprecation warnings are functionally useless
+	#ifndef _WINSOCK_DEPRECATED_NO_WARNINGS
+	  #define _WINSOCK_DEPRECATED_NO_WARNINGS
+	#endif
+
 	#ifdef HAVE_CONFIG_H
 	  #include "../config.h"
 	#endif
 	#include <tchar.h>
+	#include <inttypes.h>
 #else
 
 	#ifndef _GNU_SOURCE
@@ -124,9 +130,14 @@ void always_log(const char* c, ...);
 #include <time.h>
 #include <ctype.h>
 
-
+// Implemented per-plat
 void lwp_init ();
 void lwp_deinit ();
+
+// Implemented in global.c
+void lwp_network_change_init ();
+void lwp_network_change_deinit ();
+void lwp_on_network_changed (lw_network_change_type how);
 
 #ifdef _lacewing_debug
 	#include "refcount-dbg.h"
@@ -159,10 +170,16 @@ void lwp_deinit ();
 	#include <malloc/malloc.h>
 #endif
 
-#if defined(_lacewing_debug) || defined(_lacewing_debug_output)
+#if defined(_lacewing_debug)
 	#define lwp_trace lw_trace
 #else
-	#define lwp_trace(x, ...)
+	#define lwp_trace(x, ...) (void)0
+#endif
+// Temp, until we revamp Lacewing logging system to allow excluding some
+#ifdef _DEBUG
+	#define lw_log_if_debug(x, ...) always_log(x, ## __VA_ARGS__)
+#else
+	#define lw_log_if_debug lwp_trace
 #endif
 
 /* TODO : find the optimal value for this?  make adjustable? */
@@ -191,6 +208,8 @@ lw_bool lwp_begins_with (const char * string, const char * substring);
 
 void lwp_copy_string (char * dest, const char * source, size_t size);
 
+// Replaces memcmp with something that has a useful return index. Returns -1 if both match.
+lw_ui32 lw_memcmp_diff_index (const lw_ui8* const a, const lw_ui8* const b, const lw_ui32 size);
 lw_bool lwp_find_char (const char ** str, size_t * len, char c);
 
 ssize_t lwp_format (char ** output, const char * format, va_list args);
@@ -202,7 +221,16 @@ extern const char * const lwp_months [];
 
 time_t lwp_parse_time (const char *);
 
-lwp_socket lwp_create_server_socket (lw_filter, int type, int protocol, lw_error);
+lwp_socket lwp_create_server_socket (lw_filter, int type, int protocol, lw_bool * madeipv6, lw_error);
+
+// Sends a ICMP Port Unreachable message, and reports the result with the handler
+lw_error lwp_send_icmp_unreachable(lwp_socket icmpsock, int proto, lw_addr local, lw_ui32 ifidx, lw_addr remote,
+	const char* origMsg, lw_ui32 origMsgSize);
+
+extern struct in6_addr lwp_ipv6_public_fixed_addr;
+extern int lwp_ipv6_public_fixed_interface_index;
+extern void lwp_trigger_public_address_hunt (lw_bool block);
+extern lw_bool lwp_set_ipv6pktinfo_cmsg(void * cmsg);
 
 #ifdef __cplusplus
 

@@ -1,11 +1,11 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=cpp:
  *
  * Copyright (C) 2012 James McLaughlin et al.
- * Copyright (C) 2012-2022 Darkwire Software.
+ * Copyright (C) 2012-2026 Darkwire Software.
  * All rights reserved.
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
 
 #include "../common.h"
@@ -15,9 +15,10 @@ server lacewing::server_new (lacewing::pump pump)
 	return (server) lw_server_new ((lw_pump) pump);
 }
 
-void lacewing::server_delete (lacewing::server server)
+void lacewing::server_delete (lacewing::server &server)
 {
 	lw_server_delete ((lw_server) server);
+	server = nullptr;
 }
 
 void _server::host (long port)
@@ -82,6 +83,11 @@ server_client _server::client_first ()
 	return (server_client) lw_server_client_first ((lw_server) this);
 }
 
+void _server::hole_punch (lacewing::address remote_addr, lw_ui16 local_port)
+{
+	lw_server_hole_punch ((lw_server) this, (lw_addr)remote_addr, local_port);
+}
+
 void _server::on_connect (_server::hook_connect hook)
 {
 	lw_server_on_connect ((lw_server) this, (lw_server_hook_connect) hook);
@@ -102,9 +108,17 @@ void _server::on_error (_server::hook_error hook)
 	lw_server_on_error ((lw_server) this, (lw_server_hook_error) hook);
 }
 
-lacewing::address _server_client::address ()
+lacewing::address _server_client::remote_address ()
 {
-	return (lacewing::address) lw_server_client_addr ((lw_server_client) this);
+	return (lacewing::address) lw_server_client_remote_addr ((lw_server_client) this);
+}
+lacewing::address _server_client::local_address()
+{
+	return (lacewing::address)lw_server_client_local_addr((lw_server_client)this);
+}
+lw_ui32 _server_client::ifidx()
+{
+	return lw_server_client_ifidx((lw_server_client)this);
 }
 
 server_client _server_client::next ()
@@ -120,6 +134,11 @@ const char * _server_client::npn ()
 lw_bool _server_client::is_websocket ()
 {
 	return lw_server_client_is_websocket ((lw_server_client) this);
+}
+
+lw_bool _server_client::is_hole_punch()
+{
+	return lw_server_client_is_hole_punch ((lw_server_client) this);
 }
 
 void * _server::tag ()

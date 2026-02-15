@@ -1,11 +1,11 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=cpp:
  *
  * Copyright (C) 2012, 2013 James McLaughlin et al.
- * Copyright (C) 2012-2022 Darkwire Software.
+ * Copyright (C) 2012-2026 Darkwire Software.
  * All rights reserved.
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
 
 #include "../common.h"
@@ -15,9 +15,10 @@ filter lacewing::filter_new ()
 	return (filter) lw_filter_new ();
 }
 
-void lacewing::filter_delete (lacewing::filter filter)
+void lacewing::filter_delete (lacewing::filter &filter)
 {
 	lw_filter_delete ((lw_filter) filter);
+	filter = nullptr;
 }
 
 void _filter::local (address addr)
@@ -78,6 +79,16 @@ bool _filter::ipv6 ()
 void _filter::ipv6 (bool ipv6)
 {
 	lw_filter_set_ipv6 ((lw_filter) this, ipv6);
+}
+
+bool _filter::remote_mask ()
+{
+	return lw_filter_remote_mask((lw_filter) this);
+}
+
+void _filter::remote_mask (bool mask)
+{
+	lw_filter_set_remote_mask((lw_filter) this, mask);
 }
 
 void * _filter::tag ()

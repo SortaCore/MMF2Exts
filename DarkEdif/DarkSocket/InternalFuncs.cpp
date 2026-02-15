@@ -1,4 +1,4 @@
-#include "Common.h"
+#include "Common.hpp"
 // ============================================================================
 //
 // UNREFENCED FUNCTIONS
@@ -8,9 +8,9 @@
 
 // Vista+ protocols only, not defined if XP target
 #if (_WIN32_WINNT < 0x0600)
-	#define AF_BTH          32
+	#define AF_BTH		  32
 	#if (_WIN32_WINNT < 0x0601)
-		#define AF_LINK     33
+		#define AF_LINK	 33
 	#endif
 	#define IPPROTO_ST 5
 	#define IPPROTO_CBT 7
@@ -23,10 +23,10 @@
 	#define IPPROTO_SCTP 132
 #endif
 #ifndef _WIN32_WINNT_WIN8
-#define _WIN32_WINNT_WIN8                   0x0602 // Windows 8
-#define _WIN32_WINNT_WINBLUE                0x0603 // Windows 8.1
-#define _WIN32_WINNT_WIN10                  0x0A00 // Windows 10
-//#define _WIN32_WINNT_WIN11                  0x0B00 // Windows 11? Currently v10.0.buildnum, so not defined in SDK.
+#define _WIN32_WINNT_WIN8				   0x0602 // Windows 8
+#define _WIN32_WINNT_WINBLUE				0x0603 // Windows 8.1
+#define _WIN32_WINNT_WIN10				  0x0A00 // Windows 10
+//#define _WIN32_WINNT_WIN11				  0x0B00 // Windows 11? Currently v10.0.buildnum, so not defined in SDK.
 #endif
 
 static int winVer;
@@ -39,7 +39,7 @@ int GlobalInfo::Internal_GetWinVer()
 	// depending on the manifest of the app - pretending to be a different OS version for compatibility.
 	// RtlGetVersion doesn't, but isn't in Windows SDK, so we'll have to look up the address manually.
 
-	NTSTATUS(WINAPI * RtlGetVersion)(LPOSVERSIONINFOEXW) = NULL;
+	LONG(WINAPI * RtlGetVersion)(LPOSVERSIONINFOEXW) = NULL;
 
 	*(FARPROC*)&RtlGetVersion = GetProcAddress(GetModuleHandleW(L"ntdll"), "RtlGetVersion");
 	if (NULL != RtlGetVersion)
@@ -749,7 +749,7 @@ std::tstring Extension::Internal_GetIPFromSockaddr(sockaddr_storage* sockadd, si
 				// Start search for "]" at offset of 15
 				// 8 due to "[::ffff:" -> 8 chars
 				// 7 due to "1.2.3.4" -> 7 chars
-				for (size_t i = 15, len = strnlen(&buffer[15], 64 - 15) + 15; i < len; i++)
+				for (std::size_t i = 15, len = strnlen(&buffer[15], 64 - 15) + 15; i < len; ++i)
 				{
 					if (buffer[i] == ']')
 					{

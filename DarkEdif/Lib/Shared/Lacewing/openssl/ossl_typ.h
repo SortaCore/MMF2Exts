@@ -19,23 +19,23 @@ extern "C" {
 # include <openssl/e_os2.h>
 
 # ifdef NO_ASN1_TYPEDEFS
-#  define ASN1_INTEGER            ASN1_STRING
-#  define ASN1_ENUMERATED         ASN1_STRING
-#  define ASN1_BIT_STRING         ASN1_STRING
-#  define ASN1_OCTET_STRING       ASN1_STRING
-#  define ASN1_PRINTABLESTRING    ASN1_STRING
-#  define ASN1_T61STRING          ASN1_STRING
-#  define ASN1_IA5STRING          ASN1_STRING
-#  define ASN1_UTCTIME            ASN1_STRING
-#  define ASN1_GENERALIZEDTIME    ASN1_STRING
-#  define ASN1_TIME               ASN1_STRING
-#  define ASN1_GENERALSTRING      ASN1_STRING
-#  define ASN1_UNIVERSALSTRING    ASN1_STRING
-#  define ASN1_BMPSTRING          ASN1_STRING
-#  define ASN1_VISIBLESTRING      ASN1_STRING
-#  define ASN1_UTF8STRING         ASN1_STRING
-#  define ASN1_BOOLEAN            int
-#  define ASN1_NULL               int
+#  define ASN1_INTEGER			ASN1_STRING
+#  define ASN1_ENUMERATED		 ASN1_STRING
+#  define ASN1_BIT_STRING		 ASN1_STRING
+#  define ASN1_OCTET_STRING	   ASN1_STRING
+#  define ASN1_PRINTABLESTRING	ASN1_STRING
+#  define ASN1_T61STRING		  ASN1_STRING
+#  define ASN1_IA5STRING		  ASN1_STRING
+#  define ASN1_UTCTIME			ASN1_STRING
+#  define ASN1_GENERALIZEDTIME	ASN1_STRING
+#  define ASN1_TIME			   ASN1_STRING
+#  define ASN1_GENERALSTRING	  ASN1_STRING
+#  define ASN1_UNIVERSALSTRING	ASN1_STRING
+#  define ASN1_BMPSTRING		  ASN1_STRING
+#  define ASN1_VISIBLESTRING	  ASN1_STRING
+#  define ASN1_UTF8STRING		 ASN1_STRING
+#  define ASN1_BOOLEAN			int
+#  define ASN1_NULL			   int
 # else
 typedef struct asn1_string_st ASN1_INTEGER;
 typedef struct asn1_string_st ASN1_ENUMERATED;
@@ -177,7 +177,7 @@ typedef struct ossl_store_info_st OSSL_STORE_INFO;
 typedef struct ossl_store_search_st OSSL_STORE_SEARCH;
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
-    defined(INTMAX_MAX) && defined(UINTMAX_MAX)
+	defined(INTMAX_MAX) && defined(UINTMAX_MAX)
 typedef intmax_t ossl_intmax_t;
 typedef uintmax_t ossl_uintmax_t;
 #else
@@ -194,4 +194,4 @@ typedef unsigned long ossl_uintmax_t;
 #ifdef  __cplusplus
 }
 #endif
-#endif                          /* def HEADER_OPENSSL_TYPES_H */
+#endif						  /* def HEADER_OPENSSL_TYPES_H */

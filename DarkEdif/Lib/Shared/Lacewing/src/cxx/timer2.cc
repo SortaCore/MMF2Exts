@@ -1,23 +1,24 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=cpp:
  *
  * Copyright (C) 2012 James McLaughlin et al.
- * Copyright (C) 2012-2022 Darkwire Software.
+ * Copyright (C) 2012-2026 Darkwire Software.
  * All rights reserved.
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
 
 #include "../common.h"
 
-timer lacewing::timer_new (lacewing::pump pump)
+timer lacewing::timer_new (lacewing::pump pump, const char * timer_name)
 {
-	return (timer) lw_timer_new ((lw_pump) pump);
+	return (timer) lw_timer_new ((lw_pump) pump, timer_name);
 }
 
-void lacewing::timer_delete (lacewing::timer timer)
+void lacewing::timer_delete (lacewing::timer &timer)
 {
 	lw_timer_delete ((lw_timer) timer);
+	timer = nullptr;
 }
 
 void _timer::start (long msec)

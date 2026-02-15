@@ -18,8 +18,6 @@
 
 *.py text=auto
 *.rb text=auto
-*.java text=auto
-*.js text=auto eol=lf
 *.css text=auto
 *.scss text=auto
 *.sass text=auto
@@ -41,9 +39,17 @@
 *.fsproj text=auto merge=union
 *.dbproj text=auto merge=union
 
-*.vcxproj text=auto merge=union
-*.sln text=auto eol=crlf merge=union
+# what VS will generate by default
+*.vcxproj text eol=crlf merge=union
+*.vcxproj.filters text eol=crlf merge=union
+*.vcxitems text eol=crlf merge=union
+*.vcxitems.filters text eol=crlf merge=union
+*.sln text eol=crlf merge=union
+*.config text eol=crlf
+*.xml text eol=crlf
 
+# ImHex file
+*.hexpat text eol=lf
 
 # From the editorconfig
 *.c text eol=lf
@@ -55,6 +61,8 @@
 *.hpp text eol=lf
 *.hxx text eol=lf
 *.txt text eol=lf
+*.ini text eol=lf
+*.props text eol=lf
 *.md text eol=lf
 *.js text eol=lf
 *.json text eol=lf
@@ -63,4 +71,5 @@
 *.html text eol=crlf
 *.mm text eol=lf
 *.plist text eol=lf
+*.java text eol=lf
 CodeResources text eol=lf

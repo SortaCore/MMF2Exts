@@ -1,11 +1,11 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
  * Copyright (C) 2012 James McLaughlin et al.
- * Copyright (C) 2012-2022 Darkwire Software.
+ * Copyright (C) 2012-2026 Darkwire Software.
  * All rights reserved.
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
 
 #include "../common.h"
@@ -118,23 +118,23 @@ size_t proc_handshake_data (lwp_winsslclient ctx, const char * buffer, size_t si
 {
 	SecBuffer in [2];
 
-	  in [0].BufferType = SECBUFFER_TOKEN;
-	  in [0].pvBuffer = (BYTE *) buffer;
-	  in [0].cbBuffer = (unsigned long)size;
+	in [0].BufferType = SECBUFFER_TOKEN;
+	in [0].pvBuffer = (BYTE *) buffer;
+	in [0].cbBuffer = (unsigned long)size;
 
-	  in [1].BufferType = SECBUFFER_EMPTY;
-	  in [1].pvBuffer = 0;
-	  in [1].cbBuffer = 0;
+	in [1].BufferType = SECBUFFER_EMPTY;
+	in [1].pvBuffer = 0;
+	in [1].cbBuffer = 0;
 
 	SecBuffer out [2];
 
-	  out [0].BufferType = SECBUFFER_TOKEN;
-	  out [0].pvBuffer = 0;
-	  out [0].cbBuffer = 0;
+	out [0].BufferType = SECBUFFER_TOKEN;
+	out [0].pvBuffer = 0;
+	out [0].cbBuffer = 0;
 
-	  out [1].BufferType = SECBUFFER_EMPTY;
-	  out [1].pvBuffer = 0;
-	  out [1].cbBuffer = 0;
+	out [1].BufferType = SECBUFFER_EMPTY;
+	out [1].pvBuffer = 0;
+	out [1].cbBuffer = 0;
 
 	SecBufferDesc in_desc = {0};
 
@@ -149,31 +149,31 @@ size_t proc_handshake_data (lwp_winsslclient ctx, const char * buffer, size_t si
 	out_desc.cBuffers = 2;
 
 	int flags = ASC_REQ_SEQUENCE_DETECT | ASC_REQ_REPLAY_DETECT |
-	  ASC_REQ_CONFIDENTIALITY | ASC_REQ_EXTENDED_ERROR |
-	  ASC_REQ_ALLOCATE_MEMORY | ASC_REQ_STREAM;
+		ASC_REQ_CONFIDENTIALITY | ASC_REQ_EXTENDED_ERROR |
+		ASC_REQ_ALLOCATE_MEMORY | ASC_REQ_STREAM;
 
 	unsigned long out_flags;
 	TimeStamp expiry_time;
 
 	ctx->status = AcceptSecurityContext
 	(
-	  &ctx->server_creds,
-	  ctx->flags & lwp_winsslclient_got_context ? &ctx->context : 0,
-	  &in_desc,
-	  flags,
-	  SECURITY_NATIVE_DREP,
-	  ctx->flags & lwp_winsslclient_got_context ? 0 : &ctx->context,
-	  &out_desc,
-	  &out_flags,
-	  &expiry_time
+		&ctx->server_creds,
+		ctx->flags & lwp_winsslclient_got_context ? &ctx->context : 0,
+		&in_desc,
+		flags,
+		SECURITY_NATIVE_DREP,
+		ctx->flags & lwp_winsslclient_got_context ? 0 : &ctx->context,
+		&out_desc,
+		&out_flags,
+		&expiry_time
 	);
 
 	ctx->flags |= lwp_winsslclient_got_context;
 
 	if (FAILED (ctx->status))
 	{
-	  if (ctx->status == SEC_E_INCOMPLETE_MESSAGE)
-		 return 0; /* need more data */
+		if (ctx->status == SEC_E_INCOMPLETE_MESSAGE)
+			return 0; /* need more data */
 
 		/* Lacewing::Error Error;
 
@@ -185,53 +185,53 @@ size_t proc_handshake_data (lwp_winsslclient ctx, const char * buffer, size_t si
 
 		ctx->Public.Disconnect(); */
 
-	  return size;
+		return size;
 	}
 
 	if (ctx->status == SEC_E_OK || ctx->status == SEC_I_CONTINUE_NEEDED)
 	{
-	  /* Did AcceptSecurityContext give us back a response to send? */
+		/* Did AcceptSecurityContext give us back a response to send? */
 
-	  if (out [0].cbBuffer && out [0].pvBuffer)
-	  {
-		 lw_stream_data (&ctx->upstream, (char *) out [0].pvBuffer, out [0].cbBuffer);
+		if (out [0].cbBuffer && out [0].pvBuffer)
+		{
+			lw_stream_data (&ctx->upstream, (char *) out [0].pvBuffer, out [0].cbBuffer);
 
-		 FreeContextBuffer (out [0].pvBuffer);
-	  }
+			FreeContextBuffer (out [0].pvBuffer);
+		}
 
-	  /* Is there any data left over? */
+		/* Is there any data left over? */
 
-	  if (in [1].BufferType == SECBUFFER_EXTRA)
-		 size -= in [1].cbBuffer;
+		if (in [1].BufferType == SECBUFFER_EXTRA)
+			size -= in [1].cbBuffer;
 
-	  if (ctx->status == SEC_E_OK)
-	  {
-		 /* Handshake complete!  Find out the maximum message size and
-		  * how big the header/trailer will be.
-		  */
+		if (ctx->status == SEC_E_OK)
+		{
+			/* Handshake complete!  Find out the maximum message size and
+			* how big the header/trailer will be.
+			*/
 
-		 if ((ctx->status = QueryContextAttributes (&ctx->context,
+			if ((ctx->status = QueryContextAttributes (&ctx->context,
 													SECPKG_ATTR_STREAM_SIZES,
 													&ctx->sizes)) != SEC_E_OK)
-		 {
-			/* Lacewing::Error Error;
+			{
+				/* Lacewing::Error Error;
 
-				Error.Add(WSAGetLastError ());
-				Error.Add("Secure handshake failure");
+					Error.Add(WSAGetLastError ());
+					Error.Add("Secure handshake failure");
 
-				if (ctx->Server.Handlers.Error)
-				ctx->Server.Handlers.Error (ctx->Server.Public, Error);
+					if (ctx->Server.Handlers.Error)
+					ctx->Server.Handlers.Error (ctx->Server.Public, Error);
 
-				ctx->Public.Disconnect(); */
+					ctx->Public.Disconnect(); */
 
-			return size;
-		 }
+				return size;
+			}
 
-		 ctx->header = (char *) malloc (ctx->sizes.cbHeader);
-		 ctx->trailer = (char *) malloc (ctx->sizes.cbTrailer);
+			ctx->header = (char *) lw_malloc_or_exit (ctx->sizes.cbHeader);
+			ctx->trailer = (char *) lw_malloc_or_exit (ctx->sizes.cbTrailer);
 
-		 ctx->flags |= lwp_winsslclient_handshake_complete;
-	  }
+			ctx->flags |= lwp_winsslclient_handshake_complete;
+		}
 	}
 
 	return size;
@@ -241,13 +241,13 @@ size_t proc_message_data (lwp_winsslclient ctx, const char * buffer, size_t size
 {
 	SecBuffer buffers [4];
 
-	  buffers [0].pvBuffer = (BYTE *) buffer;
-	  buffers [0].cbBuffer = (unsigned long)size;
-	  buffers [0].BufferType = SECBUFFER_DATA;
+	buffers [0].pvBuffer = (BYTE *) buffer;
+	buffers [0].cbBuffer = (unsigned long)size;
+	buffers [0].BufferType = SECBUFFER_DATA;
 
-	  buffers [1].BufferType = SECBUFFER_EMPTY;
-	  buffers [2].BufferType = SECBUFFER_EMPTY;
-	  buffers [3].BufferType = SECBUFFER_EMPTY;
+	buffers [1].BufferType = SECBUFFER_EMPTY;
+	buffers [2].BufferType = SECBUFFER_EMPTY;
+	buffers [3].BufferType = SECBUFFER_EMPTY;
 
 	SecBufferDesc buffers_desc = {0};
 
@@ -258,17 +258,17 @@ size_t proc_message_data (lwp_winsslclient ctx, const char * buffer, size_t size
 	ctx->status = DecryptMessage (&ctx->context, &buffers_desc, 0, 0);
 
 	if (ctx->status == SEC_E_INCOMPLETE_MESSAGE)
-	  return size; /* need more data */
+		return size; /* need more data */
 
 	if (ctx->status == _HRESULT_TYPEDEF_ (0x00090317L)) /* SEC_I_CONTENT_EXPIRED */
 	{
-	  /* ctx->Public.Disconnect(); */
-	  return size;
+		/* ctx->Public.Disconnect(); */
+		return size;
 	}
 
 	if (ctx->status == SEC_I_RENEGOTIATE)
 	{
-	  /* TODO: "The DecryptMessage (Schannel) function returns
+		/* TODO: "The DecryptMessage (Schannel) function returns
 		* SEC_I_RENEGOTIATE when the message sender wants to renegotiate the
 		* connection (security context). An application handles a requested
 		* renegotiation by calling AcceptSecurityContext (Schannel) (server
@@ -281,46 +281,46 @@ size_t proc_message_data (lwp_winsslclient ctx, const char * buffer, size_t size
 		* http://msdn.microsoft.com/en-us/library/aa374781%28v=VS.85%29.aspx
 		*/
 
-	  return size;
+		return size;
 	}
 
 	if (FAILED (ctx->status))
 	{
-	  /* Error decrypting the message */
+		/* Error decrypting the message */
 
-	  /* Lacewing::Error Error;
-		 Error.Add(Status);
-		 lwp_trace("Error decrypting the message: %s", Error.ToString ());
+		/* Lacewing::Error Error;
+			Error.Add(Status);
+			lwp_trace("Error decrypting the message: %s", Error.ToString ());
 
-		 ctx->Public.Disconnect(); */
+			ctx->Public.Disconnect(); */
 
-	  return size;
+		return size;
 	}
 
 	/* Find the decrypted data */
 
 	for (int i = 0; i < 4; ++ i)
 	{
-	  SecBuffer * buffer = (buffers + i);
+		SecBuffer * buffer = (buffers + i);
 
-	  if (buffer->BufferType == SECBUFFER_DATA)
-	  {
-		 lw_stream_data (&ctx->downstream, (char *) buffer->pvBuffer, buffer->cbBuffer);
-		 break;
-	  }
+		if (buffer->BufferType == SECBUFFER_DATA)
+		{
+			lw_stream_data (&ctx->downstream, (char *) buffer->pvBuffer, buffer->cbBuffer);
+			break;
+		}
 	}
 
 	/* Check for any trailing data that wasn't part of the message */
 
 	for (int i = 0; i < 4; ++ i)
 	{
-	  SecBuffer * buffer = (buffers + i);
+		SecBuffer * buffer = (buffers + i);
 
-	  if (buffer->BufferType == SECBUFFER_EXTRA && buffer->cbBuffer > 0)
-	  {
-		 size -= buffer->cbBuffer;
-		 break;
-	  }
+		if (buffer->BufferType == SECBUFFER_EXTRA && buffer->cbBuffer > 0)
+		{
+			size -= buffer->cbBuffer;
+			break;
+		}
 	}
 
 	return size;
@@ -364,10 +364,10 @@ lwp_winsslclient lwp_winsslclient_new (CredHandle server_creds, lw_stream socket
 	lwp_stream_init (&ctx->downstream, &def_downstream, 0);
 
 	lw_stream_add_filter_upstream
-	  (socket, &ctx->upstream, lw_false, lw_true);
+		(socket, &ctx->upstream, lw_false, lw_true);
 
 	lw_stream_add_filter_downstream
-	  (socket, &ctx->downstream, lw_false, lw_true);
+		(socket, &ctx->downstream, lw_false, lw_true);
 
 	return ctx;
 }
@@ -375,11 +375,10 @@ lwp_winsslclient lwp_winsslclient_new (CredHandle server_creds, lw_stream socket
 void lwp_winsslclient_delete (lwp_winsslclient ctx)
 {
 	if (!ctx)
-	  return;
+		return;
 
 	free (ctx->header);
 	free (ctx->trailer);
 
 	free (ctx);
 }
-

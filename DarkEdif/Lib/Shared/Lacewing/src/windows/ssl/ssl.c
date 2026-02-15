@@ -1,11 +1,11 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
  * Copyright (C) 2013 James McLaughlin et al.
- * Copyright (C) 2012-2022 Darkwire Software.
+ * Copyright (C) 2012-2026 Darkwire Software.
  * All rights reserved.
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
 
 #include "../../common.h"
@@ -13,6 +13,12 @@
 
 static size_t proc_message_data
 	(lwp_ssl, const char * buffer, size_t size);
+
+// MSVC CRT debug memory does not have workarounds for malloca
+#ifdef _CRTDBG_MAP_ALLOC
+	#define _malloca(x) malloc(x)
+	#define _freea(x) free(x)
+#endif
 
 static size_t def_upstream_sink_data (lw_stream upstream,
 									  const char * buffer,
@@ -24,13 +30,29 @@ static size_t def_upstream_sink_data (lw_stream upstream,
 	if (!ctx->handshake_complete)
 	  return 0; /* can't send anything right now */
 
+	// We cannot encrypt in-place, as the buffer is const, and anything reading back from it will get indecipherable data
+	// In Blue, this caused a bug when a secure WebSocket client was in peer list, a peer join/leave would be sent to all
+	// before WS client fine, but the encryption would corrupt the message for clients after.
+	BYTE* copy = _malloca(size);
+	if (!copy)
+	{
+		lw_error err = lw_error_new();
+		lw_error_addf(err, "Out of memory, couldn't alloc %zu bytes", size);
+		lw_error_addf(err, "Encrypting message failed");
+		if (ctx->handle_error && ctx->client)
+			ctx->handle_error(ctx->client, err);
+		lw_error_delete(err);
+		return size;
+	}
+	memcpy(copy, buffer, size);
+
 	SecBuffer buffers [4];
 
 	  buffers [0].pvBuffer = ctx->header;
 	  buffers [0].cbBuffer = ctx->sizes.cbHeader;
 	  buffers [0].BufferType = SECBUFFER_STREAM_HEADER;
 
-	  buffers [1].pvBuffer = (BYTE *) buffer;
+	  buffers [1].pvBuffer = copy;
 	  buffers [1].cbBuffer = (unsigned long)size;
 	  buffers [1].BufferType = SECBUFFER_DATA;
 
@@ -51,10 +73,11 @@ static size_t def_upstream_sink_data (lw_stream upstream,
 
 	if (status != SEC_E_OK)
 	{
+		_freea(copy);
 		lw_error err = lw_error_new();
 		lw_error_add(err, status);
 		lw_error_addf(err, "Encrypting message failed");
-		if (ctx->handle_error)
+		if (ctx->handle_error && ctx->client)
 			ctx->handle_error(ctx->client, err);
 		lw_error_delete(err);
 
@@ -66,6 +89,7 @@ static size_t def_upstream_sink_data (lw_stream upstream,
 	lw_stream_data (upstream, (char *) buffers [2].pvBuffer, buffers [2].cbBuffer);
 	lw_stream_data (upstream, (char *) buffers [3].pvBuffer, buffers [3].cbBuffer);
 
+	_freea(copy);
 	return size;
 }
 
@@ -104,8 +128,8 @@ static size_t def_downstream_sink_data (lw_stream downstream,
 		 return size;
 	  }
 
-	  ctx->header = (char *) malloc (ctx->sizes.cbHeader);
-	  ctx->trailer = (char *) malloc (ctx->sizes.cbTrailer);
+	  ctx->header = (char *) lw_malloc_or_exit (ctx->sizes.cbHeader);
+	  ctx->trailer = (char *) lw_malloc_or_exit (ctx->sizes.cbTrailer);
 	}
 
 	processed += proc_message_data (ctx, buffer, size);
@@ -117,13 +141,13 @@ size_t proc_message_data (lwp_ssl ctx, const char * buffer, size_t size)
 {
 	SecBuffer buffers [4];
 
-	  buffers [0].pvBuffer = (BYTE *) buffer;
-	  buffers [0].cbBuffer = (unsigned long)size;
-	  buffers [0].BufferType = SECBUFFER_DATA;
+	buffers [0].pvBuffer = (BYTE *) buffer;
+	buffers [0].cbBuffer = (unsigned long)size;
+	buffers [0].BufferType = SECBUFFER_DATA;
 
-	  buffers [1].BufferType = SECBUFFER_EMPTY;
-	  buffers [2].BufferType = SECBUFFER_EMPTY;
-	  buffers [3].BufferType = SECBUFFER_EMPTY;
+	buffers [1].BufferType = SECBUFFER_EMPTY;
+	buffers [2].BufferType = SECBUFFER_EMPTY;
+	buffers [3].BufferType = SECBUFFER_EMPTY;
 
 	SecBufferDesc buffers_desc = {0};
 
@@ -134,7 +158,7 @@ size_t proc_message_data (lwp_ssl ctx, const char * buffer, size_t size)
 	ctx->status = DecryptMessage (&ctx->context, &buffers_desc, 0, 0);
 
 	if (ctx->status == SEC_E_INCOMPLETE_MESSAGE)
-	  return size; /* need more data */
+		return size; /* need more data */
 
 	if (ctx->status == _HRESULT_TYPEDEF_ (0x00090317L)) /* SEC_I_CONTENT_EXPIRED */
 	{
@@ -149,7 +173,7 @@ size_t proc_message_data (lwp_ssl ctx, const char * buffer, size_t size)
 
 	if (ctx->status == SEC_I_RENEGOTIATE)
 	{
-	  /* TODO: "The DecryptMessage (Schannel) function returns
+		/* TODO: "The DecryptMessage (Schannel) function returns
 		* SEC_I_RENEGOTIATE when the message sender wants to renegotiate the
 		* connection (security context). An application handles a requested
 		* renegotiation by calling AcceptSecurityContext (Schannel) (server
@@ -182,26 +206,26 @@ size_t proc_message_data (lwp_ssl ctx, const char * buffer, size_t size)
 	*/
 	for (int i = 0; i < 4; ++ i)
 	{
-	  SecBuffer * buffer = (buffers + i);
+		SecBuffer * buffer = (buffers + i);
 
-	  if (buffer->BufferType == SECBUFFER_DATA)
-	  {
-		 lw_stream_data (&ctx->downstream, (char *) buffer->pvBuffer, buffer->cbBuffer);
-		 break;
-	  }
+		if (buffer->BufferType == SECBUFFER_DATA)
+		{
+			lw_stream_data (&ctx->downstream, (char *) buffer->pvBuffer, buffer->cbBuffer);
+			break;
+		}
 	}
 
 	/* Check for any trailing data that wasn't part of the message
 	*/
 	for (int i = 0; i < 4; ++ i)
 	{
-	  SecBuffer * buffer = (buffers + i);
+		SecBuffer * buffer = (buffers + i);
 
-	  if (buffer->BufferType == SECBUFFER_EXTRA && buffer->cbBuffer > 0)
-	  {
-		 size -= buffer->cbBuffer;
-		 break;
-	  }
+		if (buffer->BufferType == SECBUFFER_EXTRA && buffer->cbBuffer > 0)
+		{
+			size -= buffer->cbBuffer;
+			break;
+		}
 	}
 
 	return size;
@@ -241,10 +265,10 @@ void lwp_ssl_init (lwp_ssl ctx, lw_server_client socket)
 	lwp_stream_init (&ctx->downstream, &def_downstream, 0);
 
 	lw_stream_add_filter_upstream
-	  ((lw_stream)socket, &ctx->upstream, lw_false, lw_true);
+		((lw_stream)socket, &ctx->upstream, lw_false, lw_true);
 
 	lw_stream_add_filter_downstream
-	  ((lw_stream)socket, &ctx->downstream, lw_false, lw_true);
+		((lw_stream)socket, &ctx->downstream, lw_false, lw_true);
 }
 
 void lwp_ssl_cleanup (lwp_ssl ctx)

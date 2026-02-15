@@ -1,5 +1,4 @@
-
-#include "Common.h"
+#include "Common.hpp"
 
 // Called when the application starts or restarts.
 // Useful for storing global data

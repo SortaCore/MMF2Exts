@@ -4,9 +4,7 @@
 //
 // Including creating, display, and setting up your object.
 // ============================================================================
-
-#include "Common.h"
-#include "DarkEdif.h"
+#include "Common.hpp"
 
 // ============================================================================
 // ROUTINES USED UNDER FRAME EDITOR
@@ -38,17 +36,21 @@ int FusionAPI CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr)
 	Edif::Init(mV, edPtr);
 
 	// Init any custom EDITDATA stuff here, between Init and DLL_CreateObject
+#if DARKEDIF_DISPLAY_TYPE > DARKEDIF_DISPLAY_ANIMATIONS
+	edPtr->objSize = DarkEdif::Size { 32, 32 }; // size of icon
+#endif
+#if TEXT_OEFLAG_EXTENSION
+	edPtr->font.Initialize(mV);
+#endif
 
 	return DarkEdif::DLL::DLL_CreateObject(mV, loPtr, edPtr);
 }
 
 // Displays the object under the frame editor
-void FusionAPI EditorDisplay(mv *mV, ObjectInfo * oiPtr, LevelObject * loPtr, EDITDATA * edPtr, RECT * rc)
+void FusionAPI EditorDisplay(mv * mV, ObjectInfo * oiPtr, LevelObject * loPtr, EDITDATA * edPtr, DarkEdif::Rect * rc)
 {
 #pragma DllExportHint
-	cSurface * Surface = WinGetSurface((int) mV->IdEditWin);
-	if (!Surface)
-		return;
+	auto frameSurf = DarkEdif::Surface::CreateFromFrameEditorWindow();
 
 	// If you don't have this function run in Edittime.cpp, SDK Updater will be disabled for your ext
 	// Don't comment or preprocessor-it out if you're removing it; delete the line entirely.
@@ -73,15 +75,20 @@ void FusionAPI EditorDisplay(mv *mV, ObjectInfo * oiPtr, LevelObject * loPtr, ED
 	// To display updates in a custom way, you can use DarkEdif::SDKUpdater::ReadUpdateStatus(NULL);
 	// to get the type of update.
 	// Note the message box for major updates will still show, and cannot be disabled.
-	Edif::SDK->Icon->Blit(*Surface, rc->left, rc->top, BMODE_TRANSP, BOP_COPY, 0);
+	Edif::SDK->ExtIcon->CopyToPoint(frameSurf, ((DarkEdif::Rect *)rc)->GetTopLeft());
+#if DARKEDIF_DISPLAY_TYPE > DARKEDIF_DISPLAY_NONE && IS_DARKEDIF_TEMPLATE==0
+	#error Add your drawing tech here, by accesing frameSurf, for example:
+	frameSurf.FillImageWith(DarkEdif::SurfaceFill::Solid(DarkEdif::ColorRGB(0, 0, 128)));
+#endif
 }
 
 // This routine tells Fusion if the mouse pointer is over a transparent zone of the object.
 // If not exported, the entire display is assumed to be opaque.
-/*
-BOOL FusionAPI IsTransparent(mv *mV, LevelObject * loPtr, EDITDATA * edPtr, int dx, int dy)
+/* BOOL FusionAPI IsTransparent(mv* mV, LevelObject* loPtr, EDITDATA* edPtr, int dx, int dy)
 {
 #pragma DllExportHint
+	// const DarkEdif::Point pt { dx, dy };
+
 	// Don't forget to pre-set the size in CreateObject() above,
 	// and uncomment GetObjectRect() below so Fusion can read the current size.
 	// You should display in EditorDisplay() above.
@@ -89,9 +96,11 @@ BOOL FusionAPI IsTransparent(mv *mV, LevelObject * loPtr, EDITDATA * edPtr, int 
 }
 */
 
+#if DARKEDIF_DISPLAY_TYPE > DARKEDIF_DISPLAY_NONE
 // Called when the object has been resized
+// If this function is not exported, your object will not be resizeable
 /*
-BOOL FusionAPI SetEditSize(mv * mv, EDITDATA * edPtr, int cx, int cy)
+BOOL FusionAPI SetEditSize(mv* mV, EDITDATA* edPtr, int cx, int cy)
 {
 #pragma DllExportHint
 	// Check compatibility
@@ -101,15 +110,15 @@ BOOL FusionAPI SetEditSize(mv * mv, EDITDATA * edPtr, int cx, int cy)
 	// Don't forget to pre-set the size in CreateObject() above,
 	// and uncomment GetObjectRect() below so Fusion can read the current size.
 	// You should display in EditorDisplay() above.
-	edPtr->swidth = cx;
-	edPtr->sheight = cy;
+	edPtr->objSize = DarkEdif::Size { cx, cy };
 	return TRUE;
 }
 */
 
 // Returns the size of the rectangle of the object in the frame editor.
 // If this function isn't defined, a size of 32x32 is assumed.
-/* void FusionAPI GetObjectRect(mv * mV, RECT * rc, LevelObject * loPtr, EDITDATA * edPtr)
+/*
+void FusionAPI GetObjectRect(mv * mV, DarkEdif::Rect * rc, LevelObject * loPtr, EDITDATA * edPtr)
 {
 #pragma DllExportHint
 	if (!mV || !rc || !edPtr)
@@ -118,9 +127,12 @@ BOOL FusionAPI SetEditSize(mv * mv, EDITDATA * edPtr, int cx, int cy)
 	// Don't forget to pre-set the size in CreateObject() above,
 	// and uncomment SetEditSize() if you want the user to be able to resize it.
 	// You should display it in EditorDisplay() above.
-	rc->right = rc->left + Edif::SDK->Icon->GetWidth();	// edPtr->swidth;
-	rc->bottom = rc->top + Edif::SDK->Icon->GetHeight();	// edPtr->sheight;
-}*/
+	rc->right = rc->left + edPtr->objSize.width;
+	rc->bottom = rc->top + edPtr->objSize.height;
+}
+*/
+
+#endif // drawing ext
 
 // Called when the user selects the Edit command in the object's popup menu
 /*
@@ -184,148 +196,58 @@ void FusionAPI SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID, BOOL
 	DarkEdif::DLL::DLL_SetPropCheck(mV, edPtr, PropID, checked);
 }
 
-// Called by Fusion when the user clicks the button of a Button or EditButton property.
-/*BOOL FusionAPI EditProp(mv * mV, EDITDATA * edPtr, unsigned int PropID)
+// Called by Fusion when the user clicks the button of a Button, Image List or Font property.
+BOOL FusionAPI EditProp(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 {
 #pragma DllExportHint
-	// Example
-	// -------
-/*
-	if (nPropID==PROPID_EDITCONTENT)
-	{
-		if ( EditObject(mV, NULL, NULL, edPtr) )
-			return TRUE;
-	}
-*\/
-
-	return FALSE;
-}*/
+	if (PropID < PROPID_EXTITEM_CUSTOM_FIRST)
+		return FALSE;
+	return DarkEdif::DLL::DLL_EditProp(mV, edPtr, PropID);
+}
 
 // Called by Fusion to request the enabled state of a property.
 BOOL FusionAPI IsPropEnabled(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 {
 #pragma DllExportHint
-	// Example
-	// -------
-/*
-	switch (nPropID) {
-
-	case PROPID_CHECK:
-		return (edPtr->nComboIndex != 0);
-	}
-*/
 	return DarkEdif::DLL::DLL_IsPropEnabled(mV, edPtr, PropID);
 }
 
-
 // Called when a property is initialized and its creation parameter is NULL (in the PropData).
 // Allows you, for example, to change the content of a combobox property according to specific settings in the EDITDATA structure.
-/*LPARAM FusionAPI GetPropCreateParam(mv *mV, EDITDATA *edPtr, unsigned int PropID)
+LPARAM FusionAPI GetPropCreateParam(mv *mV, EDITDATA *edPtr, unsigned int PropID)
 {
 #pragma DllExportHint
-	// Example
-	// -------
-	//	if ( PropID == PROPID_COMBO )
-	//	{
-	//		switch (edPtr->sType)
-	//		{
-	//		case TYPE1:
-	//			return (LPARAM)ComboList1;
-	//		case TYPE2:
-	//			return (LPARAM)ComboList2;
-	//		}
-	//	}
-
 	return DarkEdif::DLL::DLL_GetPropCreateParam(mV, edPtr, PropID);
-}*/
+}
 
 // Called after a property has been initialized.
 // Allows you, for example, to free memory allocated in GetPropCreateParam.
-/*void FusionAPI ReleasePropCreateParam(mv *mV, EDITDATA *edPtr, unsigned int PropID, LPARAM lParam)
+void FusionAPI ReleasePropCreateParam(mv *mV, EDITDATA *edPtr, unsigned int PropID, LPARAM lParam)
 {
 #pragma DllExportHint
 	return DarkEdif::DLL::DLL_ReleasePropCreateParam(mV, edPtr, PropID, lParam);
-}*/
-
-// ============================================================================
-// TEXT PROPERTIES
-// ============================================================================
-
-// Return the text capabilities of the object under the frame editor.
-/*std::uint32_t FusionAPI GetTextCaps(mv * mV, EDITDATA * edPtr)
-{
-#pragma DllExportHint
-	return 0;	// (TEXT_ALIGN_LEFT|TEXT_ALIGN_HCENTER|TEXT_ALIGN_RIGHT|TEXT_ALIGN_TOP|TEXT_ALIGN_VCENTER|TEXT_ALIGN_BOTTOM|TEXT_FONT|TEXT_COLOR);
-}*/
-
-// Return the font used the object.
-// Note: the pStyle and cbSize parameters are obsolete and passed for compatibility reasons only.
-/*BOOL FusionAPI GetTextFont(mv * mV, EDITDATA * edPtr, LOGFONT * Font, TCHAR * pStyle, unsigned int cbSize)
-{
-#pragma DllExportHint
-	// Example: copy LOGFONT structure from EDITDATA
-	// memcpy(plf, &edPtr->m_lf, sizeof(LOGFONT));
-
-	return TRUE;
-}*/
-
-// Change the font used the object.
-// Note: the pStyle parameter is obsolete and passed for compatibility reasons only.
-//
-/*BOOL FusionAPI SetTextFont(mv * mV, EDITDATA * edPtr, LOGFONT * Font, [[deprecated]] const char * pStyle)
-{
-#pragma DllExportHint
-	// Example: copy LOGFONT structure to EDITDATA
-	// memcpy(&edPtr->m_lf, plf, sizeof(LOGFONT));
-
-	return TRUE;
-}*/
-
-// Get the text color of the object.
-/*COLORREF FusionAPI GetTextClr(mv * mV, EDITDATA * edPtr)
-{
-#pragma DllExportHint
-	return 0; // try RGB()
-}*/
-
-// Called by Fusion to set the text color of the object.
-/*void FusionAPI SetTextClr(mv *mV, EDITDATA * edPtr, COLORREF color)
-{
-#pragma DllExportHint
-	// Example
-	// edPtr->fontColor = color;
-}*/
-
-// Get the text alignment of the object.
-/*std::uint32_t FusionAPI GetTextAlignment(mv *mV, EDITDATA * edPtr)
-{
-#pragma DllExportHint
-	return 0;
-}*/
-
-// Set the text alignment of the object.
-/*void FusionAPI SetTextAlignment(mv *mV, EDITDATA * edPtr, unsigned int AlignFlags)
-{
-#pragma DllExportHint
-}*/
-
+}
 
 // ============================================================================
 // ROUTINES USED WHEN BUILDING
 // ============================================================================
 
+/*
 // This routine is called by Fusion when an Android build is prepared before building.
-// It enables you to modify the Android manifest file to add your own content, or otherwise check the Android build.
+// It enables you to modify the Android files to add your own content, or otherwise check the Android build.
 // It is called in the Extensions[\Unicode] MFX, for any extension in the MFA that defines PrepareAndroidBuild,
-// including exts that have no corresponding Data\Runtime\Android file and would create a not-compatible build warning.
-/*void FusionAPI PrepareAndroidBuild(mv* mV, EDITDATA* edPtr, LPCTSTR androidDirectoryPathname)
+// including for exts that have no corresponding Data\Runtime\Android file and would create a not-compatible build warning.
+void FusionAPI PrepareAndroidBuild(mv* mV, EDITDATA* edPtr, const TCHAR * androidDirectoryPathname)
 {
 #pragma DllExportHint
 	// Erase the manifest file so the build will fail
 	std::tstring manifestPath = androidDirectoryPathname;
 	manifestPath += _T("app\\src\\main\\AndroidManifest.xml"sv);
-	// Open manifestPath as a file, say with
+	// Open manifestPath as a file, e.g. with
 	// _tfopen(manifestPath.c_str(), _T("ab"))
-	// and you're free to edit the manifest
-}*/
+	// and you're free to edit the manifest.
+	// You can also add a DarkEdif::MsgBox call, look at the path while the popup is open.
+}
+*/
+
 #endif // EditorBuild

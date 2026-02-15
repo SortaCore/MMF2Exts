@@ -1,11 +1,11 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
  * Copyright (C) 2012, 2013 James McLaughlin et al.
- * Copyright (C) 2012-2022 Darkwire Software.
+ * Copyright (C) 2012-2026 Darkwire Software.
  * All rights reserved.
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
 
 #include "../common.h"
@@ -25,8 +25,8 @@ static int on_url (http_parser * parser, const char * url, size_t length)
 
 	if (!lwp_ws_req_in_url (ctx->request, length, url))
 	{
-	  lwp_trace ("HTTP: Bad URL");
-	  return -1;
+		lwp_trace ("HTTP: Bad URL");
+		return -1;
 	}
 
 	return 0;
@@ -39,16 +39,20 @@ static int on_header_field (http_parser * parser, const char * buffer,
 
 	if (!ctx->request->version_major)
 	{
-	  char version [16];
+		char version [16];
 
-	  lwp_snprintf (version, sizeof (version), "HTTP/%d.%d",
+		lwp_snprintf (version, sizeof (version), "HTTP/%d.%d",
 			(int) parser->http_major, (int) parser->http_minor);
 
-	  if (!lwp_ws_req_in_version (ctx->request, strlen (version), version))
-	  {
-		 lwp_trace ("HTTP: Bad version");
-		 return -1;
-	  }
+		#ifdef _MSC_VER
+			// HTTP version is always 2 digits, so this is always space for zero-terminated
+			#pragma warning (suppress: 6053)
+		#endif
+		if (!lwp_ws_req_in_version (ctx->request, strlen (version), version))
+		{
+			lwp_trace ("HTTP: Bad version");
+			return -1;
+		}
 	}
 
 	/* Since we already ensure the parser receives entire lines while processing
@@ -71,8 +75,8 @@ static int on_header_value (http_parser * parser, const char * value, size_t len
 							  ctx->cur_header_name,
 							  length, value))
 	{
-	  lwp_trace ("HTTP: Bad header");
-	  return -1;
+		lwp_trace ("HTTP: Bad header");
+		return -1;
 	}
 
 	return 0;
@@ -88,8 +92,8 @@ static int on_headers_complete (http_parser * parser)
 
 	if (!lwp_ws_req_in_method (ctx->request, strlen (method), method))
 	{
-	  lwp_trace ("HTTP: Bad method");
-	  return -1;
+		lwp_trace ("HTTP: Bad method");
+		return -1;
 	}
 
 	const char * content_type = lw_ws_req_header (ctx->request, "content-type");
@@ -98,13 +102,13 @@ static int on_headers_complete (http_parser * parser)
 
 	if (lwp_begins_with (content_type, "multipart"))
 	{
-	  lwp_trace ("Creating Multipart...");
+		lwp_trace ("Creating Multipart...");
 
-	  if (! (ctx->client.multipart = lwp_ws_multipart_new
+		if (! (ctx->client.multipart = lwp_ws_multipart_new
 				(ctx->client.ws, ctx->request, content_type)))
-	  {
-		 return -1;
-	  }
+		{
+			return -1;
+		}
 	}
 
 	return 0;
@@ -116,26 +120,26 @@ static int on_body (http_parser * parser, const char * buffer, size_t size)
 
 	if (!ctx->client.multipart)
 	{
-	  /* Normal request body - just buffer it */
+		/* Normal request body - just buffer it */
 
-	  lwp_heapbuffer_add (&ctx->request->buffer, buffer, size);
-	  return 0;
+		lwp_heapbuffer_add (&ctx->request->buffer, buffer, size);
+		return 0;
 	}
 
 	/* Multipart request body - hand it over to the multipart processor */
 
 	if (lwp_ws_multipart_process (ctx->client.multipart, buffer, size) != size)
 	{
-	  lwp_trace ("Error w/ multipart form data");
+		lwp_trace ("Error w/ multipart form data");
 
-	  lwp_ws_multipart_delete (ctx->client.multipart);
-	  ctx->client.multipart = 0;
+		lwp_ws_multipart_delete (ctx->client.multipart);
+		ctx->client.multipart = 0;
 
-	  return -1;
+		return -1;
 	}
 
 	if ( (!ctx->client.multipart) || ctx->client.multipart->done)
-	  ctx->signal_eof = lw_true;
+		ctx->signal_eof = lw_true;
 
 	return 0;
 }
@@ -145,7 +149,7 @@ static int on_message_complete (http_parser * parser)
 	lwp_ws_httpclient ctx = (lwp_ws_httpclient) parser->data;
 
 	if (!ctx->client.multipart)
-	  lwp_ws_req_call_hook (ctx->request);
+		lwp_ws_req_call_hook (ctx->request);
 
 	ctx->parsing_headers = lw_true;
 

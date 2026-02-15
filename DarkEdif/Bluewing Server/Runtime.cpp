@@ -7,8 +7,7 @@
 // If your object does not use any of those, a simple non-displaying object,
 // you can safely exclude this file.
 // ============================================================================
-
-#include "Common.h"
+#include "Common.hpp"
 
 
 // ============================================================================
@@ -28,7 +27,7 @@ void FusionAPI StartApp(mv *mV, CRunApp* pApp)
 void FusionAPI EndApp(mv * mV, CRunApp * pApp)
 {
 	#pragma DllExportHint
-	if (pApp->ParentApp)
+	if (pApp->get_ParentApp())
 	{
 		OutputDebugStringA(PROJECT_NAME " - EndApp called, but it's subapp. Ignoring.\n");
 		return;

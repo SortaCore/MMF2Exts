@@ -1,10 +1,10 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=cpp:
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * Copyright (C) 2020-2022 Darkwire Software.
+ * Copyright (C) 2020-2026 Darkwire Software.
  * All rights reserved.
  *
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
 
 #include "Lacewing.h"
@@ -19,9 +19,13 @@ bool lacewing::writelock::isEnabled() const
 }
 #if defined(COXSDK)
 	#if defined(__ANDROID__)
-		#include "../Inc/Android/MMFAndroidMasterHeader.h"
+		#include "../Inc/Android/MMFAndroidMasterHeader.hpp"
 	#elif defined(__APPLE__)
-		#include "../Inc/iOS/MMFiOSMasterHeader.h"
+		#if MacBuild==0
+			#include "../Inc/iOS/MMFiOSMasterHeader.hpp"
+		#else
+			#include "../Inc/Mac/MMFMacMasterHeader.hpp"
+		#endif
 	#endif
 #endif
 
@@ -494,6 +498,10 @@ void lacewing::readwritelock::closeWriteLock(writelock &wl)
 	this->metaLock = false;
 
 	--writers;
+#ifdef _MSC_VER
+	// This function won't hold this lock, other functions will, so suppress the "caller doesn't hold lock" warning
+	#pragma warning (suppress: 26110)
+#endif
 	wl.locker.unlock();
 	wl.locked = false;
 }

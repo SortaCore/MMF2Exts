@@ -2,11 +2,11 @@
 *
 * This source code is part of the iOS exporter for Clickteam Multimedia Fusion 2
 * and Clickteam Fusion 2.5.
-* 
-* Permission is hereby granted to any person obtaining a legal copy 
-* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source 
-* code for debugging, optimizing, or customizing applications created with 
-* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5. 
+*
+* Permission is hereby granted to any person obtaining a legal copy
+* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source
+* code for debugging, optimizing, or customizing applications created with
+* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5.
 * Any other use of this source code is prohibited.
 *
 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -99,17 +99,17 @@ typedef void (* FrameToWorld)(void* rdPtr, b2Vec2* pVect);
 typedef b2Body* (*CreateBody)(void* ptr, b2BodyType type, int x, int y, float angle, float gravity, void* userData, DWORD flags, float deceleration);
 typedef b2Fixture* (* BodyCreateBoxFixture)(void* ptr, b2Body* body, void* base, int x, int y, int sx, int sy, float	density, float friction, float restitution);
 typedef b2Fixture* (* BodyCreateCircleFixture)(void* ptr, b2Body* body, void* base, int x, int y, int radius, float density, float friction, float restitution);
-typedef b2Fixture* (* BodyCreateShapeFixture)(void* ptr, b2Body* body, void* base, int x, int y, DWORD image, float density, float friction, float restitution, float scaleX, float scaleY);
+typedef b2Fixture* (* BodyCreateShapeFixture)(void* ptr, b2Body* body, void* base, int x, int y, unsigned short image, float density, float friction, float restitution, float scaleX, float scaleY);
 typedef void (*GetBodyPosition)(void* rdPtr, b2Body* body, int* pX, int* pY, float* pAngle);
 typedef void (* BodyApplyForce)(void* ptr, b2Body* pBody, float force, float angle);
 typedef void (* BodyApplyImpulse)(void* ptr, b2Body* pBody, float force, float angle);
 typedef void (* BodyApplyMMFImpulse)(void* ptr, b2Body* pBody, float force, float angle);
 typedef void (* BodySetLinearVelocity)(void* ptr, b2Body* pBody, float force, float angle);
 typedef void (* BodySetLinearVelocityAdd)(void* ptr, b2Body* pBody, float force, float angle, float vx, float vy);
-typedef void (* GetImageDimensions)(void* ptr, short img, int* x1, int* x2, int* y1, int* y2);
+typedef void (* GetImageDimensions)(void* ptr, unsigned short img, int* x1, int* x2, int* y1, int* y2);
 typedef void (* DestroyBody)(void* ptr, b2Body* body);
 typedef void (* CreateDistanceJoint)(void* ptr, b2Body* pBody1, b2Body* pBody2, float dampingRatio, float frequency, int x, int y);
-typedef void (* BodyCreatePlatformFixture)(void* ptr, b2Body* pBody, void* base, short img, int x, int y, float density, float friction, float restitution, b2Fixture** pFixture, int* pOffsetX, int* pOffsetY, float scaleX, float scaleY, float maskWidth);
+typedef void (* BodyCreatePlatformFixture)(void* ptr, b2Body* pBody, void* base, unsigned short img, int x, int y, float density, float friction, float restitution, b2Fixture** pFixture, int* pOffsetX, int* pOffsetY, float scaleX, float scaleY, float maskWidth);
 typedef void (* BodyAddVelocity)(void* ptr, b2Body* pBody, float vx, float vy);
 typedef b2Body*(* CreateBullet)(void* ptr, float angle, float speed, void* userData);
 typedef void (* BodySetTransform)(void* ptr, b2Body* pBody, b2Vec2 position, float angle);
@@ -139,7 +139,7 @@ typedef void* (* GetMBaseRout)(void* rdPtr, CObject* pHo);
 typedef void (* DestroyJoint)(void* rdPtr, b2Joint* joint);
 typedef void (* BodySetFixedRotation)(void* ptr, b2Body* pBody, BOOL flag);
 typedef b2Joint* (* JointCreate)(void* ptr, void* pBase1, short jointType, short jointAnchor, NSString* jointName, NSString* jointObject, float param1, float param2);
-typedef b2Body* (* AddABackdrop)(void* ptr, int x, int y, short img, int obstacle);
+typedef b2Body* (* AddABackdrop)(void* ptr, int x, int y, unsigned short img, int obstacle);
 typedef void (* SubABackdrop)(void* ptr, b2Body* body);
 typedef void (* RJointSetMotor)(void* rdPtr, b2RevoluteJoint* pJoint, int t, int s);
 typedef void (* RJointSetLimits)(void* rdPtr, b2RevoluteJoint* pJoint, int angle1, int angle2);
@@ -204,7 +204,7 @@ typedef struct tagRDATABASE
     AddMagnet	            pAddMagnet;
     AddTreadmill            pAddTreadmill;
     AddRope					pAddRope;
-    
+
 	float			angle;
 	DWORD			flags;
 	b2World*		world;
@@ -261,12 +261,12 @@ public:
 	virtual ~CRunMvt() {}
 	virtual void		Initialize(LPHO pHo, CFile* file) {}
     virtual void		Delete(void) { delete this; }
-    
+
 	virtual BOOL		Move(CObject* pHo) { return NO; }
 	virtual void		SetPosition(CObject* pHo, int x, int y) {}
 	virtual void		SetXPosition(CObject* pHo, int x) {}
 	virtual void		SetYPosition(CObject* pHo, int y) {}
-    
+
 	virtual void		Stop(CObject* pHo, BOOL bCurrent) {}
 	virtual void		Bounce(CObject* pHo, BOOL bCurrent) {}
 	virtual void		Reverse(CObject* pHo) {}
@@ -296,7 +296,7 @@ public:
     CRunMBase*          m_mBase;
     DWORD               m_identifier;
     CRunMvtExtension*   m_movement;
-    
+
 public:
     virtual void		Initialize(CFile* file, CObject* hoPtr) {}
     virtual void		Delete(void) { delete this; }
@@ -304,7 +304,7 @@ public:
 	virtual void		SetPosition(CObject* pHo, int x, int y) {}
 	virtual void		SetXPosition(CObject* pHo, int x) {}
 	virtual void		SetYPosition(CObject* pHo, int y) {}
-    
+
 	virtual void		Stop(CObject* pHo, BOOL bCurrent) {}
 	virtual void		Bounce(CObject* pHo, BOOL bCurrent) {}
 	virtual void		Reverse(CObject* pHo) {}
@@ -323,7 +323,7 @@ public:
 	virtual int			GetDeceleration(CObject* hoPtr) {return 0;}
 	virtual int			GetGravity(CObject* hoPtr) {return 0;}
 	virtual int			GetDir(CObject* hoPtr) {return 0;}
-    
+
 	virtual void SetCollidingObject(CRunMBase* object){};
 	virtual BOOL CreateBody(CObject* pHo){return NO;};
 	virtual void CreateJoint(CObject* pHo){};
@@ -376,7 +376,7 @@ public:
 	b2Body* m_body;
 	float m_currentAngle;
 	DWORD m_eventCount;
-	short m_image;
+    unsigned short m_image;
 	BOOL stopped;
 	DWORD m_type;
 	DWORD m_subType;
@@ -399,7 +399,7 @@ public:
     BOOL IsStop();
     void PrepareCondition();
     BOOL m_background;
-    CRunMBase(LPRDATABASE base, CObject* pHo, WORD type);    
+    CRunMBase(LPRDATABASE base, CObject* pHo, WORD type);
 };
 
 //#endif

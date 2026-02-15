@@ -52,22 +52,22 @@ extern "C" {
 #   define OPENSSL_SYS_WIN32_CYGWIN
 #  else
 #   if defined(_WIN32) || defined(OPENSSL_SYS_WIN32)
-#    undef OPENSSL_SYS_UNIX
-#    if !defined(OPENSSL_SYS_WIN32)
-#     define OPENSSL_SYS_WIN32
-#    endif
+#	undef OPENSSL_SYS_UNIX
+#	if !defined(OPENSSL_SYS_WIN32)
+#	 define OPENSSL_SYS_WIN32
+#	endif
 #   endif
 #   if defined(_WIN64) || defined(OPENSSL_SYS_WIN64)
-#    undef OPENSSL_SYS_UNIX
-#    if !defined(OPENSSL_SYS_WIN64)
-#     define OPENSSL_SYS_WIN64
-#    endif
+#	undef OPENSSL_SYS_UNIX
+#	if !defined(OPENSSL_SYS_WIN64)
+#	 define OPENSSL_SYS_WIN64
+#	endif
 #   endif
 #   if defined(OPENSSL_SYS_WINNT)
-#    undef OPENSSL_SYS_UNIX
+#	undef OPENSSL_SYS_UNIX
 #   endif
 #   if defined(OPENSSL_SYS_WINCE)
-#    undef OPENSSL_SYS_UNIX
+#	undef OPENSSL_SYS_UNIX
 #   endif
 #  endif
 # endif
@@ -88,9 +88,9 @@ extern "C" {
  */
 # ifdef OPENSSL_SYS_WINDOWS
 #  ifndef OPENSSL_OPT_WINDLL
-#   if defined(_WINDLL)         /* This is used when building OpenSSL to
-                                 * indicate that DLL linkage should be used */
-#    define OPENSSL_OPT_WINDLL
+#   if defined(_WINDLL)		 /* This is used when building OpenSSL to
+								 * indicate that DLL linkage should be used */
+#	define OPENSSL_OPT_WINDLL
 #   endif
 #  endif
 # endif
@@ -177,16 +177,16 @@ extern "C" {
  * required (if a shared library version requires it, for example.
  * The way it's done allows definitions like this:
  *
- *      // in foobar.c
- *      OPENSSL_IMPLEMENT_GLOBAL(int,foobar,0)
- *      // in foobar.h
- *      OPENSSL_DECLARE_GLOBAL(int,foobar);
- *      #define foobar OPENSSL_GLOBAL_REF(foobar)
+ *	  // in foobar.c
+ *	  OPENSSL_IMPLEMENT_GLOBAL(int,foobar,0)
+ *	  // in foobar.h
+ *	  OPENSSL_DECLARE_GLOBAL(int,foobar);
+ *	  #define foobar OPENSSL_GLOBAL_REF(foobar)
  */
 # ifdef OPENSSL_EXPORT_VAR_AS_FUNCTION
-#  define OPENSSL_IMPLEMENT_GLOBAL(type,name,value)                      \
-        type *_shadow_##name(void)                                      \
-        { static type _hide_##name=value; return &_hide_##name; }
+#  define OPENSSL_IMPLEMENT_GLOBAL(type,name,value)					  \
+		type *_shadow_##name(void)									  \
+		{ static type _hide_##name=value; return &_hide_##name; }
 #  define OPENSSL_DECLARE_GLOBAL(type,name) type *_shadow_##name(void)
 #  define OPENSSL_GLOBAL_REF(name) (*(_shadow_##name()))
 # else
@@ -238,8 +238,8 @@ typedef UINT32 uint32_t;
 typedef INT64 int64_t;
 typedef UINT64 uint64_t;
 # elif (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || \
-     defined(__osf__) || defined(__sgi) || defined(__hpux) || \
-     defined(OPENSSL_SYS_VMS) || defined (__OpenBSD__)
+	 defined(__osf__) || defined(__sgi) || defined(__hpux) || \
+	 defined(OPENSSL_SYS_VMS) || defined (__OpenBSD__)
 #  include <inttypes.h>
 # elif defined(_MSC_VER) && _MSC_VER<1600
 /*
@@ -280,7 +280,7 @@ typedef unsigned __int64 uint64_t;
 # endif
 
 # if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L && \
-     !defined(__cplusplus)
+	 !defined(__cplusplus)
 #  define ossl_noreturn _Noreturn
 # elif defined(__GNUC__) && __GNUC__ >= 2
 #  define ossl_noreturn __attribute__((noreturn))

@@ -1,11 +1,11 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
  * Copyright (C) 2013, 2014 James McLaughlin.
- * Copyright (C) 2012-2022 Darkwire Software.
+ * Copyright (C) 2012-2026 Darkwire Software.
  * All rights reserved.
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
 
 #ifndef _lw_refcount_h
@@ -15,7 +15,7 @@
 #if !defined(_MSC_VER) || _STDC_VERSION__ >= 201112
 # include <stdatomic.h>
 #else
-#define msvc_windows_atomic_workaround
+# define msvc_windows_atomic_workaround
 # define _Atomic(X) volatile LONG
 #endif
 #else
@@ -63,18 +63,18 @@ static inline lw_bool _lwp_release (struct lwp_refcount * refcount)
 	return lw_false;
 }
 
-#define lwp_refcounted														\
+#define lwp_refcounted				\
 	struct lwp_refcount refcount
 
-#define lwp_retain(x, name)													\
-	_lwp_retain ((struct lwp_refcount *) (x))								 \
+#define lwp_retain(x, name)						\
+	_lwp_retain ((struct lwp_refcount *) (x))								
 
-#define lwp_release(x, name)												  \
-	_lwp_release ((struct lwp_refcount *) (x))								 \
+#define lwp_release(x, name)					\
+	_lwp_release ((struct lwp_refcount *) (x))	
 
-#define lwp_set_dealloc_proc(x, proc) do {									\
-  *(void **) &(((struct lwp_refcount *) (x))->on_dealloc) = (void *) (proc);  \
-} while (0);																  \
+#define lwp_set_dealloc_proc(x, proc) do {										\
+  *(void **) &(((struct lwp_refcount *) (x))->on_dealloc) = (void *) (proc);	\
+} while (0);																
 
 #define lwp_set_retain_proc(x, proc)
 #define lwp_set_release_proc(x, proc)

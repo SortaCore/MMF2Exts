@@ -1,10 +1,10 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=cpp:
  *
  * Copyright (C) 2012, 2013 James McLaughlin et al.
- * Copyright (C) 2012-2022 Darkwire Software.
+ * Copyright (C) 2012-2026 Darkwire Software.
  * All rights reserved.
  * 
- * liblacewing and Lacewing Relay are provided under MIT license.
+ * liblacewing and Lacewing Relay/Blue are provided under MIT license.
  */
 
 #include "../common.h"
@@ -14,9 +14,10 @@ error lacewing::error_new ()
 	return (error) lw_error_new ();
 }
 
-void lacewing::error_delete (lacewing::error error)
+void lacewing::error_delete (lacewing::error& error)
 {
 	lw_error_delete ((lw_error) error);
+	error = nullptr;
 }
 
 void _error::add (const char * format, ...)

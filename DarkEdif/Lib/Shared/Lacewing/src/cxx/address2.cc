@@ -1,11 +1,11 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=cpp:
  *
  * Copyright (C) 2012, 2013 James McLaughlin et al.
- * Copyright (C) 2012-2022 Darkwire Software.
+ * Copyright (C) 2012-2026 Darkwire Software.
  * All rights reserved.
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
 
 #include "../common.h"
@@ -35,9 +35,10 @@ address lacewing::address_new (const char * hostname, lw_ui16 port, int hints)
 	return (address) lw_addr_new_port_hint (hostname, port, hints);
 }
 
-void lacewing::address_delete (lacewing::address address)
+void lacewing::address_delete (lacewing::address &address)
 {
 	lw_addr_delete ((lw_addr) address);
+	address = nullptr;
 }
 
 lw_ui16 _address::port ()
@@ -75,9 +76,9 @@ error _address::resolve ()
 	return (error) lw_addr_resolve ((lw_addr) this);
 }
 
-const char * _address::tostring ()
+const char * _address::tostring (lw_addr_tostring_flags flags)
 {
-	return lw_addr_tostring ((lw_addr) this);
+	return lw_addr_tostring ((lw_addr) this, flags);
 }
 
 in6_addr _address::toin6_addr()
@@ -87,7 +88,7 @@ in6_addr _address::toin6_addr()
 
 _address::operator const char * ()
 {
-	return tostring ();
+	return tostring (lw_addr_tostring_flags_default);
 }
 
 bool _address::operator == (lacewing::address address)

@@ -1,17 +1,25 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=cpp:
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * Copyright (C) 2017-2022 Darkwire Software.
+ * Copyright (C) 2017-2026 Darkwire Software.
  * All rights reserved.
  *
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
 
 #include "Lacewing.h"
+#include <iostream>
+#include <sstream>
+#ifdef _MSC_VER
+	// suppress complaints about utf8proc C enums not being C++ enum classes
+	#pragma warning (push)
+	#pragma warning (disable: 26812)
+#endif
 
 // Comments for all the below functions can be found in the header file.
 // IntelliSense should display them anyway.
 
+[[deprecated]]
 void lw_addr_prettystring(const char * input, char * const output, size_t outputSize)
 {
 	// It's a pure IPv4 already, or a pure IPv6, not IPv4-mapped-IPv6
@@ -42,7 +50,7 @@ void lw_addr_prettystring(const char * input, char * const output, size_t output
 		// Start search for "]" at offset of 15
 		// 8 due to "[::ffff:" -> 8 chars
 		// 7 due to "1.2.3.4" -> 7 chars
-		for (size_t i = 15, len = strnlen(&input[15], 64 - 15) + 15; i < len; i++)
+		for (std::size_t i = 15, len = strnlen(&input[15], 64 - 15) + 15; i < len; ++i)
 		{
 			if (input[i] == ']')
 			{
@@ -303,26 +311,33 @@ std::string_view lw_u8str_trim(std::string_view toTrim, bool abortOnTrimNeeded)
 }
 
 
-#include <sstream>
-#ifndef STRIFY
-// Turns any plain text into "plain text", with the quotes.
-#define SUB_STRIFY(X) #X
-#define STRIFY(X) SUB_STRIFY(X)
-#endif
-void LacewingFatalErrorMsgBox2(const char * const func, const char * const file, const int line)
+extern "C" void LacewingFatalErrorMsgBox2(const char * const func, const char * const file, const int line)
 {
 	// Remove the repository name
-	const char * fileSub = strstr(file, "Lacewing\\");
+	const char * fileSub = strstr(file, "\\Lacewing\\");
+	fileSub = fileSub ? fileSub : strstr(file, "/Lacewing/");
 	fileSub = fileSub ? fileSub : file;
 
 	std::stringstream err;
 	err << "Lacewing fatal error detected.\nFile: "sv << fileSub << "\nFunction: "sv << func << "\nLine: "sv << line;
 #ifdef _WIN32
+#ifndef DE_STRIFY
+	#define DE_1STRIFY(X) #X
+	// Expands the passed param and makes it into a string literal; DE_STRIFY(__LINE__) becomes "82".
+	// Used for PROJECT_NAME define
+	#define DE_STRIFY(X) DE_1STRIFY(X)
+#endif
+	std::wcout.flush();
 	MessageBoxA(NULL, err.str().c_str(), "" PROJECT_NAME " fatal error", MB_ICONERROR);
 	std::abort();
 #else
 	char output[512];
 	strcpy(output, err.str().c_str());
+	std::cout.flush();
 	assert(false && "Fatal error. Attach debugger and view output variable.");
 #endif
 }
+
+#ifdef _MSC_VER
+	#pragma warning (pop)
+#endif

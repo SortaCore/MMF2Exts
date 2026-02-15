@@ -40,7 +40,7 @@
 			 documentation or props/target files using it. The VS MacSDK property appears to be a defunct path.
 
 			 There is a MSBuild task, but we're not using it; I think it may be due to project confusing itself doing the same build
-			 config two times simultaenously, but maybe that's an assumption.
+			 config two times simultaneously, but maybe that's an assumption.
 			 Swap out -noConLog for -v:d for extra verbosity. -->
 		<Message Text="Running background update of Mac project files..." Importance="High" />
 		<Message Text="&quot;$(MSBuildBinPath)\msbuild.exe&quot; &quot;$(MSBuildProjectFullPath)&quot; -nologo -noConLog -t:ClCompile -p:Configuration=$(Configuration);Platform=$(Platform);IsSecondRun=1;SolutionDir=&quot;$(SolutionDir)\&quot;" Importance="Normal" />

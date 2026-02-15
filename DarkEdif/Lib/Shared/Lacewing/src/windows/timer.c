@@ -1,17 +1,17 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
  * Copyright (C) 2011, 2012, 2013, 2014 James McLaughlin et al.
- * Copyright (C) 2012-2022 Darkwire Software.
+ * Copyright (C) 2012-2026 Darkwire Software.
  * All rights reserved.
  *
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
 
 #include "../common.h"
 
-static void timer_thread (lw_timer);
+static DWORD __stdcall timer_thread (lw_timer);
 
 struct _lw_timer
 {
@@ -27,21 +27,28 @@ struct _lw_timer
 	lw_timer_hook_tick on_tick;
 
 	void * tag;
+
+	char * timer_name;
 };
 
-lw_timer lw_timer_new (lw_pump pump)
+lw_timer lw_timer_new (lw_pump pump, const char * timer_name)
 {
 	lw_timer ctx = (lw_timer) calloc (sizeof (*ctx), 1);
 
 	if (!ctx)
-	  return 0;
+		return 0;
 
 	ctx->pump = pump;
 
 	ctx->shutdown_event = CreateEvent (0, TRUE, FALSE, 0);
 	ctx->timer_handle = CreateWaitableTimer (0, FALSE, 0);
 
-	ctx->timer_thread = lw_thread_new ("timer", (void *) timer_thread);
+	ctx->timer_name = _strdup (timer_name);
+
+	char threadName[128];
+	lwp_snprintf (threadName, sizeof(threadName), "lw_thread for lw_timer \"%s\" (0x%" PRIXPTR ")", timer_name, (uintptr_t)ctx);
+
+	ctx->timer_thread = lw_thread_new (threadName, (void *) timer_thread);
 	lw_thread_start (ctx->timer_thread, ctx);
 
 	return ctx;
@@ -50,7 +57,7 @@ lw_timer lw_timer_new (lw_pump pump)
 void lw_timer_delete (lw_timer ctx)
 {
 	if (!ctx)
-	  return;
+		return;
 
 	SetEvent (ctx->shutdown_event);
 
@@ -58,6 +65,8 @@ void lw_timer_delete (lw_timer ctx)
 
 	lw_thread_join (ctx->timer_thread);
 	lw_thread_delete (ctx->timer_thread);
+
+	free (ctx->timer_name);
 
 	free (ctx);
 }
@@ -67,25 +76,27 @@ static void timer_completion (void * ptr)
 	lw_timer ctx = (lw_timer) ptr;
 
 	if (ctx->on_tick)
-	  ctx->on_tick (ctx);
+		ctx->on_tick (ctx);
 }
 
-void timer_thread (lw_timer ctx)
+DWORD __stdcall timer_thread (lw_timer ctx)
 {
 	HANDLE events [2] = { ctx->timer_handle, ctx->shutdown_event };
 
 	for (;;)
 	{
-	  int result = WaitForMultipleObjects (2, events, FALSE, INFINITE);
+		int result = WaitForMultipleObjects (2, events, FALSE, INFINITE);
 
-	  if (result != WAIT_OBJECT_0)
-	  {
-		 lwp_trace ("Got result %d", result);
-		 break;
-	  }
+		if (result != WAIT_OBJECT_0)
+		{
+			if (result != WAIT_OBJECT_0 + 1)
+				always_log ("lw_timer \"%s\" got wait result %d\n", ctx->timer_name, result);
+			break;
+		}
 
-	  lw_pump_post (ctx->pump, (void *) timer_completion, ctx);
+		lw_pump_post (ctx->pump, (void *) timer_completion, ctx);
 	}
+	return 0;
 }
 
 void lw_timer_start (lw_timer ctx, long interval)
@@ -97,7 +108,8 @@ void lw_timer_start (lw_timer ctx, long interval)
 
 	if (!SetWaitableTimer (ctx->timer_handle, &due_time, interval, 0, 0, 0))
 	{
-	  assert (0);
+		always_log("lw_timer \"%s\" couldn't set waitable timer: error %u\n",
+			ctx->timer_name, GetLastError());
 	}
 
 	ctx->started = lw_true;
@@ -138,4 +150,3 @@ void * lw_timer_tag (lw_timer ctx)
 }
 
 lwp_def_hook (timer, tick)
-

@@ -72,7 +72,8 @@
     <ClCompile Include="Edittime.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Inc\Windows\Props.h" />
+    <ClInclude Include="..\Inc\Windows\Props.hpp" />
+    <ClInclude Include="..\Inc\Windows\WindowsSurface.hpp" />
     <ClInclude Include="..\Inc\Windows\WindowsDefines.hpp" />
     <ClInclude Include="DarkExt.json">
       <FileType>Document</FileType>
@@ -80,7 +81,7 @@
     <None Include="Icon.png" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Inc\Windows\MMFMasterHeader.h" />
+    <ClInclude Include="..\Inc\Windows\MMFWindowsMasterHeader.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Ext.rc" />

@@ -32,7 +32,7 @@ struct multipart_parser_settings {
 };
 
 multipart_parser* multipart_parser_init
-    (const char *boundary, const multipart_parser_settings* settings);
+	(const char *boundary, const multipart_parser_settings* settings);
 
 void multipart_parser_free(multipart_parser* p);
 

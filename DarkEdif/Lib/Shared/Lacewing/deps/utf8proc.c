@@ -57,6 +57,9 @@
 #elif !defined(_WIN32)
 	#pragma GCC diagnostic push
 	#pragma GCC diagnostic ignored "-Wsign-conversion"
+#elif defined(_MSC_VER)
+	#pragma warning (push)
+	#pragma warning (disable: 6385)
 #endif
 
 #include "utf8proc_data.c"
@@ -784,4 +787,6 @@ UTF8PROC_DLLEXPORT utf8proc_uint8_t *utf8proc_NFKC_Casefold(const utf8proc_uint8
 	#pragma clang diagnostic pop // reset warnings
 #elif !defined(_WIN32)
 	#pragma GCC diagnostic pop // reset warnings
+#elif defined(_MSC_VER)
+	#pragma warning (pop) // reset warnings
 #endif

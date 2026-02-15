@@ -6,13 +6,13 @@
 	<dict>
 		<key>Resources/Info.plist</key>
 		<data>
-		0KWUHVoWEahfv5J0HYZHeCF6auk=
+		+Ya+wC1WpRiRybsvTvfF5ifvy0w=
 		</data>
 		<key>Resources/en.lproj/ControlView.nib</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			l+tgctaAUW6Z6PJtg3al6faMvrw=
+			8k0m6YVaW5jSw09tg+WvOOpFY5Y=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -30,7 +30,7 @@
 		<dict>
 			<key>hash</key>
 			<data>
-			5MbcqGfknmxjBX4QKLfIKes7YOo=
+			Cyy9OyS0sCLvcgngWthPVKYAQbA=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -56,7 +56,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			awP3a6pkMeo3rKmM4J5zLzEALv/jBjllKsD+j9ASfcU=
+			6A60luFKbjUhv/nB3bjp97db7lsj3jSOO3H2skJhro0=
 			</data>
 		</dict>
 		<key>Headers/CActExtension.h</key>
@@ -84,7 +84,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			PbaLMYXKfFwj4+I3YwAfdtHMbBs1fyJIjYhDtRxyBTY=
+			9RqIz3UE7EmYNixLefONUuUxNUs1SYJzknu/7NgFdqk=
 			</data>
 		</dict>
 		<key>Headers/CAnimHeader.h</key>
@@ -126,28 +126,28 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			D5cNmVPcx1KLB8KyXLX1/g2BE9N6kHMUBQS7jc/EWYc=
+			tSqn5EJMTob0WV8QylpqumSESo7PiWwaQdNLQ+1UoFI=
 			</data>
 		</dict>
 		<key>Headers/CBitmap.h</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			wJkoYbx6JbtUzesxCzt8RoFxrK4sq1/WhsKZg4VuLtg=
+			HhnKWvKE3Z/KW1CCS3Tw+gUtJb6NfU2v+kp182YYDVo=
 			</data>
 		</dict>
 		<key>Headers/CBkd2.h</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			PznLFHJLVwXEH0jVQ9F5GhybK+tVjVz5tqOugsf8ODA=
+			mSHRMr8rYIQ0uUSCD9PHM2P54TztYi4fZ9nwvKKMMQk=
 			</data>
 		</dict>
 		<key>Headers/CBox2D.h</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			YSMpth/x6ltUA+TjPRv4RXBLN4Ix4oBaXds0VTEdEQM=
+			1K11Mgb4ufheJ9kKXn5TLh1uglkh5gTnUzFfFrnsAs0=
 			</data>
 		</dict>
 		<key>Headers/CCCA.h</key>
@@ -161,7 +161,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			noy3RzXkapSGTi3m+4F7Vi26CP2WK1hsrC1hPzihDow=
+			PqDdq7Uvbo9SiwKZNbZuux38Jq1ZteCPrnIqQJypxBo=
 			</data>
 		</dict>
 		<key>Headers/CCndExtension.h</key>
@@ -210,7 +210,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			zuRDojIci2+Z0iM/Hk5lfC8PsSoas2nAeKS7rxqXnvk=
+			jw7JmlK6MHujE7NuEIpxW8cLjHfHzozjdKE3Osodt5U=
 			</data>
 		</dict>
 		<key>Headers/CDefObject.h</key>
@@ -248,6 +248,34 @@
 			PGvGx3lNYjpgu/VdwEAeivvvqHB0HUAUa4j5/0eXBMc=
 			</data>
 		</dict>
+		<key>Headers/CEffect.h</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			RGdPURDf6zlkB4n6cfUqt/5s3NS0dduWsfDrsCJt+CQ=
+			</data>
+		</dict>
+		<key>Headers/CEffectBank.h</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			4Ac85lEWIGxkzAzqJ7znT7IecjdCjkZggzefaZl61dU=
+			</data>
+		</dict>
+		<key>Headers/CEffectEx.h</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			vekRKda2cU3l9ZjMabPznwV2BdmMDHQJ4MYXZmJGu7Y=
+			</data>
+		</dict>
+		<key>Headers/CEffectParam.h</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			d5YzBiGW7mUmSA0RbnpNehAo2uBZWSijlUE5ivK7bjA=
+			</data>
+		</dict>
 		<key>Headers/CEmbeddedFile.h</key>
 		<dict>
 			<key>hash2</key>
@@ -259,14 +287,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			g5trbcqOAzbkE/4AAPHxtYbTj+B3sVRKHV7VMw4AXeY=
+			WEKJFVbV+OReh4kPlIxc/qRYhIBSdmKGH80AkNZxw0k=
 			</data>
 		</dict>
 		<key>Headers/CEvents.h</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			8Jpb7OTshDK7wuwJWFQfiEuPyV0bvazYnRVtE8mQRfY=
+			Bmwns0UWL4JocNIuUygW/9lUha7PZgbCSBGee1jtS+c=
 			</data>
 		</dict>
 		<key>Headers/CExtLoad.h</key>
@@ -294,7 +322,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			Mm+8UwoEqtizFtqNiuN6Bhby8JrE9iTnCmLR3V5Gh1I=
+			WqkLyk/d2bCsGsaO3nDiQPZuwRltRhf4A0nOA544VMk=
 			</data>
 		</dict>
 		<key>Headers/CFadeSprite.h</key>
@@ -308,7 +336,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			WsA12OqzfT/DbXWTXnO1MYx+7cJDamckAwqT84NUic4=
+			rqHlB8hU1c17T73tdLjwSvf60z+LDt48qW6+TlhcnBQ=
 			</data>
 		</dict>
 		<key>Headers/CFont.h</key>
@@ -336,14 +364,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			WHr2QaVvZh1TxTCePiG1PerxzXn0KXpdxDtSe9k+irU=
+			wH/r5aX8kAKbz+uv4sCfDSTGDK/IN8Dg9bllEPcS/UA=
 			</data>
 		</dict>
 		<key>Headers/CImageBank.h</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			37Rd3NkxnkMb416xDB/vm6OgaE2YRCKcNE/fi4Wl8Gs=
+			kXhwvx1HCFU9rwFdxu0nyNdfc9zbnV0Mvdm/R8yaDG0=
 			</data>
 		</dict>
 		<key>Headers/CIni.h</key>
@@ -371,7 +399,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			lXsgm/+tOhYZrWIkOhUVIixfanRFk6Wa80dphXkyOaE=
+			HxRPw7tbh6k1gEe+VyHhXztZQWxRUFtTat24mwpm2Y8=
 			</data>
 		</dict>
 		<key>Headers/CLives.h</key>
@@ -399,7 +427,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			sJEh+250btg5MXBBJ/xo028sFv5n8g/fa9jb1CWrFxs=
+			fZFnc8zK9dc1uqc8rSaxVYganhnA2CQROowkyW47xxc=
 			</data>
 		</dict>
 		<key>Headers/CMove.h</key>
@@ -581,21 +609,21 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			neC77hbaMWD0GneFbaxqMKyWVb3b/0k2Fg6xqRAkbks=
+			TlMLNL4Qqn/VW9gxnzKhEuFCGo2HQbDkhtOGJo21ASk=
 			</data>
 		</dict>
 		<key>Headers/COCQBackdrop.h</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			2YMLh1QtIPahpgcAj22u+gT+ZwTARsSqFqrFc8XcQ90=
+			l6iBRHfcokbyyo40/05yGu1qtaAurdlS5R125Vcg01Y=
 			</data>
 		</dict>
 		<key>Headers/COI.h</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			ocEZEpveAISNo0HQOJveRtv27eEhpgWgOPtpsuTNk0s=
+			e9lqKPdiDoDQa8gndG9LhoPaiJiW8ebCnqRsBd/TBPg=
 			</data>
 		</dict>
 		<key>Headers/COIList.h</key>
@@ -609,14 +637,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			Iv/I8USPe3HhQkzGufFA8WNHh0nKAHxC910acv7af9M=
+			zzJjm392etuqFxpgv8C+5ciKRBxF6cljDt1wlIJ1aus=
 			</data>
 		</dict>
 		<key>Headers/CObject.h</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			8CjfMLt7QVyWKbiykEvHYPUDncHKm30DeTulnsdIuTA=
+			fxcAgeki6iLALKTYDwKpBOmVlUrdHpwesd4YfEW08Gk=
 			</data>
 		</dict>
 		<key>Headers/CObjectCommon.h</key>
@@ -672,7 +700,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			KiGI+K7ZYO1eGrMzKE1OUmGxUIjSBQnZNeb4plJ0NfA=
+			XuWFHeLfU0wshBElRQybi5ksVloWpObnOj6UVaqdA9M=
 			</data>
 		</dict>
 		<key>Headers/CRMvt.h</key>
@@ -707,28 +735,35 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			qaGHIeep/DHiX/FlH4heNG2o7bIsM8QZOEwyaZO+N1Q=
+			wCYTqb8DBspOh5fNv1gbTA8EPCTXaxJQVTz+5rrPimw=
+			</data>
+		</dict>
+		<key>Headers/CRenderUtils.h</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			B/AsXJha5t/kPl1w0GXHUg+W+e6tWVrXR21VmsQm2FM=
 			</data>
 		</dict>
 		<key>Headers/CRenderer.h</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			uIKm4IghmHdRIJ4SmU8ysiddfWQVeBLiGuOM5FMBruE=
+			3inlLcN/w+MExtDkiZ83BFTHkyZw8SbXNl0YZSfH1T8=
 			</data>
 		</dict>
 		<key>Headers/CRun.h</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			DuR9lskKFqfsoRk3c9vuO1zisawg5WMWSa1+dqpFfVc=
+			hIMTRa3l5OqKrMGXFygA/DptqaAdtMLvhhKPYD/1TWI=
 			</data>
 		</dict>
 		<key>Headers/CRunApp.h</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			gHfQzyRb5etkxE5K9FOsJOzildIMu+QXi5oqzBCSswk=
+			gLnUNvm5SU0N80N+No+n/1Fx+BzTYlMk0b0UasHXJSo=
 			</data>
 		</dict>
 		<key>Headers/CRunExtension.h</key>
@@ -742,7 +777,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			it8X1hgBSW+1aKot3uyL2KEz7F6vc5XSij1MwmarIf4=
+			W4rl7Nq0jpsaNC95GIJN6g0EIa8hXeebLRc0WZKnrqM=
 			</data>
 		</dict>
 		<key>Headers/CRunMvtExtension.h</key>
@@ -756,7 +791,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			5nFOpcevppvcbdgC46dmHBybDV+5sZV9qyAGGBVevjI=
+			zHf9i1wtW6AZ7++zBdmxSF5h3ZUAJQLiv9DzJUYdgyo=
 			</data>
 		</dict>
 		<key>Headers/CRunViewController.h</key>
@@ -784,14 +819,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			x6Shb3v3sr82vAaHeT/jTBsgtDPRoqofrLy4ajn2GIs=
+			aUSvKAfbryDUFSU/0B4iXvz4vVmeoJLfT6Lhe2OpSqU=
 			</data>
 		</dict>
 		<key>Headers/CShader.h</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			he31BpbtVUNYj8jplUcSbUGAUca+UgBGSRA+yqFHEVE=
+			xOyy+j1zdKQ9ClEX4SSG1wimGrSiPPe8BS3w7/5rxhk=
 			</data>
 		</dict>
 		<key>Headers/CSound.h</key>
@@ -819,21 +854,21 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			///nm+y03o0HasujNTBCM2EZ3rSk0FYWuOgQb8UuaTk=
+			pRnr3EJJGenss94TUdMeomcqi8SY5PlvvqJ6afqClQc=
 			</data>
 		</dict>
 		<key>Headers/CSpriteGen.h</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			L8sCn/H0y1vvPTKo22YFSii4AO1IBAVALbWkC7ixL1o=
+			T1eB3Y2sPq+SPW3EdDNQ4OrDi3uxS3ddXp5GAFPSIIg=
 			</data>
 		</dict>
 		<key>Headers/CSysEvent.h</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			QL9H7TSAtFoNPdJ9rI3JYqlsdLBy0wuuW0oh6vgMVZA=
+			OqclZu71jtOGoo18eNn9tEsxuRVE5dE6G/qIiAkSc6Y=
 			</data>
 		</dict>
 		<key>Headers/CText.h</key>
@@ -847,14 +882,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			8vPEiThjihdDMqpLNr8zV81HAQy1X9XwplePjai3i2I=
+			Z1bzInQTzucutl++cD67uicOFj1uAr86FK7Apj7B7PQ=
 			</data>
 		</dict>
 		<key>Headers/CTexture.h</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			gFiv+ihYnvsHkmGfPDQYt0fZ6dg1dhFoXn14oPUfHQY=
+			INGWGpzBEzVdRtYhz4md+gWZ4xCm076Z6DH2n7NsiFM=
 			</data>
 		</dict>
 		<key>Headers/CTrans.h</key>
@@ -910,7 +945,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			ux6h/kPj0dunw9EEOc3LhN+JXmMg5hHv1k7gexBjfPI=
+			+udQA40Kyu4tKeVtd8uZJtEt3WUIzKgQJSu0TqLZfTQ=
 			</data>
 		</dict>
 		<key>Headers/IDrawable.h</key>
@@ -945,7 +980,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			4g2P1asZJY8Ozkag12kkE2JwYt35Cg5ypa/Qdxdumu0=
+			2l8k/bJFkSYrNJTLjGHHSR3xmyWj0WIr6s1dng+R2S4=
 			</data>
 		</dict>
 		<key>Headers/Maths.h</key>
@@ -1316,14 +1351,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			6LZ7CjeJkaTp6wsZewtxxR+rWG9IrTvxN4eJfzTFHS4=
+			5C6eg9TdgsCAJIrax/2GcW6Oic/rrQiogsCTzBfOHAo=
 			</data>
 		</dict>
 		<key>Resources/en.lproj/ControlView.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			2cSpIhdoYWVQAfHs7pciyvmR5UirI4H99awJgF42Cv4=
+			q8uBueLZRNOgRzvfrpqPslJhAotVyKbEvb3J9SJR17g=
 			</data>
 			<key>optional</key>
 			<true/>
@@ -1341,7 +1376,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			04268CUhEtHSMJ9k6LfoV9y29NHox8OEDJqtMAOR7Yc=
+			KMrm4E7138BQD7rnbklgmg2GG+JeGrxt4xmOetCtoeY=
 			</data>
 			<key>optional</key>
 			<true/>

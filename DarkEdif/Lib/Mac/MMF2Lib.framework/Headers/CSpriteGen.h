@@ -2,11 +2,11 @@
 *
 * This source code is part of the iOS exporter for Clickteam Multimedia Fusion 2
 * and Clickteam Fusion 2.5.
-* 
-* Permission is hereby granted to any person obtaining a legal copy 
-* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source 
-* code for debugging, optimizing, or customizing applications created with 
-* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5. 
+*
+* Permission is hereby granted to any person obtaining a legal copy
+* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source
+* code for debugging, optimizing, or customizing applications created with
+* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5.
 * Any other use of this source code is prohibited.
 *
 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -64,7 +64,7 @@
 @class CRunFrame;
 class CRenderer;
 
-@interface CSpriteGen : NSObject 
+@interface CSpriteGen : NSObject
 {
 @public
 	CSprite* firstSprite;
@@ -78,10 +78,10 @@ class CRenderer;
 
 -(id)initWithBank:(CImageBank*)b andApp:(CRunApp*)a;
 -(void)dealloc;
--(CSprite*)addSprite:(int)xSpr withY:(int)ySpr andImage:(short)iSpr andLayer:(short)wLayer andZOrder:(int)nZOrder andBackColor:(int)backSpr andFlags:(int)sFlags andObject:(CObject*)extraInfo;
+-(CSprite*)addSprite:(int)xSpr withY:(int)ySpr andImage:(unsigned short)iSpr andLayer:(short)wLayer andZOrder:(int)nZOrder andBackColor:(int)backSpr andFlags:(int)sFlags andObject:(CObject*)extraInfo;
 -(CSprite*)addOwnerDrawSprite:(int)x1 withY1:(int)y1 andX2:(int)x2 andY2:(int)y2 andLayer:(short)wLayer andZOrder:(int)nZOrder andBackColor:(int)backSpr andFlags:(int)sFlags andObject:(CObject*)extraInfo andDrawable:(id)sprProc;
--(CSprite*)modifSprite:(CSprite*)ptSpr withX:(int)xSpr andY:(int)ySpr andImage:(short)iSpr;
--(CSprite*)modifSpriteEx:(CSprite*)ptSpr withX:(int)xSpr andY:(int)ySpr andImage:(short)iSpr andScaleX:(float)fScaleX andScaleY:(float)fScaleY andScaleFlag:(BOOL)bResample andAngle:(float)nAngle andRotateFlag:(BOOL)bAntiA;
+-(CSprite*)modifSprite:(CSprite*)ptSpr withX:(int)xSpr andY:(int)ySpr andImage:(unsigned short)iSpr;
+-(CSprite*)modifSpriteEx:(CSprite*)ptSpr withX:(int)xSpr andY:(int)ySpr andImage:(unsigned short)iSpr andScaleX:(float)fScaleX andScaleY:(float)fScaleY andScaleFlag:(BOOL)bResample andAngle:(float)nAngle andRotateFlag:(BOOL)bAntiA;
 -(CSprite*)modifSpriteEffect:(CSprite*)ptSpr withInkEffect:(int)effect  andInkEffectParam:(int)effectParam andEffectShader:(int)effectShader ;
 -(CSprite*)modifOwnerDrawSprite:(CSprite*)ptSprModif withX1:(int)x1 andY1:(int)y1 andX2:(int)x2 andY2:(int)y2;
 -(void)setSpriteLayer:(CSprite*)ptSpr withLayer:(int)nLayer;
@@ -104,11 +104,11 @@ class CRenderer;
 -(void)delSprite:(CSprite*)ptSprToDel;
 -(void)delSpriteEffect:(CSprite*)ptSpr;
 -(void)delSpriteFast:(CSprite*)ptSpr;
--(CMask*)getSpriteMask:(CSprite*)ptSpr withImage:(short)newImg andFlags:(int)nFlags andAngle:(float)newAngle andScaleX:(double)newScaleX andScaleY:(double)newScaleY;
--(CMask*)getSpriteMask:(CSprite*)ptSpr withImage:(short)newImg andFlags:(int)nFlags;
+-(CMask*)getSpriteMask:(CSprite*)ptSpr withImage:(unsigned short)newImg andFlags:(int)nFlags andAngle:(float)newAngle andScaleX:(double)newScaleX andScaleY:(double)newScaleY;
+-(CMask*)getSpriteMask:(CSprite*)ptSpr withImage:(unsigned short)newImg andFlags:(int)nFlags;
 -(void)spriteUpdate;
 -(void)spriteClear;
--(void)pasteSpriteEffect:(CRenderer*)renderer withImage:(short)iNum andX:(int)iX andY:(int)iY andFlags:(int)flags andInkEffect:(int)effect andInkEffectParam:(int)effectParam andEffectShader:(int)effectShader;
+-(void)pasteSpriteEffect:(CRenderer*)renderer withImage:(unsigned short)iNum andX:(int)iX andY:(int)iY andFlags:(int)flags andInkEffect:(int)effect andInkEffectParam:(int)effectParam andEffectShader:(int)effectShader;
 -(void)winDrawSprites:(CRenderer*)renderer;
 -(void)drawSprite:(CSprite*)sprite withRenderer:(CRenderer*)renderer;
 -(CSprite*)getLastSprite:(int)nLayer withFlags:(int)dwFlags;
@@ -117,8 +117,8 @@ class CRenderer;
 -(void)winSetColMode:(short)c;
 -(CSprite*)spriteCol_TestPoint:(CSprite*)firstSpr withLayer:(short)nLayer andX:(int)xp andY:(int)yp andFlags:(int)dwFlags;
 -(BOOL)spriteCol_TestPointOne:(CSprite*)firstSpr withLayer:(short)nLayer andX:(int)xp andY:(int)yp andFlags:(int)dwFlags;
--(CArrayList*)spriteCol_TestSprite_All:(CSprite*)ptSpr withImage:(short)newImg andX:(int)newX andY:(int)newY andAngle:(float)newAngle andScaleX:(float)newScaleX andScaleY:(float)newScaleY andFlags:(int)dwFlags;
--(CSprite*)spriteCol_TestSprite:(CSprite*)ptSpr withImage:(short)newImg andX:(int)newX andY:(int)newY andAngle:(float)newAngle andScaleX:(float)newScaleX andScaleY:(float)newScaleY andFoot:(int)subHt andFlags:(int)dwFlags;
+-(CArrayList*)spriteCol_TestSprite_All:(CSprite*)ptSpr withImage:(unsigned short)newImg andX:(int)newX andY:(int)newY andAngle:(float)newAngle andScaleX:(float)newScaleX andScaleY:(float)newScaleY andFlags:(int)dwFlags;
+-(CSprite*)spriteCol_TestSprite:(CSprite*)ptSpr withImage:(unsigned short)newImg andX:(int)newX andY:(int)newY andAngle:(float)newAngle andScaleX:(float)newScaleX andScaleY:(float)newScaleY andFoot:(int)subHt andFlags:(int)dwFlags;
 -(CSprite*)spriteCol_TestRect:(CSprite*)firstSpr withLayer:(int)nLayer andX:(int)xp andY:(int)yp andWidth:(int)wp andHeight:(int)hp andFlags:(int)dwFlags;
 -(void)recalcSpriteSurface:(CSprite*)ptSpr;
 -(void)spriteDraw:(CRenderer*)renderer;

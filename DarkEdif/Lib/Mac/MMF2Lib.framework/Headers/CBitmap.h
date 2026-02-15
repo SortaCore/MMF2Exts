@@ -2,11 +2,11 @@
 *
 * This source code is part of the iOS exporter for Clickteam Multimedia Fusion 2
 * and Clickteam Fusion 2.5.
-* 
-* Permission is hereby granted to any person obtaining a legal copy 
-* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source 
-* code for debugging, optimizing, or customizing applications created with 
-* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5. 
+*
+* Permission is hereby granted to any person obtaining a legal copy
+* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source
+* code for debugging, optimizing, or customizing applications created with
+* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5.
 * Any other use of this source code is prohibited.
 *
 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -28,21 +28,23 @@
 
 enum
 {
-	BOP_COPY,
-	BOP_BLEND,
-	BOP_INVERT,
-	BOP_XOR,
-	BOP_AND,
-	BOP_OR,
-	BOP_BLEND_REPLEACETRANSP,
-	BOP_DWROP,
-	BOP_ANDNOT,
-	BOP_ADD,
-	BOP_MONO,
-	BOP_SUB,
-	BOP_BLEND_DONTREPLACECOLOR,
-	BOP_EFFECTEX,
-	BOP_MAX
+    BOP_COPY,
+    BOP_BLEND,
+    BOP_INVERT,
+    BOP_XOR,
+    BOP_AND,
+    BOP_OR,
+    BOP_BLEND_REPLACETRANSP,
+    BOP_DWROP,
+    BOP_ANDNOT,
+    BOP_ADD,
+    BOP_MONO,
+    BOP_SUB,
+    BOP_BLEND_DONTREPLACECOLOR,
+    BOP_EFFECTEX,
+    BOP_LAYER,
+    BOP_ONE,
+    BOP_MAX
 };
 #define BOP_MASK 0xFFF
 #define BOP_RGBAFILTER 0x1000
@@ -50,7 +52,7 @@ enum
 #define EFFECTFLAG_ANTIALIAS   0x20000000L
 #define EFFECT_MASK 0xFFFF
 
-@interface CBitmap : NSObject 
+@interface CBitmap : NSObject
 {
 @public
 	int width;

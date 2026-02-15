@@ -2,11 +2,11 @@
 *
 * This source code is part of the iOS exporter for Clickteam Multimedia Fusion 2
 * and Clickteam Fusion 2.5.
-* 
-* Permission is hereby granted to any person obtaining a legal copy 
-* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source 
-* code for debugging, optimizing, or customizing applications created with 
-* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5. 
+*
+* Permission is hereby granted to any person obtaining a legal copy
+* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source
+* code for debugging, optimizing, or customizing applications created with
+* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5.
 * Any other use of this source code is prohibited.
 *
 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -99,14 +99,14 @@ class CRenderer;
 	CArrayList* replacedColors;
 	float controlScaleX;
 	float controlScaleY;
-	
+
     // Classes de gestion communes
     CRCom* roc;                   // The CRCom object
     CRMvt* rom;                   // The CRMvt object
     CRAni* roa;                   // The CRAni object
     CRVal* rov;                   // The CRVal object
     CRSpr* ros;                   // The CRSpr object
-    
+
     // Effect code
     CEffectEx* hoEffect;
 }
@@ -116,12 +116,15 @@ class CRenderer;
 -(void)initObject:(CObjectCommon*)ocPtr withCOB:(CCreateObjectInfo*)cob;
 -(int)getX;
 -(int)getY;
+-(int)globalToLayerX:(int)X;
+-(int)globalToLayerY:(int)Y;
 -(Vec2i)getPosition;
 -(int)getWidth;
 -(int)getHeight;
 -(void)setX:(int)x;
 -(void)setY:(int)y;
 -(void)setPosition:(int)x withY:(int)y;
+-(void)setLayer:(int)newLayer;
 -(void)setWidth:(int)width;
 -(void)setHeight:(int)height;
 -(void)generateEvent:(int)code withParam:(int)param;
@@ -146,7 +149,7 @@ class CRenderer;
 -(CObject*)getObjectFromFixed:(int)fixed;
 -(BOOL)isOfType:(short)OiList;
 -(void)runtimeIsReady;
--(int)checkOrCreateEffectIfNeededByIndex:(int)index andEffectParam:(int)rgba;
+-(int)checkOrCreateEffectIfNeededByIndex:(int)index withEffectParam:(int)rgba andFillData:(BOOL)fillData;
 -(int)checkOrCreateEffectIfNeededByName:(NSString*)name andEffectParam:(int)rgba;
 -(void)fillEffectData;
 

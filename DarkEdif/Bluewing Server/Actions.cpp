@@ -1,4 +1,4 @@
-#include "Common.h"
+#include "Common.hpp"
 
 #define EventsToRun globals->_eventsToRun
 #define Remake(name) DarkEdif::MsgBox::Error(_T("Remake action"), _T("Your "#name" actions need to be recreated.\r\n") \
@@ -69,7 +69,6 @@ void Extension::FlashServer_StopHosting()
 
 void Extension::WebSocketServer_LoadHostCertificate_FromFile(const TCHAR* chainFile, const TCHAR* privKeyFile, const TCHAR* password)
 {
-	// this will return false if it fails - but we should get an error made anyway
 	const std::tstring chainFileUnembedded = DarkEdif::MakePathUnembeddedIfNeeded(this, chainFile);
 
 	// Errors in DarkEdif::MakePathUnembeddedIfNeeded indicated by starting with '>' char
@@ -83,6 +82,7 @@ void Extension::WebSocketServer_LoadHostCertificate_FromFile(const TCHAR* chainF
 		return CreateError("Cannot load private key file: %s.", DarkEdif::TStringToUTF8(privKeyFileUnembedded.substr(1)).c_str());
 
 	// Pass through as UTF-8; it'll be converted back to wide by lacewing if Unicode Windows build
+	// this will return false if it fails - but we should get an error made anyway
 	Srv.websocket->load_cert_file(
 		DarkEdif::TStringToUTF8(chainFileUnembedded).c_str(),
 		DarkEdif::TStringToUTF8(privKeyFileUnembedded).c_str(),
@@ -171,7 +171,7 @@ int FindAllowListFromName(const TCHAR * listToSet)
 	std::transform(listToSetStr.begin(), listToSetStr.end(), listToSetStr.begin(),
 		[](const TCHAR c) { return ::_totlower(c); });
 
-	for (size_t i = 0; i < std::size(listNames); i++)
+	for (std::size_t i = 0; i < std::size(listNames); ++i)
 	{
 		if (listNames[i] == listToSetStr)
 			return (i % 4);
@@ -186,7 +186,7 @@ void Extension::SetUnicodeAllowList(const TCHAR * listToSet, const TCHAR * allow
 
 	const std::string err = Srv.setcodepointsallowedlist((lacewing::relayserver::codepointsallowlistindex)listIndex, DarkEdif::TStringToANSI(allowListContents));
 	if (!err.empty())
-		CreateError("Couldn't set Unicode %s allow list, %s.", listToSet, err.c_str());
+		CreateError("Couldn't set Unicode %s allow list, %s.", DarkEdif::TStringToUTF8(listToSet).c_str(), err.c_str());
 }
 
 
@@ -526,6 +526,44 @@ void Extension::Channel_SelectByName(const TCHAR * channelNamePtr)
 	}
 
 	CreateError("Selecting channel by name failed: Channel with name \"%s\" not found on server.", DarkEdif::TStringToUTF8(channelNamePtr).c_str());
+}
+void Extension::Channel_SelectByID(int channelIDInt)
+{
+	if (channelIDInt < 0 || channelIDInt >= 0xFFFF)
+		return CreateError("Selecting channel by ID failed: ID %i is less than 0 or greater than 65534.", channelIDInt);
+
+	const lw_ui16 channelID = (lw_ui16)channelIDInt;
+	selChannel = nullptr;
+	{
+		lacewing::readlock serverChannelListReadLock = Srv.lock_channellist.createReadLock();
+		const auto& channels = Srv.getchannels();
+		for (const auto& ch : channels)
+		{
+			// Channel IDs are not contiguous or ordered, so we can't look up by index,
+			// or stop if read ID goes past. Example:
+			// Channel IDs 0, 1, 2 made.
+			// 1 is destroyed. New channel made: ID 1, but at index 2 in channels list.
+			// If we stopped at ID 2 because it was past ID 1, we'd not read index 2.
+			if (ch->id() == channelID)
+			{
+				selChannel = ch;
+
+				if (selClient == nullptr)
+					return;
+
+				// If selected client is on new channel, keep it selected, otherwise deselect client
+				serverChannelListReadLock.lw_unlock();
+
+				auto channelReadLock = ch->lock.createReadLock();
+				const auto& clientsOnChannel = ch->getclients();
+				if (std::find(clientsOnChannel.cbegin(), clientsOnChannel.cend(), selClient) == clientsOnChannel.cend())
+					selClient = nullptr;
+				return;
+			}
+		}
+	}
+
+	return CreateError("Selecting channel by ID failed: channel ID %i does not exist.", channelIDInt);
 }
 void Extension::Channel_Close()
 {
@@ -1017,7 +1055,7 @@ void Extension::Client_Disconnect()
 		return CreateError("Could not disconnect client: No client selected.");
 
 	if (!selClient->readonly())
-		selClient->disconnect();
+		selClient->disconnect(selClient);
 }
 void Extension::Client_SetLocalData(const TCHAR * key, const TCHAR * value)
 {
@@ -1125,7 +1163,7 @@ void Extension::Client_SelectByName(const TCHAR * clientName)
 void Extension::Client_SelectByID(int clientID)
 {
 	if (clientID < 0 || clientID >= 0xFFFF)
-		return CreateError("Could not select client on channel, ID is below 0 or greater than 65535.");
+		return CreateError("Could not select client by ID, ID %i is below 0 or greater than 65535.", clientID);
 
 	selClient = nullptr;
 	{
@@ -1301,7 +1339,11 @@ void Extension::BlastTextToChannel(int subchannel, const TCHAR * textToBlast)
 	if (selChannel->readonly())
 		return CreateError("Blast Text to Channel was called with a read-only channel, name %s.", selChannel->name().c_str());
 
-	selChannel->blast(subchannel, DarkEdif::TStringToUTF8(textToBlast), 0);
+	const std::string utf8Msg = DarkEdif::TStringToUTF8(textToBlast);
+	if (utf8Msg.size() > globals->maxUDPSize)
+		return CreateError("Blast Text to Channel was called with text too large (%zu bytes).", utf8Msg.size());
+
+	selChannel->blast(subchannel, utf8Msg, 0);
 }
 void Extension::BlastTextToClient(int subchannel, const TCHAR * textToBlast)
 {
@@ -1312,7 +1354,11 @@ void Extension::BlastTextToClient(int subchannel, const TCHAR * textToBlast)
 	if (selClient->readonly())
 		return CreateError("Blast Text to Client was called with a read-only client: ID %hu, name %s.", selClient->id(), selClient->name().c_str());
 
-	selClient->blast(subchannel, DarkEdif::TStringToUTF8(textToBlast), 0);
+	const std::string utf8Msg = DarkEdif::TStringToUTF8(textToBlast);
+	if (utf8Msg.size() > globals->maxUDPSize)
+		return CreateError("Blast Text to Client was called with text too large (%zu bytes).", utf8Msg.size());
+
+	selClient->blast(subchannel, utf8Msg, 0);
 }
 void Extension::BlastNumberToChannel(int subchannel, int numToBlast)
 {
@@ -1344,6 +1390,8 @@ void Extension::BlastBinaryToChannel(int subchannel)
 		CreateError("Blast Binary to Channel was called without a channel being selected.");
 	else if (selChannel->readonly())
 		CreateError("Blast Binary to Channel was called with a read-only channel, name %s.", selChannel->name().c_str());
+	else if (SendMsgSize > globals->maxUDPSize)
+		CreateError("Blast Binary to Channel was called with binary too large (%zu bytes).", SendMsgSize);
 	else
 		selChannel->blast(subchannel, std::string_view(SendMsg, SendMsgSize), 2);
 
@@ -1358,6 +1406,8 @@ void Extension::BlastBinaryToClient(int subchannel)
 		CreateError("Blast Binary to Client was called without a client being selected.");
 	else if (selClient->readonly())
 		CreateError("Blast Binary to Client was called with a read-only client: ID %hu, name %s.", selClient->id(), selClient->name().c_str());
+	else if (SendMsgSize > globals->maxUDPSize)
+		CreateError("Blast Binary to Client was called with binary too large (%zu bytes).", SendMsgSize);
 	else
 		selClient->blast(subchannel, std::string_view(SendMsg, SendMsgSize), 2);
 
@@ -1697,4 +1747,13 @@ void Extension::RecvMsg_AppendToFile(int passedPosition, int passedSize, const T
 		CreateError("Cannot append received binary to file \"%s\", error %i \"%s\""
 			" occurred with writing the end of the file.", DarkEdif::TStringToUTF8(filename).c_str(), errno, errtext);
 	}
+}
+void Extension::Relay_DoHolePunchToFutureClient(const TCHAR* clientIP, int localPort)
+{
+	if (localPort > 0xFFFF || localPort < 0)
+		return CreateError("Cannot hole punch with local port %d; invalid port.", localPort);
+	if (clientIP[0] == _T('\0'))
+		return CreateError("Cannot hole punch with blank remote IP.");
+
+	Srv.hole_punch(DarkEdif::TStringToANSI(clientIP).c_str(), (lw_ui16)localPort);
 }

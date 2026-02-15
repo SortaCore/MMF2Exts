@@ -1,11 +1,11 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
  * Copyright (C) 2011, 2012, 2013 James McLaughlin et al.
- * Copyright (C) 2012-2022 Darkwire Software.
+ * Copyright (C) 2012-2026 Darkwire Software.
  * All rights reserved.
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
 
 #include <sys/types.h>
@@ -99,3 +99,8 @@ typedef int lwp_socket;
 #define lwp_snprintf snprintf
 #define lwp_fmt_size "%zd"
 
+// From Microsoft's implementation in ws2ipdef.h; on Windows, is defined there
+#ifndef IN6_IS_ADDR_GLOBAL
+	// Gets if an IPv6 address is global-scope (as opposed to link-local, site-local, loopback)
+	#define IN6_IS_ADDR_GLOBAL(a) ((((const uint32_t *) (a))[0] & htonl(0x70000000)) == htonl (0x20000000))
+#endif /* IS ADDR GLOBAL */

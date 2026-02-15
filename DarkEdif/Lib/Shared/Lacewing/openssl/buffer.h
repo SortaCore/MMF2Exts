@@ -36,10 +36,10 @@ extern "C" {
 # define BUF_strnlen(str, maxlen) OPENSSL_strnlen(str, maxlen)
 
 struct buf_mem_st {
-    size_t length;              /* current number of bytes */
-    char *data;
-    size_t max;                 /* size of buffer */
-    unsigned long flags;
+	size_t length;			  /* current number of bytes */
+	char *data;
+	size_t max;				 /* size of buffer */
+	unsigned long flags;
 };
 
 # define BUF_MEM_FLAG_SECURE  0x01

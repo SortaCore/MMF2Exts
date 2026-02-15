@@ -1,6 +1,6 @@
 MMF2/CF2.5 Open Source Extension Repository
 ===
-A single repository to contain and/or link to open source extensions for MMF2/CF2.5. All extensions are compatible with both Fusion 2.0 and implicitly 2.5.  
+A single repository to contain and/or link to open source extensions for MMF2/CF2.5. All extensions are compatible with Fusion 2.0 and higher, including 2.5, and 2.5+.  
 These extensions are collated for examples and for upgrading; these are subject to individual licenses.  
 If you plan on distributing your own version publicly, it is highly recommended you get permission from original authors, where possible.  
 Since these source codes are collated by Phi, not by the authors themselves, they may be old versions, but should be suitable for demonstration.
@@ -9,9 +9,23 @@ Since these source codes are collated by Phi, not by the authors themselves, the
 It's recommended you use Visual Studio 2019, although other editions can be used with loss of platform compatiblity.
 
 You should install either the Express edition, or get the free **Community** edition, which supports VS addons.
-* VS 2017 - Android, Windows XP+ support, no iOS, no Mac - can be downloaded under [older VS downloads][Older VS editions]. Requires a free registration.
-* VS 2019 - iOS, Mac, Android, Windows XP+ support - can be downloaded under [older VS downloads][Older VS editions]. Requires a free registration.
-* VS 2022 - iOS, Mac, Android, Windows Vista+ support - can be downloaded here: [VS 2022 Express], [VS 2022 Community]
+* VS 2017 Community - Android, Windows XP+ support, no iOS, no Mac - can be downloaded under [older VS downloads][Older VS editions]. Requires a free registration.
+* VS 2019 Community - iOS, Mac, Android, Windows XP+ support - can be downloaded under [VS 2019 Community DD] (direct download from MS).
+* VS 2022 Community - iOS, Mac, Android, Windows Vista+ support - can be downloaded here: [VS 2022 Community DD] (direct download from MS).
+* VS 2026 - Android, Windows Vista+ support, iOS\*, Mac\* - can be downloaded here: [VS 2026 Express], [VS 2026 Community]  
+  \*= _Microsoft will deprecate remote building for iOS/Mac in VS 2026. If this means removal, this will no longer be usable for DarkEdif._
+
+To build iOS/Mac, you need a Mac, running Xcode 10.4.3, or later. This runs on Mac OS 12 (Monterey).  
+Your Mac should be a model released in 2014.  
+Earlier Xcode 10.2+ (Mac 2012 Q3+) and later Xcode can be used, with some compatibility loss.
+
+For more details on setting up on each platform, refer to the [DarkEdif help file].
+
+### Contributing ###
+It is encouraged to contribute to this repository by PRs. 🙂
+
+If you wrote something that works only on one platform, or only on MMF2 or CF2.5, you can still contribute it!  
+But code it to prevent compilation on other platforms you provide projects for, or to fail at runtime when using a wrong version.
 
 ### Windows targeting ###
 
@@ -45,10 +59,10 @@ You will also need a Windows SDK:
   * VS 2017: Add 8.1 SDK from Visual Studio Installer's Components tab.  
   * VS 2019, 2022: Install 8.1 SDK manually from the [Windows SDK archive]. You only need the first option in the installer.
 * Windows 10 SDK: VS 2017-2022, install from Visual Studio Installer's Components tab.
-* Windows 11 SDK: VS 2022, install from Visual Studio Installer's Components tab.
+* Windows 11 SDK: VS 2022-2026, install from Visual Studio Installer's Components tab.
 
 
-### Android targeting ###
+### Android targeting
 To target Android, in the Visual Studio Installer, under Individual Components tab, you need to enable "C++ Android development tools". That should be all you need.
 
 You'll need Visual Studio 2019 or 2022. VS 2017 can't use C++17 standard on Android.
@@ -57,7 +71,9 @@ For more details on Android, such as pitfalls, features and setting up debugging
 
 You don't need the Fusion Android exporter to build Android extensions, but you'll be unable to test your extensions without it, and as any developer can tell you, there's no way you'll write code that works as expected first try.
 
-### iOS/Mac targeting ####
+For more details on setting up on each platform, refer to the [DarkEdif help file].
+
+### iOS/Mac targeting
 To target iOS and/or Mac, in the Visual Studio Installer, under Individual Components tab, you need to enable "C++ iOS development tools".  
 You will also need to download the free [PuTTY tools][Link to PuTTY], and set up how to use it in FusionSDKConfig.ini; the FusionSDKConfig.Template.ini file should describe how to do it.
 
@@ -73,11 +89,15 @@ Likewise, DarkEdif will automatically package your built Mac files into a DAT fi
 
 For more details on iOS/Mac, such as pitfalls, features and setting up debugging, make sure you read the iOS section of the [MultiTarget guide] under DarkEdif documentation.
 
-### Using a single project ###
+For more details on setting up on each platform, refer to the [DarkEdif help file].
+
+### Using a single project
 For exporting a single project, you will need to download the project folder, the Lib, and the Inc folder.
 For example, DarkEdif Template can be extracted by downloading DarkEdif\DarkEdif Template, DarkEdif\Inc, and DarkEdif\Lib.
-All projects in this repository use a shared Visual Studio props file, found in Lib, which will set all general vcxproj settings, automatically checking what SDK is in use. This has several effects:
 
+If you are using DarkEdif, you can use the PrepareDarkEdif tool to generate a fresh project based on the template. The tool will remove things you don't want, like translations, ANSI compatibility, other platforms, etc.
+
+All projects in this repository use a shared Visual Studio props file, found in Lib, which will set all general vcxproj settings, automatically checking what SDK is in use. This has several effects:
 1. You won't find most project settings entered in the vcxproj; you should instead open the Edit dialog for a property and view the "evaluated version".
 2. If you are converting from one SDK to another, most of the work will be done for you.
 3. Adding a new project configuration (example, you have Edittime, and you add Edittime Unicode), the props file will read the project configuration name and apply the settings for Edittime and Unicode; making it non-debug, adding the `_UNICODE` defines, etc.
@@ -121,7 +141,7 @@ More details on DarkEdif are available in the Wiki, see:
 * [DarkEdif Fusion user features] for a list of features available to Fusion users
 
 ## How to convert ANSI functions to ANSI & Unicode
-Make sure you're aware of what any text-related function you call expects. Does it ask for number of elements in array, or number of bytes in array?
+Make sure you're aware of what any text-related function you call expects. Does it ask for number of elements in an array, or number of bytes in an array?
 Note TCHAR is a preprocessor definition provided by Microsoft, which will be replaced with char in ANSI builds, and wchar_t in Unicode builds.
 
 If you don't want to provide Fusion 2.0 ANSI compatiblity, you can remove the non-Unicode project configurations from your project. Both CF2.5 and Fusion 2.0 Unicode can still use ANSI-only extensions, but both use Unicode by default if both variants of an extension are available.
@@ -135,8 +155,11 @@ If you don't want to provide Fusion 2.0 ANSI compatiblity, you can remove the no
 
 [XP compatibility false]: https://github.com/SortaCore/MMF2Exts/wiki/DarkEdif-ext-dev-features#disable-windows-xp-compatibility
 [Older VS editions]: https://visualstudio.microsoft.com/vs/older-downloads/
-[VS 2022 Express]: https://visualstudio.microsoft.com/vs/express/
-[VS 2022 Community]: https://visualstudio.microsoft.com/vs/community/
+[VS 2017 Community DD]: https://aka.ms/vs/15/release/vs_community.exe
+[VS 2019 Community DD]: https://aka.ms/vs/16/release/vs_community.exe
+[VS 2022 Community DD]: https://aka.ms/vs/17/release/vs_community.exe
+[VS 2026 Express]: https://visualstudio.microsoft.com/vs/express/
+[VS 2026 Community]: https://visualstudio.microsoft.com/vs/community/
 [DarkEdif ext dev features]: https://github.com/SortaCore/MMF2Exts/wiki/DarkEdif-ext-dev-features
 [DarkEdif Fusion user features]: https://github.com/SortaCore/MMF2Exts/wiki/DarkEdif-Fusion-user-features
 [DarkEdif Clickteam forum thread]: https://community.clickteam.com/threads/71793-DarkEDIF-Taking-suggestions?p=608099&viewfull=1#post608099 "DarkEdif forum thread"
@@ -148,4 +171,5 @@ If you don't want to provide Fusion 2.0 ANSI compatiblity, you can remove the no
 [Edif Clickteam forum thread]: https://community.clickteam.com/threads/61692-Edif-Extension-Development-Is-Fun
 [Windows SDK archive]: https://developer.microsoft.com/en-us/windows/downloads/sdk-archive/
 [Link to PuTTY]: https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html
+[DarkEdif help file]: https://github.com/SortaCore/MMF2Exts/raw/refs/heads/master/DarkEdif/-%20MFAs%20and%20documentation/DarkEdif%20SDK/DarkEdif%20Help.chm
 

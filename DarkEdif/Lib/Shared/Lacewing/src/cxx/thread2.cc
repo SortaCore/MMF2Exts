@@ -1,11 +1,11 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=cpp:
  *
  * Copyright (C) 2012 James McLaughlin et al.
- * Copyright (C) 2012-2022 Darkwire Software.
+ * Copyright (C) 2012-2026 Darkwire Software.
  * All rights reserved.
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
 
 #include "../common.h"
@@ -15,9 +15,10 @@ thread lacewing::thread_new (const char * name, void * proc)
 	return (thread) lw_thread_new (name, proc);
 }
 
-void lacewing::thread_delete (lacewing::thread thread)
+void lacewing::thread_delete (lacewing::thread &thread)
 {
 	lw_thread_delete ((lw_thread) thread);
+	thread = nullptr;
 }
 
 void _thread::start (void * param)

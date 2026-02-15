@@ -1,11 +1,11 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
  * Copyright (C) 2012 James McLaughlin et al.
- * Copyright (C) 2012-2022 Darkwire Software.
+ * Copyright (C) 2012-2026 Darkwire Software.
  * All rights reserved.
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
 
 #include "common.h"
@@ -145,10 +145,10 @@ static int on_header_value (multipart_parser * parser,
 	struct _lw_ws_upload_hdr header;
 
 	if (! (header.name = (char *) malloc (ctx->cur_header_name_length + 1)))
-	  return -1;
+		return -1;
 
 	if (! (header.value = (char *) malloc (length + 1)))
-	  return -1;
+		return -1;
 
 	memcpy (header.name, ctx->cur_header_name, ctx->cur_header_name_length);
 	header.name [ctx->cur_header_name_length] = 0;
@@ -164,27 +164,27 @@ static int on_header_value (multipart_parser * parser,
 
 	if (!strcmp (header.name, "content-disposition"))
 	{
-	  if (!parse_disposition (ctx, length, at))
-		 return -1;
+		if (!parse_disposition (ctx, length, at))
+			return -1;
 
-	  if (ctx->child)
-	  {
-		 lwp_nvhash_set (&ctx->child->disposition, "name",
-						 lwp_nvhash_get (&ctx->disposition, "name", ""),
-						 lw_true);
-	  }
+		if (ctx->child)
+		{
+			lwp_nvhash_set (&ctx->child->disposition, "name",
+							lwp_nvhash_get (&ctx->disposition, "name", ""),
+							lw_true);
+		}
 	}
 	else if (!strcmp (header.name, "content-type"))
 	{
-	  if (lwp_begins_with (header.value, "multipart"))
-	  {
-		 ctx->child = lwp_ws_multipart_new (ctx->ws, ctx->request, header.value);
+		if (lwp_begins_with (header.value, "multipart"))
+		{
+			ctx->child = lwp_ws_multipart_new (ctx->ws, ctx->request, header.value);
 
-		 const char * name = lwp_nvhash_get (&ctx->disposition, "name", 0);
+			const char * name = lwp_nvhash_get (&ctx->disposition, "name", 0);
 
-		 if (name)
-			lwp_nvhash_set (&ctx->child->disposition, "name", name, lw_true);
-	  }
+			if (name)
+				lwp_nvhash_set (&ctx->child->disposition, "name", name, lw_true);
+		}
 	}
 
 	return 0;
@@ -201,24 +201,24 @@ static int on_headers_complete (multipart_parser * parser)
 
 	if (lwp_nvhash_get (&ctx->disposition, "filename", 0))
 	{
-	  /* A filename was given - assign this part an upload structure. */
+		/* A filename was given - assign this part an upload structure. */
 
-	  ctx->cur_upload = lwp_ws_upload_new (ctx->request);
+		ctx->cur_upload = lwp_ws_upload_new (ctx->request);
 
-	  ctx->cur_upload->disposition = ctx->disposition;
-	  ctx->disposition = 0;
+		ctx->cur_upload->disposition = ctx->disposition;
+		ctx->disposition = 0;
 
-	  list_each (struct _lw_ws_upload_hdr, ctx->headers, header)
-	  {
-		 list_push (struct _lw_ws_upload_hdr, ctx->cur_upload->headers, header);
-	  }
+		list_each (struct _lw_ws_upload_hdr, ctx->headers, header)
+		{
+			list_push (struct _lw_ws_upload_hdr, ctx->cur_upload->headers, header);
+		}
 
-	  list_clear (ctx->headers);
+		list_clear (ctx->headers);
 
-	  lwp_trace ("Multipart %p: Calling on_upload_start", ctx);
+		lwp_trace ("Multipart %p: Calling on_upload_start", ctx);
 
-	  if (ctx->ws->on_upload_start)
-		 ctx->ws->on_upload_start (ctx->ws, ctx->request, ctx->cur_upload);
+		if (ctx->ws->on_upload_start)
+			ctx->ws->on_upload_start (ctx->ws, ctx->request, ctx->cur_upload);
 	}
 
 	return 0;
@@ -232,47 +232,47 @@ static int on_part_data (multipart_parser * parser,
 
 	if (ctx->child)
 	{
-	  if (lwp_ws_multipart_process (ctx->child, at, length) != length)
-	  {
-		 lwp_ws_multipart_delete (ctx->child);
-		 ctx->child = 0;
+		if (lwp_ws_multipart_process (ctx->child, at, length) != length)
+		{
+			lwp_ws_multipart_delete (ctx->child);
+			ctx->child = 0;
 
-		 return -1;
-	  }
+			return -1;
+		}
 
-	  if (ctx->child->done)
-	  {
-		 lwp_ws_multipart_delete (ctx->child);
-		 ctx->child = 0;
+		if (ctx->child->done)
+		{
+			lwp_ws_multipart_delete (ctx->child);
+			ctx->child = 0;
 
-		 return 0;
-	  }
+			return 0;
+		}
 	}
 
 	if (!ctx->cur_upload)
 	{
-	  /* No upload structure: this will be treated as a normal POST item, and
+		/* No upload structure: this will be treated as a normal POST item, and
 		* so the data must be buffered.
 		*/
 
-	  lwp_heapbuffer_add (&ctx->request->buffer, at, length);
-	  return 0;
+		lwp_heapbuffer_add (&ctx->request->buffer, at, length);
+		return 0;
 	}
 
 	if (ctx->cur_upload->autosave_file)
 	{
-	  /* Auto save mode */
+		/* Auto save mode */
 
-	  lw_stream_write ((lw_stream) ctx->cur_upload->autosave_file, at, length);
-	  return 0;
+		lw_stream_write ((lw_stream) ctx->cur_upload->autosave_file, at, length);
+		return 0;
 	}
 
 	/* Manual save mode */
 
 	if (ctx->ws->on_upload_chunk)
 	{
-	  ctx->ws->on_upload_chunk (ctx->ws, ctx->request,
-								ctx->cur_upload, at, length);
+		ctx->ws->on_upload_chunk (ctx->ws, ctx->request,
+								  ctx->cur_upload, at, length);
 	}
 
 	return 0;
@@ -281,7 +281,7 @@ static int on_part_data (multipart_parser * parser,
 static int on_part_data_begin (multipart_parser * parser)
 {
 	lwp_ws_multipart ctx = (lwp_ws_multipart) multipart_parser_get_data (parser);
-	(void)ctx; // We're not using ctx in all builds
+	(void)ctx; // We're not using ctx in all build configs
 
 	lwp_trace ("Multipart %p: onPartDataBegin", ctx);
 
@@ -290,8 +290,8 @@ static int on_part_data_begin (multipart_parser * parser)
 
 static void add_upload (lwp_ws_multipart ctx, lw_ws_upload upload)
 {
-	ctx->uploads = (lw_ws_upload *) realloc
-	  (ctx->uploads, sizeof (lw_ws_upload) * (++ ctx->num_uploads));
+	ctx->uploads = (lw_ws_upload *) lw_realloc_or_exit
+		(ctx->uploads, sizeof (lw_ws_upload) * (++ ctx->num_uploads));
 
 	ctx->uploads [ctx->num_uploads - 1] = upload;
 }
@@ -306,41 +306,41 @@ static int on_part_data_end (multipart_parser * parser)
 
 	if (ctx->cur_upload)
 	{
-	  if (ctx->parent)
-		 add_upload (ctx->parent, ctx->cur_upload);
-	  else
-		 add_upload (ctx, ctx->cur_upload);
+		if (ctx->parent)
+			add_upload (ctx->parent, ctx->cur_upload);
+		else
+			add_upload (ctx, ctx->cur_upload);
 
-	  if (ctx->cur_upload->autosave_file)
-	  {
-		 /* Auto save */
+		if (ctx->cur_upload->autosave_file)
+		{
+			/* Auto save */
 
-		 lwp_trace("Closing auto save file");
+			lwp_trace("Closing auto save file");
 
-		 lw_stream_close ((lw_stream) ctx->cur_upload->autosave_file, lw_false);
-	  }
-	  else
-	  {
-		 /* Manual save */
+			lw_stream_close ((lw_stream) ctx->cur_upload->autosave_file, lw_false);
+		}
+		else
+		{
+			/* Manual save */
 
-		 if (ctx->ws->on_upload_done)
-			ctx->ws->on_upload_done (ctx->ws, ctx->request, ctx->cur_upload);
-	  }
+			if (ctx->ws->on_upload_done)
+				ctx->ws->on_upload_done (ctx->ws, ctx->request, ctx->cur_upload);
+		}
 
-	  ctx->cur_upload = 0;
+		ctx->cur_upload = 0;
 	}
 	else
 	{
-	  /* No upload structure - add to POST items */
+		/* No upload structure - add to POST items */
 
-	  lwp_heapbuffer_add (&ctx->request->buffer, "\0", 1);
+		lwp_heapbuffer_add (&ctx->request->buffer, "\0", 1);
 
-	  lwp_nvhash_set (&ctx->request->post_items,
-					  lwp_nvhash_get (&ctx->disposition, "name", ""),
-					  lwp_heapbuffer_buffer (&ctx->request->buffer),
-					  lw_true);
+		lwp_nvhash_set (&ctx->request->post_items,
+						lwp_nvhash_get (&ctx->disposition, "name", ""),
+						lwp_heapbuffer_buffer (&ctx->request->buffer),
+						lw_true);
 
-	  lwp_heapbuffer_reset (&ctx->request->buffer);
+		lwp_heapbuffer_reset (&ctx->request->buffer);
 	}
 
 	lwp_nvhash_clear (&ctx->disposition);
@@ -357,7 +357,7 @@ static int on_body_end (multipart_parser * parser)
 	ctx->done = lw_true;
 
 	if (!ctx->parent)
-	  lwp_ws_multipart_call_hook (ctx);
+		lwp_ws_multipart_call_hook (ctx);
 
 	return 0;
 }
@@ -367,14 +367,14 @@ void lwp_ws_multipart_call_hook (lwp_ws_multipart ctx)
 	/* The handler might have already been called in autosave mode
 	*/
 	if (ctx->called_handler)
-	  return;
+		return;
 
 	/* Only call the handler if all files are closed
 	*/
 	for (size_t i = 0; i < ctx->num_uploads; ++ i)
 	{
-	  if (ctx->uploads [i]->autosave_file)
-		 return;
+		if (ctx->uploads [i]->autosave_file)
+			return;
 	}
 
 	ctx->called_handler = lw_true;
@@ -383,8 +383,8 @@ void lwp_ws_multipart_call_hook (lwp_ws_multipart ctx)
 
 	if (ctx->ws->on_upload_post)
 	{
-	  ctx->ws->on_upload_post (ctx->ws, ctx->request,
-								ctx->uploads, ctx->num_uploads);
+		ctx->ws->on_upload_post (ctx->ws, ctx->request,
+								 ctx->uploads, ctx->num_uploads);
 	}
 
 	lwp_ws_req_after_handler (ctx->request);
@@ -404,18 +404,26 @@ const multipart_parser_settings settings =
 lwp_ws_multipart lwp_ws_multipart_new (lw_ws ws, lw_ws_req request,
 										const char * content_type)
 {
+	const char* _boundary = strstr(content_type, "boundary=") + 9;
+	if (!_boundary)
+		return 0;
+
 	lwp_ws_multipart ctx = (lwp_ws_multipart) calloc (sizeof (*ctx), 1);
 
 	if (!ctx)
-	  return 0;
+		return 0;
 
 	ctx->ws = ws;
 	ctx->request = request;
 
-	const char * _boundary = strstr (content_type, "boundary=") + 9;
-
+	#ifdef _MSC_VER
+		#pragma warning (suppress: 6255) // alloca is not evil
+	#endif
 	char * boundary = (char *) alloca (strlen (_boundary) + 3);
 
+	#ifdef _MSC_VER
+		#pragma warning (suppress: 6386) // Not an overrun
+	#endif
 	strcpy (boundary, "--");
 	strcat (boundary, _boundary);
 
@@ -437,14 +445,14 @@ void lwp_ws_multipart_delete (lwp_ws_multipart ctx)
 
 	list_each (struct _lw_ws_upload_hdr, ctx->headers, header)
 	{
-	  free (header.name);
-	  free (header.value);
+		free (header.name);
+		free (header.value);
 	}
 
 	list_clear (ctx->headers);
 
 	if (ctx->child)
-	  lwp_ws_multipart_delete (ctx->child);
+		lwp_ws_multipart_delete (ctx->child);
 
 	free (ctx->uploads);
 
@@ -463,83 +471,81 @@ size_t lwp_ws_multipart_process (lwp_ws_multipart ctx,
 
 	if (ctx->parsing_headers)
 	{
-	  for (size_t i = 0; i < size; )
-	  {
-		 {  char b = buffer [i];
-
-			if (b == '\r')
+		for (size_t i = 0; i < size; )
+		{
 			{
-				if (buffer [i + 1] == '\n')
-				  ++ i;
+				char b = buffer [i];
+
+				if (b == '\r')
+				{
+					if (buffer [i + 1] == '\n')
+						++ i;
+				}
+				else if (b != '\n')
+				{
+					++ i;
+					continue;
+				}
 			}
-			else if (b != '\n')
+
+			size_t to_parse = i + 1;
+			lw_bool error = lw_false;
+
+			if (lwp_heapbuffer_length (&ctx->request->buffer) > 0)
 			{
-				++ i;
-				continue;
+				lwp_heapbuffer_add (&ctx->request->buffer, buffer, to_parse);
+
+				size_t parsed = multipart_parser_execute
+					(ctx->parser, lwp_heapbuffer_buffer (&ctx->request->buffer),
+									lwp_heapbuffer_length (&ctx->request->buffer));
+
+				if (parsed != lwp_heapbuffer_length (&ctx->request->buffer))
+					error = lw_true;
+
+				lwp_heapbuffer_reset (&ctx->request->buffer);
 			}
-		 }
+			else
+			{
+				size_t parsed = multipart_parser_execute
+					(ctx->parser, buffer, to_parse);
 
-		 size_t to_parse = i + 1;
-		 lw_bool error = lw_false;
+				if (parsed != to_parse)
+					error = lw_true;
+			}
 
-		 if (lwp_heapbuffer_length (&ctx->request->buffer) > 0)
-		 {
-			lwp_heapbuffer_add (&ctx->request->buffer, buffer, to_parse);
+			size -= to_parse;
+			buffer += to_parse;
 
-			size_t parsed = multipart_parser_execute
-				(ctx->parser, lwp_heapbuffer_buffer (&ctx->request->buffer),
-							 lwp_heapbuffer_length (&ctx->request->buffer));
+			if (error)
+			{
+				lwp_trace ("Multipart error");
+				return 0;
+			}
 
-			if (parsed != lwp_heapbuffer_length (&ctx->request->buffer))
-				error = lw_true;
+			if (!ctx->parsing_headers)
+				break;
 
-			lwp_heapbuffer_reset (&ctx->request->buffer);
-		 }
-		 else
-		 {
-			size_t parsed = multipart_parser_execute
-				(ctx->parser, buffer, to_parse);
+			i = 0;
+		}
 
-			if (parsed != to_parse)
-				error = lw_true;
-		 }
+		if (ctx->parsing_headers)
+		{
+			/* TODO : max line length */
 
-		 size -= to_parse;
-		 buffer += to_parse;
-
-		 if (error)
-		 {
-			lwp_trace ("Multipart error");
-			return 0;
-		 }
-
-		 if (!ctx->parsing_headers)
-			break;
-
-		 i = 0;
-	  }
-
-	  if (ctx->parsing_headers)
-	  {
-		 /* TODO : max line length */
-
-		 lwp_heapbuffer_add (&ctx->request->buffer, buffer, size);
-		 return buffer_size;
-	  }
-	  else
-	  {
-		 if (!size)
+			lwp_heapbuffer_add (&ctx->request->buffer, buffer, size);
 			return buffer_size;
-	  }
+		}
+		else
+		{
+			if (!size)
+				return buffer_size;
+		}
 	}
 
 	size_t parsed = multipart_parser_execute (ctx->parser, buffer, size);
 
 	if (parsed != size)
-	  return 0;
+		return 0;
 
 	return buffer_size;
 }
-
-
-

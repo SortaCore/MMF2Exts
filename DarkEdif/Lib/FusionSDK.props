@@ -46,10 +46,10 @@
 			 Simulator-and-device-in-one targets are handled by first run through
 			 building as device, then later a second run as simulator - the switch is
 			 handled below, so we don't override here. -->
-		<iOSSimulatorBuild Condition="$(_TargetPlatInclMac)=='iOS' AND ('$(TargetArch)'=='i386' OR '$(TargetArch)'=='x86_64')">1</iOSSimulatorBuild>
+		<iOSSimulatorBuild Condition="'$(_TargetPlatInclMac)'=='iOS' AND ('$(TargetArch)'=='i386' OR '$(TargetArch)'=='x86_64')">1</iOSSimulatorBuild>
 
 		<SimulatorOrDevice></SimulatorOrDevice>
-		<SimulatorOrDevice Condition="$(_TargetPlatInclMac)=='iOS'">\device</SimulatorOrDevice>
+		<SimulatorOrDevice Condition="'$(_TargetPlatInclMac)'=='iOS'">\device</SimulatorOrDevice>
 		<SimulatorOrDevice Condition="$(iOSSimulatorBuild)==1">\simulator</SimulatorOrDevice>
 
 		<!-- Not really needed for DarkEdif, it puts all languages in one MFX. -->
@@ -58,7 +58,7 @@
 
 		<!-- Roundtrip date/time format, can be parsed back -->
 		<BuildDate>$([System.DateTime]::Now.ToString('o'))</BuildDate>
-		<!-- Just the year, used in copyright output -->
+		<!-- Just the year, used in Copyright RC file output -->
 		<Year>$([System.DateTime]::Now.Year)</Year>
 
 		<!-- For ..\Inc and ..\Lib; OpenCV is in two levels of subfolders. -->
@@ -87,10 +87,35 @@
 		<DarkEdif_UpdateChecker>0</DarkEdif_UpdateChecker>
 		<!-- If user has enabled update checker tagging -->
 		<DarkEdif_UCTagging>0</DarkEdif_UCTagging>
+		<!-- If ext dev uses OEFLAGS::TEXT, indicating they need EditTimeFont -->
+		<DarkEdif_OEFLAGTextPresent>0</DarkEdif_OEFLAGTextPresent>
+		<!-- If ext dev uses OEFLAGS that indicate the ext displays, enabling DisplayRunObject() etc,
+			 this is set to 1 or more. Current possible values:
+			 0 is no display exports, or display exports don't call Extension handlers
+			 1 is display via built-in animation system (not sure if this is even possible)
+			 2 is display via DarkEdif simple display system
+			 3 is display via DarkEdif manual display system -->
+		<DarkEdif_DisplayType>0</DarkEdif_DisplayType>
+		<!-- If ext dev uses OEFLAGS::WINDOW_PROC, indicating they need window proc -->
+		<DarkEdif_OEFLAGWndProcPresent>0</DarkEdif_OEFLAGWndProcPresent>
+		<!-- If ext dev has a FusionSDKConfig flag or defines in Windows proj, indicates they implement
+			 ContinueRunObject/PauseRunObject handlers. On Windows, this is required or runtime will crash on pause,
+			 but DE will not call the handlers in Extension without this define. -->
+		<DarkEdif_PausableExt Condition="'$(SDKType)'=='DarkEdif'">0</DarkEdif_PausableExt>
+
+		<!-- Windows vcxproj path, handles one-proj Windows and multi-plat, used for define lookups -->
+		<DarkEdif_WinProjPath Condition="$(SDKType)=='DarkEdif'">$(ProjectDir)$(ProjectFileName.Replace('.$(_TargetPlatInclMac).', '.Windows.'))</DarkEdif_WinProjPath>
 	</PropertyGroup>
 	<!-- Fusion SDK settings. Sets user preferences. -->
 	<PropertyGroup>
-		<_FusionSDKConfig Condition="exists('$(ProjectDir)\..\..\FusionSDKConfig.ini')">$([System.IO.File]::ReadAllText('$(ProjectDir)\..\..\FusionSDKConfig.ini'))</_FusionSDKConfig>
+		<!-- Load INI from alongside solution, or 0-2 folder parents up from project, if it exists -->
+		<_FusionSDKConfigIniPath>(not found)</_FusionSDKConfigIniPath>
+		<_FusionSDKConfigIniPath Condition="exists('$(SolutionDir)FusionSDKConfig.ini')">$(SolutionDir)FusionSDKConfig.ini</_FusionSDKConfigIniPath>
+		<_FusionSDKConfigIniPath Condition="'$(_FusionSDKConfigIniPath)'=='(not found)' AND exists('$(ProjectDir)\FusionSDKConfig.ini')">$(ProjectDir)\FusionSDKConfig.ini</_FusionSDKConfigIniPath>
+		<_FusionSDKConfigIniPath Condition="'$(_FusionSDKConfigIniPath)'=='(not found)' AND exists('$(ProjectDir)\..\FusionSDKConfig.ini')">$(ProjectDir)\..\FusionSDKConfig.ini</_FusionSDKConfigIniPath>
+		<_FusionSDKConfigIniPath Condition="'$(_FusionSDKConfigIniPath)'=='(not found)' AND exists('$(ProjectDir)\..\..\FusionSDKConfig.ini')">$(ProjectDir)\..\..\FusionSDKConfig.ini</_FusionSDKConfigIniPath>
+
+		<_FusionSDKConfig Condition="'$(_FusionSDKConfigIniPath)'!='(not found)'">$([System.IO.File]::ReadAllText('$(_FusionSDKConfigIniPath)'))</_FusionSDKConfig>
 
 		<!-- These are Fusion SDK settings that are needed by the build process, not post-build. -->
 
@@ -167,6 +192,22 @@
 		<ZipExt>ZIP</ZipExt>
 		<ZipExt Condition="'$(_TargetPlatInclMac)'=='iOS'">EXT</ZipExt>
 		<ZipExt Condition="'$(_TargetPlatInclMac)'=='Mac'">DAT</ZipExt>
+
+		<!-- Build for 4 architectures by default, tied to the VS project architectures.
+			 Translating VS arch to iOS arch:
+				ARM = armv7; x86 = i386; x64 = x86_64; ARM64 = arm64
+
+			 Read more about whether you should/can include/exclude archs in
+			 DarkEdif/#MFAs and documentation/DarkEdif MultiTargeting.md file,
+			 as well as extra details on each arch. -->
+		<_iOSBuildArchitecturesRegex><![CDATA[(?im)^iOSBuildArchitecturesREPLME\s*=\s*(.*)\s*$]]></_iOSBuildArchitecturesRegex>
+		<_iOSBuildArchitectures>arm64;armv7;x64_64</_iOSBuildArchitectures>
+		<_iOSBuildArchitectures Condition="$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_iOSBuildArchitecturesRegex.Replace('REPLME',$(Configuration)))).Success)">$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_iOSBuildArchitecturesRegex.Replace('REPLME',$(Configuration)))).Result('$1'))</_iOSBuildArchitectures>
+		<_iOSBuildArchitectures>;$(_iOSBuildArchitectures.Replace(' ','').Replace(',',';'));</_iOSBuildArchitectures>
+
+		<!-- ARM64e with no ARM64: override ARM64 arch to ARM64e -->
+		<TargetArch Condition="'$(_TargetPlat)'=='iOS' AND '$(Platform)'=='arm64' AND !$(_iOSBuildArchitectures.Contains(';arm64;')) AND $(_iOSBuildArchitectures.Contains(';arm64e;'))">arm64e</TargetArch>
+		<PlatformNativeArch Condition="'$(_TargetPlat)'=='iOS' AND '$(Platform)'=='arm64' AND !$(_iOSBuildArchitectures.Contains(';arm64;')) AND $(_iOSBuildArchitectures.Contains(';arm64e;'))">arm64e</PlatformNativeArch>
 	</PropertyGroup>
 	<PropertyGroup Condition="$(SDKType.Contains('Edif'))" Label="UserMacros">
 		<_JSON Condition="$(SDKType)=='DarkEdif'">$([System.IO.File]::ReadAllText('$(ProjectDir)\DarkExt.json'))</_JSON>
@@ -174,7 +215,7 @@
 
 		<!-- Find the line where Extension::Version is defined, read number -->
 		<_ExtVersionRegex><![CDATA[Version\s*=\s*(\d*);]]></_ExtVersionRegex>
-		<ExtVersion Condition="!$(ProjectDir.Contains('Bluewing'))">$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText('$(ProjectDir)Extension.h')), $(_ExtVersionRegex)).Result('$1'))</ExtVersion>
+		<ExtVersion Condition="!$(ProjectDir.Contains('Bluewing'))">$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText('$(ProjectDir)Extension.hpp')), $(_ExtVersionRegex)).Result('$1'))</ExtVersion>
 
 		<_ExtVersionRegex><![CDATA[relayclient[^}]*?buildnum\s*=\s*(\d*);]]></_ExtVersionRegex>
 		<ExtVersion Condition="$(ProjectDir.Contains('Bluewing Client'))">$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText('$(ProjectDir)\$(SDKRootFolder)\Lib\Shared\Lacewing\Lacewing.h')), $(_ExtVersionRegex)).Result('$1'))</ExtVersion>
@@ -188,11 +229,12 @@
 
 		<!-- Use Author Name if company isn't found -->
 		<_CompanyNameRegex><![CDATA[(?im)"Company"\s*:\s*"(.*)"\s*?,\s*$]]></_CompanyNameRegex>
-		<_ExtH>$([System.IO.File]::ReadAllText('$(ProjectDir)\Extension.h'))</_ExtH>
+		<_ExtH Condition="$(SDKType)=='DarkEdif'">$([System.IO.File]::ReadAllText('$(ProjectDir)\Extension.hpp'))</_ExtH>
+		<_ExtH Condition="$(SDKType)=='Edif'">$([System.IO.File]::ReadAllText('$(ProjectDir)\Extension.h'))</_ExtH>
 		<CompanyName Condition="$(_JSON.Contains('CompanyName'))">$([System.Text.RegularExpressions.Regex]::Match($(_ExtH), $(_CompanyNameRegex)).Result('$1').Replace('\'', '\u0027'))</CompanyName>
 		<CompanyName Condition="$(CompanyName)==''">$(AuthorName)</CompanyName>
 
-		<!-- This define is true if FusionDebugger variable is detected in Extension.h, it's true at runtime. -->
+		<!-- This define is true if FusionDebugger variable is detected in Extension.hpp, it's true at runtime. -->
 		<_DarkEdif_DetectFusionDebuggerRegex><![CDATA[(?m)^\s*DarkEdif::FusionDebugger\s+FusionDebugger\s*;\s*$]]></_DarkEdif_DetectFusionDebuggerRegex>
 		<DarkEdif_FusionDebugger Condition="$(SDKType)=='DarkEdif' AND $([System.Text.RegularExpressions.Regex]::IsMatch($(_ExtH), $(_DarkEdif_DetectFusionDebuggerRegex)))">1</DarkEdif_FusionDebugger>
 
@@ -200,13 +242,42 @@
 		<_DarkEdif_DetectUpdateCheckerRegex><![CDATA[(?m)^\s*DarkEdif::SDKUpdater::RunUpdateNotifs\s*\(]]></_DarkEdif_DetectUpdateCheckerRegex>
 		<DarkEdif_UpdateChecker Condition="$(SDKType)=='DarkEdif' AND $(EditorBuild)==1 AND $([System.Text.RegularExpressions.Regex]::IsMatch($([System.IO.File]::ReadAllText('$(ProjectDir)\Edittime.cpp')), $(_DarkEdif_DetectUpdateCheckerRegex)))">1</DarkEdif_UpdateChecker>
 
-		<!-- This define is true if you want to machine-uniquely tag your extensions -->
+		<!-- This define is set by Extension::OEFLAGS in Extension.hpp -->
+		<_DarkEdif_GetOEFLAGListRegex><![CDATA[(?m)^\s*[A-Za-z0-9_\s]+?OEFLAGS\s+OEFLAGS\s*=\s*([^;]*);]]></_DarkEdif_GetOEFLAGListRegex>
+		<_DarkEdif_OEFLAGList>Fake</_DarkEdif_OEFLAGList>
+		<_DarkEdif_OEFLAGList Condition="'$(SDKType)'=='DarkEdif'">$([System.Text.RegularExpressions.Regex]::Match($(_ExtH), $(_DarkEdif_GetOEFLAGListRegex)).Result('$1')).Replace('OEFLAGS::', '')</_DarkEdif_OEFLAGList>
+		<!-- This define is true if OEFLAGS contains TEXT -->
+		<DarkEdif_OEFLAGTextPresent Condition="'$(SDKType)'=='DarkEdif' AND $(_DarkEdif_OEFLAGList.Contains('TEXT'))">1</DarkEdif_OEFLAGTextPresent>
+		<!-- This define is true if OEFLAGS contains WINDOW_PROC -->
+		<DarkEdif_OEFLAGWndProcPresent Condition="'$(SDKType)'=='DarkEdif' AND $(_DarkEdif_OEFLAGList.Contains('WINDOW_PROC'))">1</DarkEdif_OEFLAGWndProcPresent>
+
+		<!-- Looks for this line in FusionSDKConfig.ini:
+			 PausableExt,Ext Name=true
+			 It also allows PAUSABLE_EXTENSION to be defined in Windows project. -->
+		<_PausableExtReplaceRegex><![CDATA[(?im)^PausableExt,!!!\s*=\s*true\s*?$]]></_PausableExtReplaceRegex>
+		<DarkEdif_PausableExt Condition="$(SDKType)=='DarkEdif' AND $([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_PausableExtReplaceRegex.Replace('!!!',$(ExtName)))).Success)">1</DarkEdif_PausableExt>
+		<DarkEdif_PausableExt Condition="$(SDKType)=='DarkEdif' AND $([System.IO.File]::ReadAllText($(DarkEdif_WinProjPath)).Contains('PAUSABLE_EXTENSION'))">1</DarkEdif_PausableExt>
+
+		<!-- This define is true if OEFLAGS contains SPRITES, QUICK_DISPLAY, BACKGROUND, ANIMATIONS, or DISPLAY_EXT.
+			It is not true for DISPLAY_IN_FRONT, as this is used by non-display exts according to MMF2 original SDK help file. -->
+		<DarkEdif_DisplayType Condition="'$(SDKType)'=='DarkEdif' AND ($(_DarkEdif_OEFLAGList.Contains('SPRITES')) OR $(_DarkEdif_OEFLAGList.Contains('ANIMATIONS')) OR $(_DarkEdif_OEFLAGList.Contains('QUICK_DISPLAY')) OR $(_DarkEdif_OEFLAGList.Contains('BACKGROUND')) OR $(_DarkEdif_OEFLAGList.Contains('MOVEMENTS')) OR $(_DarkEdif_OEFLAGList.Contains('SIMPLE_DISPLAY_EXT')) OR $(_DarkEdif_OEFLAGList.Contains('MANUAL_DISPLAY_EXT')))">1</DarkEdif_DisplayType>
+		<DarkEdif_DisplayType Condition="$(DarkEdif_DisplayType)==1 AND $(_DarkEdif_OEFLAGList.Contains('SIMPLE_DISPLAY_EXT'))">2</DarkEdif_DisplayType>
+		<DarkEdif_DisplayType Condition="$(DarkEdif_DisplayType)==1 AND $(_DarkEdif_OEFLAGList.Contains('MANUAL_DISPLAY_EXT'))">3</DarkEdif_DisplayType>
+
+		<!-- Default to 0 for all SDKs, true for DarkEdif -->
+		<UsingSmartPropertySystem>0</UsingSmartPropertySystem>
+		<UsingSmartPropertySystem Condition="$(SDKType)=='DarkEdif'">1</UsingSmartPropertySystem>
+		<!-- This define is false if NOPROPS is defined in the Windows vcxproj -->
+		<UsingSmartPropertySystem Condition="$(SDKType)=='DarkEdif' AND $([System.IO.File]::ReadAllText($(DarkEdif_WinProjPath)).Contains('NOPROPS'))">0</UsingSmartPropertySystem>
+
+		<!-- This define is true if you want to analyse your code for more subtly incorrect code, which doesn't cause compiler/linker errors-->
 		<_RunAnalyzerRegex><![CDATA[(?im)^RunStaticCodeAnalysis\s*=\s*([a-z]+)\s*?$]]></_RunAnalyzerRegex>
 		<RunAnalyzerSetting Condition="$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_RunAnalyzerRegex)).Success)"
 			></RunAnalyzerSetting>
 
+		<!-- This define is true if you want to machine-uniquely tag your extensions -->
 		<_DarkEdif_UCTaggingRegex><![CDATA[(?im)^DarkEdifUpdateCheckerTagging\s*=\s*(.*?)\s*?$]]></_DarkEdif_UCTaggingRegex>
-		<DarkEdif_UCTaggingINI Condition="$(SDKType)=='DarkEdif' AND $(EditorBuild)==1 AND $([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_DarkEdif_UCTaggingRegex)).Success)">$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_DarkEdif_UCTaggingRegex)).Result('$1'))</DarkEdif_UCTaggingINI>
+		<DarkEdif_UCTaggingINI Condition="$(SDKType)=='DarkEdif' AND $([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_DarkEdif_UCTaggingRegex)).Success)">$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_DarkEdif_UCTaggingRegex)).Result('$1'))</DarkEdif_UCTaggingINI>
 		<DarkEdif_UCTagging Condition="$(DarkEdif_UCTaggingINI.Contains('$(ExtName)'))">1</DarkEdif_UCTagging>
 	</PropertyGroup>
 	<PropertyGroup Condition="$(SDKType.Contains('MMF2SDK'))" Label="UserMacros">
@@ -236,43 +307,6 @@
 		<_AuthorNameRegex><![CDATA[(?im)#define[ \t]+ObjectAuthor[ \t]+"([^\n]+)"\s*?$]]></_AuthorNameRegex>
 		<AuthorName>$([System.Text.RegularExpressions.Regex]::Match($(_InfoFile), $(_AuthorNameRegex)).Result('$1'))</AuthorName>
 		<CompanyName>$(AuthorName)</CompanyName>
-	</PropertyGroup>
-	<PropertyGroup Label="UserMacros" Condition="$(_TargetPlat)=='Windows'">
-		<!-- Broken in latest MS
-		<_FusionSDKAdds>/D "CONFIG=$(Configuration)" /D "PROJECT_NAME=\"$(ExtName)\""
-			/D "AUTHOR_NAME=\"$(AuthorName)\"" /D "COMPANY_NAME=\"$(CompanyName)\""
-			/D "EXTENSION_VERSION=$(ExtVersion)"
-			/D "BUILD_DATE=\"$(BuildDate)\"" /D "YEAR=\"$(Year)\""
-			/D "USE_DARKEDIF_UPDATE_CHECKER=$(DarkEdif_UpdateChecker)"
-			/D "USE_DARKEDIF_FUSION_DEBUGGER=$(DarkEdif_FusionDebugger)"</_FusionSDKAdds> -->
-		<!-- Do not include build date in the C++ compilation. It causes VS to think the whole
-			 project needs rebuilding on every run. -->
-		<_FusionSDKAdds>/D "CONFIG=$(Configuration)" /D "PROJECT_NAME=STRIFY($(ExtName))"
-			/D "AUTHOR_NAME=STRIFY($(AuthorName))" /D "COMPANY_NAME=STRIFY($(CompanyName))"
-			/D "EXTENSION_VERSION=$(ExtVersion)" /D "YEAR=STRIFY($(Year))"
-			/D "USE_DARKEDIF_UPDATE_CHECKER=$(DarkEdif_UpdateChecker)"
-			/D "USE_DARKEDIF_FUSION_DEBUGGER=$(DarkEdif_FusionDebugger)"
-			/D "EditorBuild=$(EditorBuild)" /D "RuntimeBuild=$(RuntimeBuild)" /D "UniBuild=$(UniBuild)"
-			/D "USE_DARKEDIF_UC_TAGGING=$(DarkEdif_UCTagging)" /D "MacBuild=$(MacBuild)"
-			</_FusionSDKAdds>
-		<!-- ResourceCompiler doesn't like newlines. -->
-		<_FusionSDKAdds>$(_FusionSDKAdds.Replace('\n',' ').Replace('\t',' '))</_FusionSDKAdds>
-		<!-- #if EditorBuild needs to evaluate to true.
-			 Worth noting in ResourceCompiler, "true" is not true. 1 is apparently true though. -->
-		<_FusionSDKAddsRC>$(_FusionSDKAdds.Replace('\n',' ').Replace('\','\\\').Replace('STRIFY(','asStr(')) /D "BUILD_DATE=asStr($(BuildDate))"</_FusionSDKAddsRC>
-	</PropertyGroup>
-	<PropertyGroup Condition="$(_TargetPlat)=='Android' OR $(_TargetPlat)=='iOS'">
-		<!-- Android uses Clang, a different format of commandline items
-			-D PROJECT_NAME=\"$(ExtName)\"
-			-D AUTHOR_NAME=\"$(AuthorName)\" -D "COMPANY_NAME=\"$(CompanyName)\"
-			-D EXTENSION_VERSION=$(ExtVersion)
-			-D BUILD_DATE=\"$(BuildDate)\" -D YEAR=\"$(Year)\"		-->
-		<!-- Doesn't work due to MS bug.
-		<_FusionSDKAdds>CONFIG=$(Configuration);PROJECT_NAME="$(ExtName)";AUTHOR_NAME="$(AuthorName)";COMPANY_NAME="$(CompanyName)";EXTENSION_VERSION=$(ExtVersion);YEAR="$(Year)"</_FusionSDKAdds> -->
-		<_FusionSDKAdds>CONFIG=$(Configuration);PROJECT_NAME=STRIFY($(ExtName));PROJECT_NAME_UNDERSCORES=STRIFY($(ExtName.Replace(' ','_')));AUTHOR_NAME=STRIFY($(AuthorName));COMPANY_NAME=STRIFY($(CompanyName));EXTENSION_VERSION=$(ExtVersion);YEAR=STRIFY($(Year));USE_DARKEDIF_FUSION_DEBUGGER=$(DarkEdif_FusionDebugger);EditorBuild=$(EditorBuild);RuntimeBuild=$(RuntimeBuild);UniBuild=$(UniBuild);MacBuild=$(MacBuild)</_FusionSDKAdds>
-
-		<!-- Not defined by Clang, just MSVC. -->
-		<_FusionSDKAdds Condition="$(DbgBuild)==1">$(_FusionSDKAdds);_DEBUG=1</_FusionSDKAdds>
 	</PropertyGroup>
 	<Choose>
 		<When Condition="$(_TargetPlat)=='Windows'">
@@ -305,11 +339,21 @@
 		<!-- MFX files are internally DLLs, apart from on iOS/Mac -->
 		<ConfigurationType Condition="$(_TargetPlat)!='iOS'">DynamicLibrary</ConfigurationType>
 
-		<!-- TargetName is incorrect on Android/iOS, due to project name containing '.' -->
 		<TargetName>$(ExtName)$(LangSuffix)</TargetName>
-		<TargetName Condition="$(_TargetPlat)=='Android' OR $(_TargetPlatInclMac)=='iOS'">lib$(ExtName.Replace(' ','_'))$(LangSuffix)</TargetName>
 
-		<ExtNameUnderscores>$(ExtName.Replace(' ','_'))</ExtNameUnderscores>
+		<!-- Replace the target name with new text; for example, renaming Firefly 2D Text to Firefly2T.mfx, provide
+			 MFXNameOverride,Firefly 2D Text=Firefly2T
+			 in FusionSDKConfig.ini. Anticipates you rename any custom wrapper files and their internal classes,
+			 like CRunFirefly2T.java containing CRunFirefly2T class. -->
+		<_ExtNameReplaceRegex><![CDATA[(?im)^MFXNameOverride,!!!\s*=\s*([A-Za-z0-9_ -]+)\s*?$]]></_ExtNameReplaceRegex>
+		<TargetName Condition="$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_ExtNameReplaceRegex.Replace('!!!',$(ExtName)))).Success)">$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_ExtNameReplaceRegex.Replace('!!!',$(ExtName)))).Result('$1'))</TargetName>
+
+		<!-- Used to check for successfully generated library files; due to spaces needing escaping, some exporters replace the spaces with underscores -->
+		<TargetNameUnderscores>$(TargetName.Replace(' ','_'))</TargetNameUnderscores>
+
+		<!-- Android/iOS expect a lib prefix to libraries, and use underscores in place of spaces -->
+		<TargetNameNoPrefix>$(TargetName)</TargetNameNoPrefix>
+		<TargetName Condition="$(_TargetPlat)=='Android' OR $(_TargetPlatInclMac)=='iOS'">lib$(TargetName.Replace(' ','_'))</TargetName>
 
 		<!-- Prevent the madness of every linked DLL being copied to output folder. -->
 		<CopyCppRuntimeToOutputDir>false</CopyCppRuntimeToOutputDir>
@@ -322,7 +366,7 @@
 		<IntDir>$(_FusionSDKTempDir)\</IntDir>
 
 		<!-- Minifies JSON file and builds call table for runtimes that lack A/C/E ASM -->
-		<DarkEdifPreBuildToolParams>/ProjName="$(ExtName)" /TargetPlat="$(_TargetPlatInclMac)" /TargetArch="$(TargetArch)" /MacroInputFile="$(SDKRootFolder)\Lib\Shared\ACECallTable_Macro.cpp"  /MacroOutputFile="$(SolutionDir)\Temp\$(ExtName)\Temp_ACECallTable.cpp" /JSONInputPathToMinify="$(ProjectDir)\DarkExt.json" /FusionConfigIniPath="$(SolutionDir)FusionSDKConfig.ini"</DarkEdifPreBuildToolParams>
+		<DarkEdifPreBuildToolParams>/ProjName="$(ExtName)" /TargetPlat="$(_TargetPlatInclMac)" /TargetArch="$(TargetArch)" /MacroInputFile="$(SDKRootFolder)\Lib\Shared\ACECallTable_Macro.cpp"  /MacroOutputFile="$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp" /JSONInputPathToMinify="$(ProjectDir)\DarkExt.json" /FusionConfigIniPath="$(_FusionSDKConfigIniPath)" /UsingSmartPropertySystem=$(UsingSmartPropertySystem) /ExtDisplayType=$(DarkEdif_DisplayType) /IsTextExt=$(DarkEdif_OEFLAGTextPresent) /IsPausableExt=$(DarkEdif_PausableExt)</DarkEdifPreBuildToolParams>
 	</PropertyGroup>
 	<!-- Worth noting a When cannot contain a ItemDefinitionGroup -->
 	<ItemDefinitionGroup Label="Configuration">
@@ -346,15 +390,41 @@
 
 			<PreprocessorDefinitions Condition="$(_TargetPlat)=='Android' OR '$(_TargetPlat)'=='iOS'">$(_FusionSDKAdds);%(PreprocessorDefinitions);</PreprocessorDefinitions>
 
-			<!-- Not including ProjectDir causes includes of "Common.h" from the DarkEdif SDK to fail.
+			<!-- Not including ProjectDir causes includes of "Common.hpp" from the DarkEdif SDK to fail.
 				 OpenCV's projects are in an addition layer of subfolders. -->
-			<AdditionalIncludeDirectories>$(ProjectDir.TrimEnd('\'));$(SDKRootFolder)\Inc\$(_TargetPlat);$(SDKRootFolder)\Inc\Shared;$(SolutionDir)Temp\$(ExtName);$(SDKRootFolder)\Inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+			<AdditionalIncludeDirectories>$(ProjectDir.TrimEnd('\'));$(SDKRootFolder)\Inc\$(_TargetPlatInclMac);$(SDKRootFolder)\Inc\Shared;$(SolutionDir)Temp\$(ExtName);$(SDKRootFolder)\Inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 		</ClCompile>
 		<Link>
 			<AdditionalLibraryDirectories>$(ProjectDir.TrimEnd('\'));$(SDKRootFolder)\Lib\$(_TargetPlat)\$(TargetArch);$(SDKRootFolder)\Lib\$(_TargetPlat);$(SDKRootFolder)\Lib\Shared;$(SolutionDir)Temp\$(ExtName);$(SDKRootFolder)\Lib;%(AdditionalLibraryDirectories);</AdditionalLibraryDirectories>
 		</Link>
+		<BuildLog>
+			<!-- Android insists on making a log file, make sure it's in Temp -->
+			<Path>$(_FusionSDKTempDir)\build.log</Path>
+		</BuildLog>
 	</ItemDefinitionGroup>
 
+	<PropertyGroup Label="UserMacros" Condition="$(_TargetPlat)=='Windows'">
+		<!-- Do not include full build date in the C++ compilation. It causes VS to think the whole
+			 project needs rebuilding on every run. -->
+		<_FusionSDKAdds>/D "CONFIG=$(Configuration)" /D "PROJECT_TARGET_NAME=DE_STRIFY($(TargetNameNoPrefix))"
+			/D "PROJECT_NAME=DE_STRIFY($(ExtName))"
+			/D "AUTHOR_NAME=DE_STRIFY($(AuthorName))" /D "COMPANY_NAME=DE_STRIFY($(CompanyName))"
+			/D "EXTENSION_VERSION=$(ExtVersion)" /D "YEAR=DE_STRIFY($(Year))"
+			/D "USE_DARKEDIF_UPDATE_CHECKER=$(DarkEdif_UpdateChecker)"
+			/D "USE_DARKEDIF_FUSION_DEBUGGER=$(DarkEdif_FusionDebugger)"
+			/D "TEXT_OEFLAG_EXTENSION=$(DarkEdif_OEFLAGTextPresent)"
+			/D "WNDPROC_OEFLAG_EXTENSION=$(DarkEdif_OEFLAGWndProcPresent)"
+			/D "PAUSABLE_EXTENSION=$(DarkEdif_PausableExt)"
+			/D "DARKEDIF_DISPLAY_TYPE=$(DarkEdif_DisplayType)"
+			/D "EditorBuild=$(EditorBuild)" /D "RuntimeBuild=$(RuntimeBuild)" /D "UniBuild=$(UniBuild)"
+			/D "USE_DARKEDIF_UC_TAGGING=$(DarkEdif_UCTagging)" /D "MacBuild=$(MacBuild)"
+			</_FusionSDKAdds>
+		<!-- ResourceCompiler doesn't like newlines. -->
+		<_FusionSDKAdds>$(_FusionSDKAdds.Replace('\n',' ').Replace('\t',' '))</_FusionSDKAdds>
+		<!-- #if EditorBuild needs to evaluate to true.
+			 Worth noting in ResourceCompiler, "true" is not true. 1 is apparently true though. -->
+		<_FusionSDKAddsRC>$(_FusionSDKAdds.Replace('\n',' ').Replace('\','\\\').Replace('DE_STRIFY(','asStr(')) /D "BUILD_DATE=asStr($(BuildDate))"</_FusionSDKAddsRC>
+	</PropertyGroup>
 
 <!--#################################
 		BEGIN Windows
@@ -373,8 +443,12 @@
 
 		<!-- If not XP, then use the latest compiler. $(PlatformToolsetVersion) is not available,
 			 so the following "check for toolset" are copied from Microsoft.Cpp.Defaults.props;
-			 v141 = VS 2017, v142 = VS 2019, v143 = VS 2022. Note v100 (VS 2010) is MS's default. -->
+			 v141 = VS 2017, v142 = VS 2019, v143 = VS 2022, v144 = VS2026, v145 = VS2028. Note v100 (VS 2010) is MS's default. -->
 		<PlatformToolset Condition="$(PlatformToolset)==''">v100</PlatformToolset>
+		<PlatformToolset Condition="$(PlatformToolset)=='v100' AND
+			Exists('$(VCTargetsPath)Platforms\Win32\PlatformToolsets\v145\Toolset.props')">v145</PlatformToolset>
+		<PlatformToolset Condition="$(PlatformToolset)=='v100' AND
+			Exists('$(VCTargetsPath)Platforms\Win32\PlatformToolsets\v144\Toolset.props')">v144</PlatformToolset>
 		<PlatformToolset Condition="$(PlatformToolset)=='v100' AND
 			Exists('$(VCTargetsPath)Platforms\Win32\PlatformToolsets\v143\Toolset.props')">v143</PlatformToolset>
 		<PlatformToolset Condition="$(PlatformToolset)=='v100' AND
@@ -395,7 +469,7 @@
 
 		<!-- Instead of putting in output folder, put it here. -->
 		<CodeAnalysisLogFile>$(IntDir)$(TargetFileName).CodeAnalysisLog.xml</CodeAnalysisLogFile>
-        <CodeAnalysisSucceededFile>$(IntDir)$(TargetFileName).lastcodeanalysissucceeded</CodeAnalysisSucceededFile>
+		<CodeAnalysisSucceededFile>$(IntDir)$(TargetFileName).lastcodeanalysissucceeded</CodeAnalysisSucceededFile>
 	</PropertyGroup>
 	<ItemDefinitionGroup Label="Configuration" Condition="$(_TargetPlat)=='Windows'">
 		<ClCompile>
@@ -418,6 +492,8 @@
 			<WarningLevel>Level3</WarningLevel>
 			<!-- Use C++ 2017 Standard (C++17) -->
 			<LanguageStandard>stdcpp17</LanguageStandard>
+			<!-- Use C 2011 language standard (C11) -->
+			<LanguageStandard_C>stdc11</LanguageStandard_C>
 			<!-- Use all processors during compilation. Not noticeable during multi-project building,
 				 but matters when it's one project. -->
 			<MultiProcessorCompilation Condition="$(_UseMultiProcessor)==1">true</MultiProcessorCompilation>
@@ -429,7 +505,8 @@
 			<AdditionalOptions>$(_FusionSDKAdds) /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
 			<!-- Disable thread-safe initialization on XP, as VS 2019 uses Vista+ functionality to implement it.
 				 This will only create a problem if you have statics accessed from multiple threads that spawn at the same time. To conditionally write code for this, see __cpp_threadsafe_static_init. -->
-			<AdditionalOptions Condition="$(WindowsXPCompatibility)==1 AND $(VisualStudioVersion)==16.0">/Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
+			<AdditionalOptions Condition="$(WindowsXPCompatibility)==1 AND $(VisualStudioVersion)&gt;=16.0">/Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
+			<AdditionalOptions Condition="$(WindowsXPCompatibility)==0 OR $(VisualStudioVersion)&lt;16.0">/DThreadSafeStaticInitIsSafe=1 %(AdditionalOptions)</AdditionalOptions>
 		</ClCompile>
 		<Link>
 			<!-- Windows subsystem. Required to prevent a warning message -->
@@ -567,7 +644,19 @@
 	################################# -->
 	<PropertyGroup Condition="'$(_TargetPlat)'!='Windows'">
 		<!-- To move the compiled SO file into the Data\Runtime\Android/iOS zip file. -->
-		<DarkEdifPostBuildToolParams>/ProjName="$(ExtName)" /TargetArch="$(TargetArch)" /InputSOFolder="$(OutDir.TrimEnd('\'))" /OutputDir="$(MFXDir.TrimEnd('\'))" /ProjectDir="$(ProjectDir.TrimEnd('\'))" /TargetPlat="$(_TargetPlatInclMac)" /ProjConfig="$(Configuration)" /FusionConfigIniPath="$(SolutionDir)FusionSDKConfig.ini"</DarkEdifPostBuildToolParams>
+		<DarkEdifPostBuildToolParams>/ProjName="$(ExtName)" /TargetArch="$(TargetArch)" /InputSOFolder="$(OutDir.TrimEnd('\'))" /OutputDir="$(MFXDir.TrimEnd('\'))" /ProjectDir="$(ProjectDir.TrimEnd('\'))" /TargetPlat="$(_TargetPlatInclMac)" /ProjConfig="$(Configuration)" /FusionConfigIniPath="$(_FusionSDKConfigIniPath)" /ExtDisplayType=$(DarkEdif_DisplayType) /IsTextExt=$(DarkEdif_OEFLAGTextPresent) /IsPausableExt=$(DarkEdif_PausableExt)</DarkEdifPostBuildToolParams>
+
+		<!-- Android uses Clang, a different format of commandline items
+			-D PROJECT_NAME=\"$(ExtName)\"
+			-D AUTHOR_NAME=\"$(AuthorName)\" -D "COMPANY_NAME=\"$(CompanyName)\"
+			-D EXTENSION_VERSION=$(ExtVersion)
+			-D BUILD_DATE=\"$(BuildDate)\" -D YEAR=\"$(Year)\"		-->
+		<!-- Doesn't work due to MS bug.
+		<_FusionSDKAdds>CONFIG=$(Configuration);PROJECT_NAME="$(ExtName)";AUTHOR_NAME="$(AuthorName)";COMPANY_NAME="$(CompanyName)";EXTENSION_VERSION=$(ExtVersion);YEAR="$(Year)"</_FusionSDKAdds> -->
+		<_FusionSDKAdds>CONFIG=$(Configuration);PROJECT_TARGET_NAME=DE_STRIFY($(TargetNameNoPrefix));PROJECT_TARGET_NAME_UNDERSCORES=DE_STRIFY($(TargetNameUnderscores));PROJECT_TARGET_NAME_UNDERSCORES_RAW=$(TargetNameUnderscores);PROJECT_NAME=DE_STRIFY($(ExtName));PROJECT_NAME_UNDERSCORES=DE_STRIFY($(ExtName.Replace(' ','_')));AUTHOR_NAME=DE_STRIFY($(AuthorName));COMPANY_NAME=DE_STRIFY($(CompanyName));EXTENSION_VERSION=$(ExtVersion);YEAR=DE_STRIFY($(Year));USE_DARKEDIF_FUSION_DEBUGGER=$(DarkEdif_FusionDebugger);EditorBuild=$(EditorBuild);RuntimeBuild=$(RuntimeBuild);UniBuild=$(UniBuild);MacBuild=$(MacBuild);ThreadSafeStaticInitIsSafe=1;TEXT_OEFLAG_EXTENSION=$(DarkEdif_OEFLAGTextPresent);WNDPROC_OEFLAG_EXTENSION=$(DarkEdif_OEFLAGWndProcPresent);DARKEDIF_DISPLAY_TYPE=$(DarkEdif_DisplayType);PAUSABLE_EXTENSION=$(DarkEdif_PausableExt)</_FusionSDKAdds>
+
+		<!-- Not defined by Clang, just MSVC. -->
+		<_FusionSDKAdds Condition="$(DbgBuild)==1">$(_FusionSDKAdds);_DEBUG=1</_FusionSDKAdds>
 	</PropertyGroup>
 
 <!--#################################
@@ -587,9 +676,25 @@
 
 		<!-- Generate ARM style code for Thumb archs. -->
 		<ThumbMode Condition="'$(Platform)'=='ARM'">ARM</ThumbMode>
-		<!-- API that's readily accessible. Note 21 is minimum 64-bit API. -->
-		<AndroidAPILevel>android-19</AndroidAPILevel>
-		<AndroidAPILevel Condition="'$(Platform)'=='ARM64' OR '$(Platform)'=='x64'">android-21</AndroidAPILevel>
+
+		<!-- Sysroot link fix; Sysroot is set by API number, but VS doesn't update it
+			 if API number is changed. Original API level is assumed to be android-31,
+			 even when NDK is r16b, which comes with VS, and is too early for API 31. -->
+		<_SysrootLinkFix>$(SysrootLink.Replace('\$(AndroidAPILevel)\', '$evil$'))</_SysrootLinkFix>
+
+		<!-- API that's readily accessible in VS 2019. Note 21 is minimum 64-bit API.
+			 API depends on NDK that VS is using; see later code for API support check. -->
+		<AndroidAPILevel Condition="'$(AndroidAPILevel)'=='' AND ('$(Platform)'=='ARM64' OR '$(Platform)'=='x64')">android-21</AndroidAPILevel>
+		<AndroidAPILevel Condition="'$(AndroidAPILevel)'==''">android-19</AndroidAPILevel>
+		
+		<!-- This one sets the __ANDROID_API__ define to same as above.
+			 Note if you get errors for missing stdout/stderr define, this is due to
+			 mismatch of API in library vs C define; those were changed between NDK versions,
+			 stdout/stderr moved from hidden function calls to real variables. -->
+		<AndroidAPILevelNumber>$(AndroidAPILevel.Substring(8))</AndroidAPILevelNumber>
+
+		<!-- Sysroot link fix, pt 2, replaces VS assumed android API level with real one -->
+		<SysrootLink>$(_SysrootLinkFix.Replace('$evil$', '\$(AndroidAPILevel)\'))</SysrootLink>
 
 		<!-- We should use _UseMultiProcessor, but on Windows, that prevents incremental linking.
 			 Not so on Android, so we use it all the time. -->
@@ -599,7 +704,10 @@
 		<ClCompile>
 			<!-- Use C++17, and C11, latest finalised standards. -->
 			<CppLanguageStandard>c++1z</CppLanguageStandard>
+			<CppLanguageStandardNumber>17</CppLanguageStandardNumber>
 			<CLanguageStandard>c11</CLanguageStandard>
+			<LanguageStandard>c++1z</LanguageStandard>
+			<LanguageStandard_C>c11</LanguageStandard_C>
 
 			<!-- Make it easier to do a call stack trace; also, smaller files. -->
 			<FunctionLevelLinking>true</FunctionLevelLinking>
@@ -628,7 +736,7 @@
 			<OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
 
 			<!-- Include math library (libm.so). -->
-			<LibraryDependencies>$(StlLibraryName);m;%(LibraryDependencies)</LibraryDependencies>
+			<LibraryDependencies>$(StlLibraryName);m;ESxRenderer;ES1Renderer;%(LibraryDependencies)</LibraryDependencies>
 			<!-- Include android_support library for x86 and ARM (available in x86/ARM constantly, but only in ARM64/x64 for NDK17 and lower) -->
 			<LibraryDependencies Condition="$(Platform)=='ARM' OR $(Platform)=='x86' OR '$(NDKVersion)' &lt; '17.0'">$(StlLibraryName);android_support;%(LibraryDependencies)</LibraryDependencies>
 			<!-- This SO static object file will be moved by the DarkEdifPostBuildTool,
@@ -636,27 +744,33 @@
 			<IncrementalLink>false</IncrementalLink>
 			<!-- Strip out debugger info in release builds. Removes ClCompile.DebuggerSymbolInformation if it's there, too. -->
 			<DebuggerSymbolInformation Condition="$(RelBuild)==1">OmitAllSymbolInformation</DebuggerSymbolInformation>
+			<!-- Since Nov 2025, all Google Play Android 15+ libraries must be built with 16KB alignment.
+				 r22 and lower must specify common page size; higher just max page size.
+				 https://developer.android.com/guide/practices/page-sizes#ndk-build_1 -->
+			<AdditionalOptions Condition="'$(TargetArch)'=='x86_64' OR '$(TargetArch)'=='arm64'">-Wl,-z,max-page-size=16384 %(AdditionalOptions)</AdditionalOptions>
+			<AdditionalOptions Condition="('$(TargetArch)'=='x86_64' OR '$(TargetArch)'=='arm64') AND $(NDKVersion) &lt;= 22">-Wl,-z,common-page-size=16384 %(AdditionalOptions)</AdditionalOptions>
 		</Link>
 	</ItemDefinitionGroup>
 	<!-- Ensure VS knows the build failed if the .so or .zip files weren't updated -->
 	<ItemGroup Condition="'$(_TargetPlat)'=='Android'">
-		<UpToDateCheckOutput Include="$(MFXDir)\$(ExtName.Replace(' ','_')).zip;$(SolutionDir)\Temp\$(ExtName)\Android\$(Configuration)\$(TargetArch)\lib$(ExtName.Replace(' ','_')).so" />
+		<UpToDateCheckOutput Include="$(MFXDir)\$(TargetNameUnderscores).zip;$(_FusionSDKTempDir)\lib$(TargetNameUnderscores).so" />
 	</ItemGroup>
 
 <!--#################################
 		END Android
-		BEGIN iOS
+		BEGIN iOS and Mac
 	################################# -->
 	<PropertyGroup Condition="$(_TargetPlat)=='iOS'">
-		<!-- Always static -->
+		<!-- Always static, dynamic is limited to Apple OS and drivers -->
 		<ConfigurationType>StaticLibrary</ConfigurationType>
 		<iOSConfigurationType>StaticLibrary</iOSConfigurationType>
 		<!-- Debug libraries on Debug config -->
 		<UseDebugLibraries>false</UseDebugLibraries>
 		<UseDebugLibraries Condition="$(DbgBuild)==1">true</UseDebugLibraries>
-		<!-- Most recent supported -->
+		<!-- Most recent supported by VS, although works up to XCode 13.4.1 (Mac OS Monterey), possibly further. -->
 		<PlatformToolset>XCode_6_1</PlatformToolset>
-		<!-- libSTDc++ (not libc++) was deprecated ages ago, and is not available on watchOS or tvOS. -->
+		<!-- libSTDc++ (not libc++) was deprecated ages ago, and is not available on watchOS or tvOS.
+https://forums.developer.apple.com/forums/thread/113746?answerId=349757022#349757022 -->
 		<UseOfStl>libc++</UseOfStl>
 
 		<!-- Targets iPhone simulator. ARM64 can be device or simulator, but VS
@@ -664,19 +778,10 @@
 		<_AppleSDKTarget>iphoneos</_AppleSDKTarget>
 		<_AppleSDKTarget Condition="$(MacBuild)==1">macosx</_AppleSDKTarget>
 		<_AppleSDKTarget Condition="$(iOSSimulatorBuild)==1">iphonesimulator</_AppleSDKTarget>
-		<!-- Override target iOS version; VS defaults to iOS 8.1 and doesn't appear to let you edit it. Note that changing it higher or lower may exclude some CPU archs, exclusion which PostBuildTool is not designed to look for.
-			<AppleSDKDeployVersion>11.4</AppleSDKDeployVersion>
-		-->
 
 		<!-- iOS files redirection -->
  		<PbxprojDirectory>$(_FusionSDKTempDir)\$(ProjectName).xcodeproj</PbxprojDirectory>
 		<PayloadDescriptionFilepath>$(_FusionSDKTempDir)\.$(ProjectName).payload.desc</PayloadDescriptionFilepath>
-
-		<!-- See comments above. -->
-		<AppleSDKDeployVersion Condition="$(MacBuild)==0 AND $(ProjectName.StartsWith('Bluewing'))">10.0</AppleSDKDeployVersion>
-
-		<!-- Mac build: minimum possible
-		<AppleSDKDeployVersion Condition="$(MacBuild)==1">10.9</AppleSDKDeployVersion> -->
 
 		<!-- We stick with static library default (.a) for iOS, but bundle for Mac -->
 		<TargetExt Condition="$(MacBuild)==1">.bundle</TargetExt>
@@ -695,7 +800,6 @@
 		<ClCompile>
 			<PrecompiledHeader>NotUsing</PrecompiledHeader>
 			<!-- <AdditionalIncludeDirectories>$(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>-->
-			<PreprocessorDefinitions>__APPLE__;PROJECT_NAME_RAW=$(ExtName.Replace(' ','_'));%(PreprocessorDefinitions)</PreprocessorDefinitions>
 			<!-- Use C++17, and C11, latest finalised standards.
 				 VS 2017 (15.0) doesn't understand C++17 as a target for iOS, so we'll add it to additional options manually. -->
 			<CppLanguageStandard Condition="$(VisualStudioVersion)&gt;15.0">c++17</CppLanguageStandard>
@@ -704,7 +808,7 @@
 			<ExceptionHandling>Enabled</ExceptionHandling>
 			<!-- Prevents a weird glitch from using structs.
 				 Hopefully, also obscures the repeated static library Edif functions from using each others' functions. -->
-			<AdditionalOptions>-fsigned-char -fno-aligned-allocation -fvisibility=hidden -D Edif=$(ExtName.Replace(' ','_'))_Edif -D Extension=$(ExtName.Replace(' ','_'))_Extension -D DarkEdif=$(ExtName.Replace(' ','_'))_DarkEdif $(AdditionalOptions)</AdditionalOptions>
+			<AdditionalOptions>-fsigned-char -fno-aligned-allocation -fvisibility=hidden -Wno-nullability-completeness -D Edif=$(TargetNameUnderscores)_Edif -D Extension=$(TargetNameUnderscores)_Extension -D DarkEdif=$(TargetNameUnderscores)_DarkEdif -D FusionInternals=$(TargetNameUnderscores)_FusionInternals $(AdditionalOptions)</AdditionalOptions>
 
 			<!-- VS 2017 (15.0) doesn't accept C++17 as a target for iOS, so we'll add it to additional options manually. -->
 			<AdditionalOptions Condition="$(VisualStudioVersion)==15.0">-std=c++17 $(AdditionalOptions)</AdditionalOptions>
@@ -731,18 +835,23 @@
 			<LinkTimeOptimization Condition="$(LTCG)=='Y'">true</LinkTimeOptimization>
 		</ClCompile>
 	</ItemDefinitionGroup>
-	<!-- Ensure VS knows the build failed if the .xcframework or .ext files weren't updated -->
+	<!-- Ensure VS knows the build failed if the .xcframework or .ext files weren't updated.
+		 Go up once for simulator/device, once for target arch, end result is config folder where merged lib output is -->
 	<ItemGroup Condition="'$(_TargetPlatInclMac)'=='iOS'">
-		<UpToDateCheckOutput Include="$(MFXDir)\$(ExtNameUnderscores).ext;$(SolutionDir)\Temp\$(ExtName)\iOS\$(Configuration)\$(ExtNameUnderscores)).xcframework\Info.plist" />
+		<UpToDateCheckOutput Include="$(MFXDir)\$(TargetNameNoPrefix).ext;$(_FusionSDKTempDir)\..\..\$(TargetNameNoPrefix).xcframework\Info.plist" />
 	</ItemGroup>
-	<!-- Ensure VS knows the build failed if the bundle file or .dat file weren't updated -->
+	<!-- Ensure VS knows the build failed if the bundle file or .dat file weren't updated.
+		 Go up once for target arch, end result is config folder where merged bundle output is -->
 	<ItemGroup Condition="'$(_TargetPlatInclMac)'=='Mac'">
-		<UpToDateCheckOutput Include="$(MFXDir)\$(ExtName).dat;$(SolutionDir)\Temp\$(ExtName)\Mac\$(Configuration)\$(ExtName)" />
+		<UpToDateCheckOutput Include="$(MFXDir)\$(TargetNameNoPrefix).dat;$(_FusionSDKTempDir)\..\$(TargetNameNoPrefix)" />
 	</ItemGroup>
 
-	<!-- All runtimes -->
+<!--#################################
+		END iOS and Mac
+		BEGIN VS exports
+	################################# -->
 	<ItemGroup>
-		<!-- Forwards the macros calculated above to the build process -->
+		<!-- Forwards the macros calculated above to the User Macros property pane. Functionally irrelevant. -->
 		<BuildMacro Include="MFXDir">
 			<Value>$(MFXDir)</Value>
 		</BuildMacro>
@@ -779,15 +888,17 @@
 		<BuildMacro Include="RunAnalyzerSetting">
 			<Value>$(RunAnalyzerSetting)</Value>
 		</BuildMacro>
-		<BuildMacro Include="Betsy">
-			<Value Condition="$(_TargetPlat)=='Windows'">true</Value>
-		</BuildMacro>
 	</ItemGroup>
+
+<!--#################################
+		END VS exports
+		BEGIN VS build tasks
+	################################# -->
 
 	<!-- Windows 8.1 SDK misses half its C++ standard library headers if you don't have the Visual Studio Windows Universal CRT SDK component.
 		 Windows 10 SDK+ doesn't have this bug.
 		 Windows 7.1 SDK from XP targeting pack does have it, but requires Universal CRT SDK as part of XP targeting. -->
-	<Target Name="Win8_1 or lower SDK without UCRT" Condition="$(_TargetPlat)==Windows AND $(WindowsTargetPlatformVersion)=='8.1' AND '$(UniversalCRT_IncludePath)'==''" BeforeTargets="ClCompile">
+	<Target Name="Win8_1 or lower SDK without UCRT" Condition="'$(_TargetPlat)'=='Windows' AND $(WindowsTargetPlatformVersion)=='8.1' AND '$(UniversalCRT_IncludePath)'==''" BeforeTargets="ClCompile">
 		<Error Text="FusionSDK error: Windows 8.1 or lower SDK cannot work fully without the 'Universal CRT SDK' Visual Studio component." />
 	</Target>
 
@@ -825,18 +936,23 @@
 	</Target>
 
 	<!-- The iOS compiler for some reason insists on using project name instead of target name.
-		 We'll temporarily change the project name. Since TargetName includes "lib" and shouldn't, we'll substring it. -->
-	<Target Name="iOS library name fix" Condition="$(_TargetPlatInclMac)=='iOS'" BeforeTargets="GenerateXCodeProj">
-		<Message Text="Corrected library name from $(ProjectName) to $(TargetName.Substring(3,$([MSBuild]::Subtract($(TargetName.Length), 3))))." Importance="High" />
+		 We'll temporarily change the project name. -->
+	<Target Name="Apple library name fix" Condition="$(_TargetPlat)=='iOS'" BeforeTargets="GenerateXCodeProj">
+		<Message Text="Corrected library name from $(ProjectName) to $(TargetNameNoPrefix)." Importance="High" />
 		<PropertyGroup>
-			<ProjectName>$(TargetName.Substring(3,$([MSBuild]::Subtract($(TargetName.Length), 3))))</ProjectName>
+			<ProjectName>$(TargetNameNoPrefix)</ProjectName>
  		</PropertyGroup>
 	</Target>
-	<Target Name="Mac library name fix" Condition="$(_TargetPlatInclMac)=='Mac'" BeforeTargets="GenerateXCodeProj">
-		<Message Text="Corrected library name from $(ProjectName) to $(TargetName)." Importance="High" />
-		<PropertyGroup>
-			<ProjectName>$(TargetName)</ProjectName>
-		</PropertyGroup>
+
+	<!-- Obj-C syntax can be permitted on top of C/C++. We want that as Fusion's internals are strictly Obj-C. -->
+	<Target Name="iOSAlwaysObjC" Condition="$(_TargetPlat)=='iOS'" BeforeTargets="GenerateXCodeProj">
+		<Message Text="FusionProps: overriding CompileAs to include ObjC." Importance="High" />
+		<ItemGroup>
+			<ClCompile>
+				<CompileAs Condition="'%(ClCompile.CompileAs)' == 'CompileAsC'">CompileAsObjC</CompileAs>
+				<CompileAs Condition="'%(ClCompile.CompileAs)' == 'CompileAsCpp'">CompileAsObjCpp</CompileAs>
+			</ClCompile>
+		</ItemGroup>
 	</Target>
 
 	<!-- After building x86_64, i386, or ARM64, build the Simulator variant of the same.
@@ -845,38 +961,38 @@
 		<Message Text="Built device config $(ProjectName), arch $(TargetArch), building simulator variant..." Importance="High" />
 
 		<Message Text="MSBuild project '$(ProjectName)' props='Configuration=$(Configuration);Platform=$(Platform);TargetArch=$(TargetArch);iOSSimulatorBuild=1'" Importance="High" />
-	    <MSBuild Projects="$(MSBuildProjectFullPath)" Properties="Configuration=$(Configuration);Platform=$(Platform);TargetArch=$(TargetArch);iOSSimulatorBuild=1" Targets="Build" />
+		<MSBuild Projects="$(MSBuildProjectFullPath)" Properties="Configuration=$(Configuration);Platform=$(Platform);TargetArch=$(TargetArch);iOSSimulatorBuild=1" Targets="Build" />
 	</Target>
 
 	<!-- armv6 is a variant of armv7, in the sense they both use ARM project configuration -->
-	<Target Name="iOS Build armv6" Condition="$(_TargetPlatInclMac)=='iOS' AND $(TargetArch)=='armv7' AND $(_iOSBuildArchitectures.Contains('armv6'))" AfterTargets="Build;Rebuild">
+	<Target Name="iOS Build armv6" Condition="$(_TargetPlatInclMac)=='iOS' AND $(TargetArch)=='armv7' AND $(_iOSBuildArchitectures.Contains(';armv6;'))" AfterTargets="Build;Rebuild">
 		<Message Text="Built device config $(ProjectName), arch $(TargetArch), building armv6 variant..." Importance="High" />
 
 		<Message Text="FusionSDK.props: starting variant MSBuild; project '$(ProjectName)' props='Configuration=$(Configuration);Platform=$(Platform);TargetArch=armv6;PlatformNativeArch=armv6'" Importance="High" />
-	    <MSBuild Projects="$(MSBuildProjectFullPath)" Properties="Configuration=$(Configuration);Platform=$(Platform);TargetArch=armv6;PlatformNativeArch=armv6" Targets="Build" />
+		<MSBuild Projects="$(MSBuildProjectFullPath)" Properties="Configuration=$(Configuration);Platform=$(Platform);TargetArch=armv6;PlatformNativeArch=armv6" Targets="Build" />
 	</Target>
 
 	<!-- armv7s is a variant of armv7 -->
-	<Target Name="iOS Build armv7s" Condition="$(_TargetPlatInclMac)=='iOS' AND $(TargetArch)=='armv7' AND $(_iOSBuildArchitectures.Contains('armv7s'))" AfterTargets="Build;Rebuild">
+	<Target Name="iOS Build armv7s" Condition="$(_TargetPlatInclMac)=='iOS' AND $(TargetArch)=='armv7' AND $(_iOSBuildArchitectures.Contains(';armv7s;'))" AfterTargets="Build;Rebuild">
 		<Message Text="Built device config $(ProjectName), arch $(TargetArch), building armv7s variant..." Importance="High" />
 
 		<Message Text="FusionSDK.props: starting variant MSBuild; project '$(ProjectName)' props='Configuration=$(Configuration);Platform=$(Platform);TargetArch=armv7s;PlatformNativeArch=armv7s'" Importance="High" />
-	    <MSBuild Projects="$(MSBuildProjectFullPath)" Properties="Configuration=$(Configuration);Platform=$(Platform);TargetArch=armv7s;PlatformNativeArch=armv7s" Targets="Build" />
+		<MSBuild Projects="$(MSBuildProjectFullPath)" Properties="Configuration=$(Configuration);Platform=$(Platform);TargetArch=armv7s;PlatformNativeArch=armv7s" Targets="Build" />
 	</Target>
 
-	<Target Name="iOS Build arm64e" Condition="$(_TargetPlatInclMac)=='iOS' AND $(TargetArch)=='arm64' AND $(iOSSimulatorBuild)==1 AND $(_iOSBuildArchitectures.Contains('arm64e'))" AfterTargets="Build;Rebuild">
+	<Target Name="iOS Build arm64e" Condition="$(_TargetPlatInclMac)=='iOS' AND $(TargetArch)=='arm64' AND $(iOSSimulatorBuild)==1 AND $(_iOSBuildArchitectures.Contains(';arm64e;'))" AfterTargets="Build;Rebuild">
 		<Message Text="Built device config $(ProjectName), arch $(TargetArch), building arm64e variant..." Importance="High" />
 
 		<!-- Note: Set SimulatorBuild=0, or it will inherit the =1 from this project run. The above one will also build SimulatorBuild=1 for it. -->
 		<Message Text="FusionSDK.props: starting variant MSBuild; project '$(ProjectName)' props='Configuration=$(Configuration);Platform=$(Platform);TargetArch=arm64e;PlatformNativeArch=arm64e;iOSSimulatorBuild=0'" Importance="High" />
-	    <MSBuild Projects="$(MSBuildProjectFullPath)" Properties="Configuration=$(Configuration);Platform=$(Platform);TargetArch=arm64e;PlatformNativeArch=arm64e;iOSSimulatorBuild=0" Targets="Build" />
+		<MSBuild Projects="$(MSBuildProjectFullPath)" Properties="Configuration=$(Configuration);Platform=$(Platform);TargetArch=arm64e;PlatformNativeArch=arm64e;iOSSimulatorBuild=0" Targets="Build" />
 	</Target>
 
 	<!-- Post build tool for non-Windows. Copies built libraries into ZIP/EXT in MFX\Data\Runtime. -->
 	<Target Name="Copy libraries files into ZIP" Condition="$(SDKType)=='DarkEdif' AND '$(_TargetPlat)'!='Windows' AND '$(IsSecondRun)'!='1'" AfterTargets="Build">
-      <Message Text="Copying the built libraries into the $(ZipExt) file in MFX\Data\Runtime..." Importance="High" />
-	  <Exec Command="&quot;$(SDKRootFolder)\DarkEdifPostBuildTool.exe&quot; $(DarkEdifPostBuildToolParams)" />
-    </Target>
+		<Message Text="Copying the built libraries into the $(ZipExt) file in MFX\Data\Runtime..." Importance="High" />
+		<Exec Command="&quot;$(SDKRootFolder)\DarkEdifPostBuildTool.exe&quot; $(DarkEdifPostBuildToolParams)" />
+	</Target>
 
 	<!-- Writes FusionSDK.props debugging info, usually ext devs should not need this. -->
 	<Target Name="For debugging" Condition="$(EchoAllDefinesFromPropsFileDuringBuild)==1" BeforeTargets="ResourceCompile;Compile;Build;BeforeBuild">
@@ -885,5 +1001,70 @@
 		<Message Text="_FusionSDKAdds = [$(_FusionSDKAdds)]" Importance="High" />
 		<Message Text="_FusionSDKAddsRC = [$(_FusionSDKAddsRC)]" Importance="High" />
 		<Message Text="=========================" Importance="High" />
+	</Target>
+	<!-- Look for NDK/platforms/android-XX folders to find NDK support range.
+		 https://learn.microsoft.com/en-us/visualstudio/msbuild/msbuild-roslyncodetaskfactory?view=visualstudio -->
+	<UsingTask TaskName="AndroidAPIRangeFinder"
+			TaskFactory="RoslynCodeTaskFactory"
+			AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+		<ParameterGroup>
+			<NDKPath ParameterType="System.String" Required="true" />
+			<MaxNDKAPI ParameterType="System.Int32" Output="true" />
+			<MinNDKAPI ParameterType="System.Int32" Output="true" />
+		</ParameterGroup>
+		<Task>
+			<Reference Include="Microsoft.Build.Framework" />
+			<Code Type="Method" Language="cs"><![CDATA[
+			public override bool Execute()
+			{
+				MinNDKAPI = 0;
+				MaxNDKAPI = 0;
+				
+				for (int i = 50; i > 1; --i)
+				{
+					if (System.IO.Directory.Exists($"{NDKPath}/platforms/android-{i}"))	
+					{
+						MaxNDKAPI = i;
+						break;
+					}
+				}
+				if (MaxNDKAPI == 0)
+				{
+					Log.LogError($"Couldn't find platform folders of format \"{NDKPath}/platforms/android-X\".");
+					return false;
+				}
+				for (int i = 1; i < MaxNDKAPI; ++i)
+				{
+					if (System.IO.Directory.Exists($"{NDKPath}/platforms/android-{i}"))	
+					{
+						MinNDKAPI = i;
+						break;
+					}
+				}
+				if (MinNDKAPI == 0)
+				{
+					Log.LogError($"Couldn't find platform folders of format \"{NDKPath}/platforms/android-X\".");
+					return false;
+				}
+				return true;
+			}
+			]]></Code>
+		</Task>
+	</UsingTask>
+	<Target Name="Android API check" Condition="'$(_TargetPlat)'=='Android'" BeforeTargets="BeforeBuild;ClCompile">
+		<PropertyGroup>
+			<MinNDKAPI>0</MinNDKAPI>
+			<MaxNDKAPI>50</MaxNDKAPI>
+			<!-- Sysroot ends with format of "...-r16b\sysroot", take r16b. But r29 doesn't have a letter, so trim the slashes. -->
+			<NDKVerWithLetter>$(Sysroot.Substring($([MSBuild]::Add($(Sysroot.LastIndexOf('-')), 1)),4).Trim('\\/-'))</NDKVerWithLetter>
+		</PropertyGroup>
+		<AndroidAPIRangeFinder NDKPath="$(Sysroot)/../">
+			<Output TaskParameter="MaxNDKAPI" PropertyName="MaxNDKAPI" />
+			<Output TaskParameter="MinNDKAPI" PropertyName="MinNDKAPI" />
+		</AndroidAPIRangeFinder>
+		
+		<Message Importance="High" Text="DarkEdif Android build check: Android NDK &quot;$(NDKVerWithLetter)&quot; has support for Android API range $(MinNDKAPI) to $(MaxNDKAPI)." />
+		<Error Condition="($(AndroidAPILevelNumber) &gt; $(MaxNDKAPI)) OR ($(AndroidAPILevelNumber) &lt; $(MinNDKAPI))"
+			Text="Android NDK-API mismatch! You are using Android NDK $(NDKVerWithLetter) which supports API range $(MinNDKAPI) to $(MaxNDKAPI), but you are targeting Android API $(AndroidAPILevelNumber)." />
 	</Target>
 </Project>

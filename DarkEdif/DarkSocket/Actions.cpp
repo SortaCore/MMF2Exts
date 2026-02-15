@@ -1,4 +1,4 @@
-#include "Common.h"
+#include "Common.hpp"
 
 // ============================================================================
 //
@@ -163,6 +163,13 @@ void Extension::ClientSend(int socketID, const TCHAR * packet, const TCHAR * enc
 		return;
 
 	sock->lock.edif_lock();
+
+	if (sock->mainSocketFD == -1)
+	{
+		sock->lock.edif_unlock();
+		return globals->CreateError(socketID, _T("Client socket is not valid, cannot send."));
+	}
+
 	std::string msgTo;
 	if (!Internal_SetTextWithEncoding(encoding, packet, msgTo, sock->mainSocketFD))
 	{
@@ -182,11 +189,16 @@ void Extension::ClientSend(int socketID, const TCHAR * packet, const TCHAR * enc
 	// sendto is equivalent to send, with address ignored for one-destination anyway
 	int ret = sendto(sock->mainSocketFD, msgTo.data(), msgTo.size(), flags, (sockaddr *)&sock->mainSockAddress, sock->mainSockAddressSize);
 	sock->lock.edif_unlock();
-	++sock->sources[0]->numPacketsOut;
-	sock->sources[0]->bytesOut += ret;
+
+	// sock->sources[0] may be invalid
+	if (ret > 0)
+	{
+		++sock->sources[0]->numPacketsOut;
+		sock->sources[0]->bytesOut += ret;
+	}
 
 	// Incomplete send. If this is common, I'll get the ticking to handle packet sending too, so it can send the rest.
-	if (sock->HandleSockOpReturn("sending packet on client socket", ret)&& ret < (int)msgTo.size())
+	if (sock->HandleSockOpReturn("sending packet on client socket", ret) && ret < (int)msgTo.size())
 		globals->CreateError(socketID, _T("Only sent %d bytes of packet instead of %zu bytes; sending overloaded?"), ret, msgTo.size());
 }
 void Extension::REMOVED_ClientGoIndependent(int socketID)
@@ -593,7 +605,7 @@ void Extension::PacketBeingBuilt_SetBuffer(const TCHAR * memoryAddress, int size
 	if (errno == ERANGE || errno == EINVAL)
 		return globals->CreateError(-1, _T("Couldn't set buffer from memory address \"%s\", the address was too small or too big to be an address."), memoryAddress);
 
-	if (!memcpy(&packetBeingBuilt[packetBeingBuiltOffset], (void *)memoryAddress, (size_t)sizeOfBank))
+	if (!memcpy(&packetBeingBuilt[packetBeingBuiltOffset], (void *)conv, (size_t)sizeOfBank))
 		globals->CreateError(-1, _T("Set bank to bank failed; error %d: %s."), errno, _tcserror(errno));
 }
 

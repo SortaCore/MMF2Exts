@@ -94,8 +94,8 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\Inc\iOS\MMFiOSMasterHeader.h" />
     <ClInclude Condition="exists('$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp')" Include="$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp" />
+    <ClInclude Include="..\Inc\Mac\MMFMacMasterHeader.hpp" />
     <ClInclude Include="..\Lib\Shared\Lacewing\src\flashpolicy.h" />
     <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\common.h" />
     <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\eventqueue\eventqueue.h" />
@@ -104,8 +104,8 @@
     <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\ios config.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Condition="exists('$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(ExtNameUnderscores).hpp')" Include="$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(ExtNameUnderscores).hpp" />
-    <ClCompile Condition="exists('$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(ExtNameUnderscores).mm')" Include="$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(ExtNameUnderscores).mm">
+    <ClInclude Condition="exists('$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(TargetNameUnderscores).hpp')" Include="$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(TargetNameUnderscores).hpp" />
+    <ClCompile Condition="exists('$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(TargetNameUnderscores).mm')" Include="$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(TargetNameUnderscores).mm">
       <FileType>CppCode</FileType>
     </ClCompile>
     <ClInclude Condition="exists('$(ProjectDir)\DarkExt.PostMinify.json')" Include="$(ProjectDir)\DarkExt.PostMinify.json" />

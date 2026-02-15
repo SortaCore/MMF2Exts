@@ -1,12 +1,13 @@
-/* vim: set et ts=4 sw=4 sts=4 ft=cpp:
+/* vim: set noet ts=4 sw=4 sts=4 ft=cpp:
  *
  * Copyright (C) 2011 James McLaughlin.
- * Copyright (C) 2012-2022 Darkwire Software.
+ * Copyright (C) 2012-2026 Darkwire Software.
  * All rights reserved.
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
+
 #include "Lacewing.h"
 #include <vector>
 #include <assert.h>
@@ -25,9 +26,16 @@ public:
 
 	char * buffer = nullptr;
 	lw_ui32 size = 0U;
+	std::thread::id threadOwner;
 
 	messagebuilder()
 	{
+		updatethreadowner();
+	}
+
+	void updatethreadowner()
+	{
+		threadOwner = std::this_thread::get_id();
 	}
 
 	~ messagebuilder()
@@ -48,6 +56,7 @@ public:
 
 		if (this->size + size > allocated)
 		{
+			int origalloc = allocated;
 			if (!allocated)
 				allocated = 1024 * 4;
 			else
@@ -56,9 +65,8 @@ public:
 			if (this->size + size > allocated)
 				allocated += size;
 
-			char * test = (char *) realloc(this->buffer, allocated);
-			assert(test && "could not reallocate buffer for message.");
-			this->buffer = test;
+			this->buffer = (char *)lw_realloc_or_exit(this->buffer, allocated);
+			memset(this->buffer + origalloc, 0, allocated - origalloc);
 		}
 
 		memcpy(this->buffer + this->size, buffer, size);
@@ -128,9 +136,9 @@ public:
 		socket->write(buffer + offset, size - offset);
 	}
 
-	void send(lacewing::udp udp, lacewing::address address, int offset = 0)
+	void send(lacewing::udp udp, lacewing::address from, lw_ui32 ifidx, lacewing::address to, int offset = 0)
 	{
-		udp->send(address, buffer + offset, size - offset);
+		udp->send(from, ifidx, to, buffer + offset, size - offset);
 	}
 
 };

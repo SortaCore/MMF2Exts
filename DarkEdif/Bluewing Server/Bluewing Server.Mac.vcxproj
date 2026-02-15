@@ -91,9 +91,9 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\Inc\iOS\MMFiOSMasterHeader.h" />
-    <ClInclude Condition="exists('$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(ExtNameUnderscores).hpp')" Include="$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(ExtNameUnderscores).hpp" />
-    <ClCompile Condition="exists('$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(ExtNameUnderscores).mm')" Include="$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(ExtNameUnderscores).mm">
+    <ClInclude Include="..\Inc\Mac\MMFMacMasterHeader.hpp" />
+    <ClInclude Condition="exists('$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(TargetNameUnderscores).hpp')" Include="$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(TargetNameUnderscores).hpp" />
+    <ClCompile Condition="exists('$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(TargetNameUnderscores).mm')" Include="$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(TargetNameUnderscores).mm">
       <FileType>CppCode</FileType>
     </ClCompile>
     <ClInclude Condition="exists('$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp')" Include="$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp" />

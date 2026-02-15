@@ -1,11 +1,11 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=cpp:
  *
  * Copyright (C) 2012 James McLaughlin et al.
- * Copyright (C) 2012-2022 Darkwire Software.
+ * Copyright (C) 2012-2026 Darkwire Software.
  * All rights reserved.
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
 
 #include "../common.h"
@@ -15,9 +15,10 @@ stream lacewing::stream_new (const lw_streamdef * def, lacewing::pump pump)
 	return (stream) lw_stream_new (def, (lw_pump) pump);
 }
 
-void lacewing::stream_delete (lacewing::stream stream)
+void lacewing::stream_delete (lacewing::stream &stream)
 {
 	lw_stream_delete ((lw_stream) stream);
+	stream = nullptr;
 }
 
 void _stream::add_hook_data (hook_data hook, void * tag)

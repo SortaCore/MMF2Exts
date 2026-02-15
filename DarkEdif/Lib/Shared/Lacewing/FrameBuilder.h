@@ -1,11 +1,11 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=cpp:
  *
  * Copyright (C) 2011 James McLaughlin.
- * Copyright (C) 2012-2022 Darkwire Software.
+ * Copyright (C) 2012-2026 Darkwire Software.
  * All rights reserved.
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
 
 #include "MessageBuilder.h"
@@ -15,6 +15,7 @@ extern "C" size_t lwp_stream_write(lw_stream ctx, const char* buffer, size_t siz
 
 #ifndef lacewingframebuilder
 #define lacewingframebuilder
+static const char zerothree[3] = { 0, 0, 0 };
 
 class framebuilder : public messagebuilder
 {
@@ -61,20 +62,32 @@ protected:
 			}
 			else
 			{
-				// The TCP header uses only 8 bytes, and we need 10 for uint64 size, so hack an extra two bytes in
-				// It's not efficient, but anyone passing this much data shouldn't expect speed
-				add<lw_ui16>(0);
-				memmove(buffer + 10, buffer + 8, size - 8);
+				// The TCP header uses only 8 bytes, and we need 11 for uint64 size, so hack an extra three bytes in
+				// It's not efficient to memmove like this, but anyone passing this much data shouldn't expect speed
+				// TODO: For speed, add extra header space, so there's room for the full thing without memmove()
+				add(zerothree, sizeof(zerothree));
 
-				assert(!"Host to native!");
+				memmove(buffer + 11, buffer + 8, messagesize);
 
 				(*(lw_ui8*)(buffer)) = flagopcode;
 				(*(lw_ui8*)(buffer + 1)) = (lw_ui8)127; // indicate uint64 following size
-				(*(lw_ui64*)(buffer + 2)) = messagesize + 1;
+
+				const lw_i16 endianTest = 42;
+				if (*(lw_i8*)&endianTest == endianTest)
+				{
+					(*(lw_ui32*)(buffer + 2)) = 0; // assumes messagesize is not > 32bit, which is expected due to sizeof(this->size) and sizeof(messagesize)
+					(*(lw_ui32*)(buffer + 6)) = htonl(messagesize + 1);
+				}
+				else // big-endian
+				{
+					(*(lw_ui32*)(buffer + 2)) = htonl(messagesize + 1);
+					(*(lw_ui32*)(buffer + 6)) = 0; // see above comment
+				}
+
 				(*(lw_ui8*)(buffer + 10)) = (lw_ui8)type;
 
 				tosend = buffer;
-				tosendsize = messagesize + 10;
+				tosendsize = size;
 			}
 
 			return;
@@ -113,7 +126,6 @@ protected:
 
 		tosend	 = (buffer + 8) - headersize;
 		tosendsize =  messagesize + headersize;
-
 	}
 
 	bool isudpclient;
@@ -136,7 +148,11 @@ public:
 
 	inline void addheader(lw_ui8 type, lw_ui8 variant, bool forudp = false, int udpclientid = -1)
 	{
+		if (threadOwner != std::this_thread::get_id())
+			LacewingFatalErrorMsgBox();
+
 		assert(size == 0 && "lacewing framebuilder.addheader() error: adding header to message that already has one.");
+		assert(type <= 0xF && variant <= 0xF);
 
 		if (!forudp)
 		{
@@ -158,6 +174,8 @@ public:
 
 	inline void send(lacewing::server_client client, bool clear = true)
 	{
+		if (threadOwner != std::this_thread::get_id())
+			LacewingFatalErrorMsgBox();
 		if (wasWebLast == -1 || client->is_websocket() != wasWebLast)
 		{
 			wasWebLast = client->is_websocket();
@@ -176,6 +194,8 @@ public:
 
 	inline void send(lacewing::client client, bool clear = true)
 	{
+		if (threadOwner != std::this_thread::get_id())
+			LacewingFatalErrorMsgBox();
 		preparefortransmission(false);
 		client->write(tosend, tosendsize);
 
@@ -189,9 +209,11 @@ public:
 		tosendsize = 0;
 	}
 
-	inline void send(lacewing::udp udp, lacewing::address address, bool clear = true)
+	inline void send(lacewing::udp udp, lacewing::address from, lw_ui32 ifidx, lacewing::address to, bool clear = true)
 	{
-		udp->send(address, &buffer[isudpclient ? 5 : 7], size - (isudpclient ? 5 : 7));
+		if (threadOwner != std::this_thread::get_id())
+			LacewingFatalErrorMsgBox();
+		udp->send (from, ifidx, to, &buffer[isudpclient ? 5 : 7], size - (isudpclient ? 5 : 7));
 
 		if (clear)
 			framereset();

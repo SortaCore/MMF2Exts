@@ -472,7 +472,7 @@ typedef struct tagSMI {
 #define SCF_PLATFORM		0x02
 #define SCF_EVENNOCOL		0x04			// Flag: returns even sprites that haven't the SF_RAMBO flag
 #define SCF_BACKGROUND		0x08			// Flag: if 0, returns active sprites, otherwise returns background sprites
-#define	SCF_TESTFEET		0x10			// Test only the bottom of the sprite
+#define	SCF_TESTFEET		0x10			// Test only the bottom of the sprite (6 pixels)
 
 #define LAYER_ALL			(-1)
 
@@ -851,7 +851,7 @@ DLLExport32 npSpr	WINAPI GetLastSprite	(npWin ptrWin, int nLayer, DWORD dwFlags)
 	// Sauvegarde / Restitution de zones
 	// ---------------------------------
 DLLExport32 void	WINAPI	WinResetZones	(npWin);
-DLLExport32 void	WINAPI	WinAddZone		(npWin, RECT	*);
+DLLExport32 void	WINAPI	WinAddZone		(npWin, RECT *);
 DLLExport32 void	WINAPI	WinAddCoord		(npWin, int, int, int, int);
 DLLExport32 int		WINAPI	SaveRect		(npWin, fpSaveRect, int, int, int, int);
 DLLExport32 void	WINAPI	RestoreRect		(npWin, fpSaveRect);
@@ -862,11 +862,31 @@ DLLExport32 void	WINAPI	WinEnableUpdate	(npWin, int);
 	// Collisions
 	// ----------
 DLLExport32 DWORD	WINAPI SetSpriteColFlag			(npWin, npSpr, DWORD);				// UINT = SF_xxxx
-DLLExport32 npSpr	WINAPI SpriteCol_TestPoint		(npWin, npSpr, int, int, int, DWORD);		// Entre 1 pixel et les sprites sauf un
-DLLExport32 npSpr	WINAPI SpriteCol_TestRect		(npWin, npSpr, int, int, int, int, int, DWORD);		// Entre 1 rectangle et les sprites sauf un
-DLLExport32 npSpr	WINAPI SpriteCol_TestSprite		(npWin ptrWin, npSpr ptSpr, DWORD newImg, int newX, int newY, int newAngle, float newScaleX, float newScaleY, int subHt, DWORD dwFlags);
-DLLExport32 UINT	WINAPI SpriteCol_TestSprite_All	(npWin, npSpr, LPVOID*, DWORD, int, int, int, float, float, DWORD);
-DLLExport32 int	 WINAPI WinSetColMode			(npWin, WORD);						// Mode BOX ou BITMAP
+/**
+ * @brief Test if a point collides with a specific sprite or sprites in the sprite list. For background collision, see notes.
+ * @param ptrWin idEditWin (= window that contains the sprite list)
+ * @param firstSpr Sprite list to test with???; see notes
+ * @param nLayer 0-based layer to test on (see notes), or -1 for all layers
+ * @param xp X pos to test, relative to frame without scroll consideration
+ * @param yp Y pos to test, relative to frame without scroll consideration
+ * @param dwFlags Flags of SCF_TESTPOINTINSPRITE and/or SCF_BACKGROUND, see notes
+ * @return First sprite that collides with pixel or NULL
+ * @remarks If SCF_TESTPOINTINSPRITE is set in dwFlags, then tests if the point collides with a non-transparent pixel of the firstSpr sprite.
+			If not set, the routine will test all the sprites after firstSpr sprite and will return the first one for which the given pixel is not transparent.
+			If NULL it starts from the first sprite in the sprite list???
+			To get X/Y position without scroll from frame pos with scroll, subtract rhPtr->WindowX/Y.
+			GetSpriteExtra returns the HeaderObject relating to the returned Spr.
+*/
+DLLExport32 npSpr WINAPI SpriteCol_TestPoint(npWin ptrWin, npSpr firstSpr,
+	int nLayer, int xp, int yp, DWORD dwFlags);
+
+// Entre 1 pixel et les sprites sauf un
+DLLExport32 npSpr WINAPI SpriteCol_TestRect(npWin ptrWin, npSpr, int, int, int, int, int, DWORD);
+
+// Entre 1 rectangle et les sprites sauf un
+DLLExport32 npSpr WINAPI SpriteCol_TestSprite(npWin ptrWin, npSpr ptSpr, DWORD newImg, int newX, int newY, int newAngle, float newScaleX, float newScaleY, int subHt, DWORD dwFlags);
+DLLExport32 UINT WINAPI SpriteCol_TestSprite_All	(npWin, npSpr, LPVOID*, DWORD, int, int, int, float, float, DWORD);
+DLLExport32 int WINAPI WinSetColMode			(npWin, WORD);						// Mode BOX ou BITMAP
 
 DLLExport32 BOOL	WINAPI ColMask_Create			(npWin, UINT, UINT, DWORD);			// Creation bitmap masque fond
 DLLExport32 BOOL	WINAPI ColMask_CreateEx			(npWin, int, int, int, int, DWORD);

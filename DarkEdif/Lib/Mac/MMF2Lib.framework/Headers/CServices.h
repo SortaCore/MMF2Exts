@@ -2,11 +2,11 @@
 *
 * This source code is part of the iOS exporter for Clickteam Multimedia Fusion 2
 * and Clickteam Fusion 2.5.
-* 
-* Permission is hereby granted to any person obtaining a legal copy 
-* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source 
-* code for debugging, optimizing, or customizing applications created with 
-* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5. 
+*
+* Permission is hereby granted to any person obtaining a legal copy
+* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source
+* code for debugging, optimizing, or customizing applications created with
+* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5.
 * Any other use of this source code is prohibited.
 *
 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -86,15 +86,17 @@ extern int POSX(int ul);
 extern int POSY(int ul);
 extern int MAKELONG(int lo, int hi);
 extern int swapRGB(int rgb);
+extern int SemiTranspToAlpha(int semi);
+extern int AlphaToSemiTransp(int alpha);
 extern int strUnicharLen(unichar* str);
 extern NSColor* getNSColor(int rgb);
 
-@interface CServices : NSObject 
+@interface CServices : NSObject
 {
 }
 +(NSColor*)getNSColor:(int)color;
 +(int)indexOf:(NSString*)s withChar:(unichar)c startingAt:(int)start;
-+(int)drawText:(CBitmap*)bitmap withString:(NSString*)s andFlags:(short)flags andRect:(CRect)rc andColor:(int)rgb andFont:(CFont*)font andEffect:(int)effect andEffectParam:(int)effectParam;
++(int)drawText:(CBitmap*)bitmap withString:(NSString*)s andFlags:(short)flags andRect:(CRect)rc andColor:(int)rgb andFont:(CFont*)font;
 +(NSString*)intToString:(int)v withFlags:(int)flags;
 +(NSString*)doubleToString:(double)v withFlags:(int)flags;
 +(NSSize)textSizeForText:(NSString*)string andFont:(NSFont*)font andMaxWidth:(int)width;

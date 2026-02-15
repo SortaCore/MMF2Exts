@@ -1,11 +1,11 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=cpp:
  *
  * Copyright (C) 2012, 2013 James McLaughlin et al.
- * Copyright (C) 2012-2022 Darkwire Software.
+ * Copyright (C) 2012-2026 Darkwire Software.
  * All rights reserved.
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
 
 #include "../common.h"
@@ -13,6 +13,11 @@
 client lacewing::client_new (lacewing::pump pump)
 {
 	return (client) lw_client_new ((lw_pump) pump);
+}
+void lacewing::client_delete (lacewing::client &cli)
+{
+	lw_stream_delete((lw_stream)cli);
+	cli = nullptr;
 }
 
 void _client::connect (const char * host, lw_ui16 port)
@@ -23,6 +28,11 @@ void _client::connect (const char * host, lw_ui16 port)
 void _client::connect (address addr)
 {
 	lw_client_connect_addr ((lw_client) this, (lw_addr) addr);
+}
+
+void _client::setlocalport (lw_ui16 port)
+{
+	lw_client_set_local_port ((lw_client)this, port);
 }
 
 bool _client::connected ()
@@ -38,6 +48,16 @@ bool _client::connecting ()
 address _client::server_address ()
 {
 	return (address) lw_client_server_addr ((lw_client) this);
+}
+address _client::local_address()
+{
+	return (address)lw_client_local_addr((lw_client)this);
+}
+lw_ui32 _client::ifidx()
+{
+	lw_ui32 i = lw_client_ifidx((lw_client)this);
+	assert(*(lw_i32*)&i > 0);
+	return i;
 }
 
 void _client::on_connect (_client::hook_connect hook)

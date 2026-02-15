@@ -1,4 +1,4 @@
-#include "Common.h"
+#include "Common.hpp"
 
 const bool Extension::AlwaysTrue() const {
 	return true;

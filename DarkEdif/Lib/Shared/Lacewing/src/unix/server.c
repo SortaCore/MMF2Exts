@@ -1,14 +1,15 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
  * Copyright (C) 2011, 2012, 2013 James McLaughlin.
- * Copyright (C) 2012-2022 Darkwire Software.
+ * Copyright (C) 2012-2026 Darkwire Software.
  * All rights reserved.
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
 
 #include "../common.h"
+#include <sys/ioctl.h>
 
 #ifdef ENABLE_SSL
 	#include "../openssl/sslclient.h"
@@ -62,6 +63,7 @@ struct _lw_server_client
 
 	lw_bool on_connect_called;
 	lw_bool is_websocket;
+	lw_bool is_hole_punch;
 
 	void* relay_tag;
 
@@ -69,7 +71,9 @@ struct _lw_server_client
 		lwp_sslclient ssl;
 	#endif
 
-	lw_addr address;
+	lw_addr remote_address;
+	lw_addr local_address;
+	lw_ui32 ifidx;
 
 	lw_server_client * elem;
 };
@@ -116,7 +120,7 @@ static lw_server_client lwp_server_client_new (lw_server ctx, lw_pump pump, int 
 
 	#endif
 
-	lw_fdstream_set_fd (&client->fdstream, fd, 0, lw_true, lw_true);
+	lw_fdstream_set_fd (&client->fdstream, fd, lw_true, lw_true);
 
 	return client;
 }
@@ -201,6 +205,82 @@ void * lw_server_tag (lw_server ctx)
 	return ctx->tag;
 }
 
+static lw_bool add_client_internal(lw_server ctx,
+	struct sockaddr_storage * remote_addr, lwp_socket fd, lw_bool accepted)
+{
+	lwp_trace("%s FD %d", accepted ? "hole punch adding" : "accepted", fd);
+
+	lw_server_client client = lwp_server_client_new(ctx, ctx->pump, fd);
+
+	if (!client)
+	{
+		lwp_trace("Failed allocating client");
+		return lw_false;
+	}
+
+	struct sockaddr_storage local_addr = lwp_socket_addr(fd);
+	client->remote_address = lwp_addr_new_sockaddr((struct sockaddr*)remote_addr);
+	client->local_address = lwp_addr_new_sockaddr((struct sockaddr*)&local_addr);
+	client->ifidx = lwp_get_ifidx(&local_addr);
+
+	lw_bool should_read = lw_false;
+
+	if (ctx->on_data)
+	{
+		lw_stream_add_hook_data((lw_stream)client, on_client_data, client);
+		should_read = lw_true;
+	}
+
+#ifdef ENABLE_SSL
+	if (!client->ssl)
+	{
+#endif
+
+		client->on_connect_called = lw_true;
+
+		lwp_retain(client, "on_connect");
+
+		if (ctx->on_connect)
+			ctx->on_connect(ctx, client);
+
+		if (lwp_release(client, "on_connect") ||
+			((lw_stream)client)->flags & lwp_stream_flag_dead)
+		{
+			if (ctx->on_disconnect)
+				ctx->on_disconnect(ctx, client);
+			/* Client was deleted by connect hook
+			 */
+			return lw_false;
+		}
+
+		list_push(lw_server_client, ctx->clients, client);
+		client->elem = list_elem_back(lw_server_client, ctx->clients);
+
+#ifdef ENABLE_SSL
+	}
+	else
+	{
+		should_read = lw_true;
+	}
+#endif
+
+	if (should_read)
+	{
+		lwp_retain(client, "client initial read");
+
+		lw_stream_read((lw_stream)client, SIZE_MAX);
+
+		if (lwp_release(client, "client initial read") ||
+			((lw_stream)client)->flags & lwp_stream_flag_dead)
+		{
+			/* Client was deleted when performing initial read
+			 */
+			return lw_false;
+		}
+	}
+	return lw_true;
+}
+
 static void listen_socket_read_ready (void * tag)
 {
 	lw_server ctx = (lw_server)tag;
@@ -221,73 +301,83 @@ static void listen_socket_read_ready (void * tag)
 		 break;
 	  }
 
-	  lwp_trace ("Accepted FD %d", fd);
+	  if (add_client_internal(ctx, &address, fd, lw_true))
+		  return;
+	}
+}
 
-	  lw_server_client client = lwp_server_client_new (ctx, ctx->pump, fd);
+typedef struct _lw_hole_punch_params {
+	lw_server server;
+	lwp_socket sock;
+	struct sockaddr_storage addr;
+	socklen_t addrlen;
+	lw_ui16 local_port;
+	lw_pump_watch watch;
+} lw_hole_punch_params;
 
-	  if (!client)
-	  {
-		 lwp_trace ("Failed allocating client");
-		 break;
-	  }
+static lw_callback void hole_punch_socket_first_data(lw_hole_punch_params * params)
+{
+	lw_pump_remove(params->server->pump, params->watch, "hole_punch_socket_first_data removing");
+	add_client_internal(params->server, &params->addr, params->sock, lw_false);
+	lwp_release(params->server, "hole punch");
+}
 
-	  client->address = lwp_addr_new_sockaddr ((struct sockaddr *) &address);
+void lw_server_hole_punch(lw_server ctx, lw_addr addr, lw_ui16 local_port)
+{
+	lwp_retain(ctx, "hole punch");
+	lw_hole_punch_params* params = (lw_hole_punch_params*)lw_malloc_or_exit(sizeof(lw_hole_punch_params));
+	params->server = ctx;
+	params->addr = *(struct sockaddr_storage *)addr->info->ai_addr;
+	params->addrlen = addr->info->ai_addrlen;
+	params->local_port = local_port;
+	params->sock = -1;
+	params->watch = NULL;
 
-	  lw_bool should_read = lw_false;
+	params->sock = socket(params->addr.ss_family, SOCK_STREAM, IPPROTO_TCP);
+	char* errStr = NULL;
+	do {
+		if (params->sock == -1)
+		{
+			errStr = "Creating TCP hole punch failed";
+			break;
+		}
 
-	  if (ctx->on_data)
-	  {
-		 lw_stream_add_hook_data ((lw_stream) client, on_client_data, client);
-		 should_read = lw_true;
-	  }
+		// reuse addr on
+		//lwp_setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (const char *)&yes, sizeof(yes));
+		struct sockaddr_storage s = { 0 };
+		s.ss_family = params->addr.ss_family;
+		// Port is at same offset in both sockaddr_in and sockaddr_in6
+		((struct sockaddr_in6*)&s)->sin6_port = htons((lw_ui16)params->local_port);
 
-	  #ifdef ENABLE_SSL
-	  if (!client->ssl)
-	  {
-	  #endif
+		if (bind(params->sock, (struct sockaddr*)&s, params->addrlen) == -1)
+		{
+			errStr = "bind on TCP hole punch failed";
+			break;
+		}
+		lwp_make_nonblocking(params->sock);
+		ssize_t conRet = connect(params->sock, (struct sockaddr *)&params->addr, params->addrlen);
+		if (conRet == -1 && errno != EWOULDBLOCK)
+		{
+			errStr = "connect on TCP hole punch failed";
+			break;
+		}
 
-		 client->on_connect_called = lw_true;
+		params->watch = lw_pump_add(params->server->pump, params->sock,
+			"lw_server doing TCP hole punch",
+			params, (lw_pump_callback)hole_punch_socket_first_data, NULL, lw_true);
+	} while (0);
 
-		 lwp_retain (client, "on_connect");
-
-		 if (ctx->on_connect)
-			ctx->on_connect (ctx, client);
-
-		 if (lwp_release (client, "on_connect") ||
-				((lw_stream)client)->flags & lwp_stream_flag_dead)
-		 {
-			 if (ctx->on_disconnect)
-				 ctx->on_disconnect(ctx, client);
-			/* Client was deleted by connect hook
-			 */
-			return;
-		 }
-
-		 list_push (lw_server_client, ctx->clients, client);
-		 client->elem = list_elem_back (lw_server_client, ctx->clients);
-
-	  #ifdef ENABLE_SSL
-	  }
-	  else
-	  {
-		 should_read = lw_true;
-	  }
-	  #endif
-
-	  if (should_read)
-	  {
-		 lwp_retain (client, "client initial read");
-
-		 lw_stream_read ((lw_stream) client, SIZE_MAX);
-
-		 if (lwp_release (client, "client initial read") ||
-				((lw_stream) client)->flags & lwp_stream_flag_dead)
-		 {
-			/* Client was deleted when performing initial read
-			 */
-			return;
-		 }
-	  }
+	if (errStr)
+	{
+		lw_error err = lw_error_new();
+		lw_error_add(err, errno);
+		lw_error_addf(err, "%s", errStr);
+		if (params->sock != -1)
+			lwp_close_socket(params->sock);
+		if (params->server->on_error)
+			params->server->on_error(params->server, err);
+		lw_error_delete(err);
+		free(params);
 	}
 }
 
@@ -306,15 +396,15 @@ void lw_server_host_filter (lw_server ctx, lw_filter filter)
 	lw_error error = lw_error_new ();
 
 	if ((ctx->socket = lwp_create_server_socket
-			(filter, SOCK_STREAM, IPPROTO_TCP, error)) == -1)
+			(filter, SOCK_STREAM, IPPROTO_TCP, NULL, error)) == -1)
 	{
-	  lwp_trace ("server: error hosting: %s", lw_error_tostring (error));
+		lw_error_addf(error, "Creating TCP port");
 
-	  if (ctx->on_error)
-		 ctx->on_error (ctx, error);
+		if (ctx->on_error)
+			ctx->on_error (ctx, error);
 
-	  lw_error_delete (error);
-	  return;
+		lw_error_delete (error);
+		return;
 	}
 
 	if (listen (ctx->socket, SOMAXCONN) == -1)
@@ -333,7 +423,10 @@ void lw_server_host_filter (lw_server ctx, lw_filter filter)
 
 	lwp_make_nonblocking(ctx->socket);
 
-	ctx->pump_watch = lw_pump_add (ctx->pump, ctx->socket, ctx, listen_socket_read_ready, 0, lw_true);
+	char name[128];
+	lwp_snprintf(name, sizeof(name), "lw_server tcp port %li", lw_filter_local_port(filter));
+	ctx->pump_watch = lw_pump_add (ctx->pump, ctx->socket, name,
+		ctx, listen_socket_read_ready, 0, lw_true);
 
 	lw_error_delete (error);
 }
@@ -346,7 +439,7 @@ void lw_server_unhost (lw_server ctx)
 	close (ctx->socket);
 	ctx->socket = -1;
 
-	lw_pump_remove(ctx->pump, ctx->pump_watch);
+	lw_pump_remove(ctx->pump, ctx->pump_watch, "lw_server_unhost");
 	ctx->pump_watch = NULL;
 
 	// Not having this leaves lw_server_client connections open but server is closed
@@ -510,7 +603,7 @@ lw_bool lw_server_load_cert_file (lw_server ctx, const char * filename_cert_chai
 		if (strftime(buff, sizeof(buff), "%I:%M:%S%p on %A %d %B %Y AD", &tm) <= 0)
 			always_log("time conversion failed, error %d", errno);
 		else
-			always_log("SSL certificate will expire at %s (local time).", buff);
+			always_log("TLS certificate will expire at %s (local time).", buff);
 
 		if (day > 0 || sec > 0)
 			ctx->cert_expiry_time = timegm(&tm);
@@ -520,7 +613,7 @@ lw_bool lw_server_load_cert_file (lw_server ctx, const char * filename_cert_chai
 			ctx->ssl_context = 0;
 
 			lw_error error = lw_error_new ();
-			lw_error_addf(error, "SSL certificate has already expired, at %s (local time)", buff);
+			lw_error_addf(error, "TLS certificate has already expired, at %s (local time)", buff);
 			if (ctx->on_error)
 				ctx->on_error(ctx, error);
 			lw_error_delete(error);
@@ -611,14 +704,27 @@ const char * lw_server_client_npn (lw_server_client client)
 	#endif
 }
 
-lw_addr lw_server_client_addr (lw_server_client client)
+lw_addr lw_server_client_remote_addr (lw_server_client client)
 {
-	return client->address;
+	return client->remote_address;
+}
+lw_addr lw_server_client_local_addr (lw_server_client client)
+{
+	return client->local_address;
+}
+lw_ui32 lw_server_client_ifidx (lw_server_client client)
+{
+	return client->ifidx;
 }
 
 lw_bool lw_server_client_is_websocket(lw_server_client client)
 {
 	return client->is_websocket;
+}
+
+lw_bool lw_server_client_is_hole_punch(lw_server_client client)
+{
+	return client->is_hole_punch;
 }
 
 void* lw_server_client_get_relay_tag(lw_server_client client)

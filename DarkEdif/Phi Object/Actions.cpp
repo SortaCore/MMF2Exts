@@ -1,4 +1,4 @@
-#include "Common.h"
+#include "Common.hpp"
 
 #ifdef _WIN32
 #include <psapi.h>
@@ -69,7 +69,7 @@ std::string exec(const char* cmd) {
 	while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
 		result << buffer.data();
 		std::string t = "Inside exec: "; t += buffer.data();
-		OutputDebugStringA(t.c_str());
+		LOGI("%s", t.c_str());
 	}
 	return result.str();
 }
@@ -113,13 +113,13 @@ void Extension::UpdateRAMUsageInfo()
 	PERFORMACE_INFORMATION ppi;
 	ppi.cb = sizeof(ppi);
 	if (GetPerformanceInfo(&ppi, sizeof(ppi)) == FALSE)
-		return MakeError("GetPerformanceInfo failed with error %u: %s.", GetLastError(), GetLastErrorAsString().c_str());
+		return MakeError(_T("GetPerformanceInfo failed with error %u: %hs."), GetLastError(), GetLastErrorAsString().c_str());
 
 	MEMORYSTATUSEX statex;
 	statex.dwLength = sizeof(statex);
 
 	if (GlobalMemoryStatusEx(&statex) == FALSE)
-		return MakeError("GetPerformanceInfo failed with error %u: %s.", GetLastError(), GetLastErrorAsString().c_str());
+		return MakeError(_T("GetPerformanceInfo failed with error %u: %hs."), GetLastError(), GetLastErrorAsString().c_str());
 
 	// int32 won't suffice for the multiply, so if we define page size as int64,
 	// C++ will upgrade all page size math to int64.
@@ -192,12 +192,13 @@ void Extension::UpdateRAMUsageInfo()
 		std::int64_t kbInLine = strtoll(std::string(retString).c_str(), NULL, 10);
 		std::int32_t res = kbInLine <= 0 ? kbInLine : (std::int32_t)(kbInLine / 1024LL);
 		auto op = memInfoOutputHashToMB.insert(std::make_pair(std::string_view(memInfoOutputLines[lineIndex].data(), colonIndex), res));
+		(void)op;
 		LOGV("Added mem info line: \"%s\" = %d MB.\n", std::string(op.first->first).c_str(), res);
 		return res;
 	};
 
 	// Skip last line, it's usually empty
-	for (size_t i = 0; i < memInfoOutputLines.size() - 1; i++)
+	for (std::size_t i = 0; i < memInfoOutputLines.size() - 1; ++i)
 		parseMBfromLine(i);
 
 	physMemTotalMB = memInfoOutputHashToMB["MemTotal"sv];
@@ -210,11 +211,11 @@ void Extension::UpdateRAMUsageInfo()
 	virtualMemFreeMB = virtualMemTotalMB - memInfoOutputHashToMB["VmallocUsed"sv]; // VmallocUsed
 
 	// https://stackoverflow.com/questions/8133417/android-get-free-size-of-internal-external-memory
-	OutputDebugStringA("Result of df:\n");
+	LOGI("Result of df:\n");
 	std::string dfOutputStr = exec("df -h");
 	auto dfOutputLines = split(dfOutputStr, '\n');
-	for (size_t i = 0; i < dfOutputLines.size(); i++)
-		OutputDebugStringA((dfOutputLines[i] + "\n").c_str());
+	for (std::size_t i = 0; i < dfOutputLines.size(); ++i)
+		LOGI("%s", (dfOutputLines[i] + "\n").c_str());
 #else
 	MakeError("iOS RAM usage info not coded");
 #endif
@@ -227,14 +228,13 @@ void Extension::UpdateRAMUsageInfo()
 #include <sddl.h>
 #include <winefs.h>
 
-
-bool Extension::Sub_BuildTrusteeAndAccessPerms(__in std::tstring & sidOrAcc, __in std::string & argPermList,
-	__out PTRUSTEE trustee, __out PSID * trusteePSID, __out DWORD * accessPermissions)
+bool Extension::Sub_BuildTrusteeAndAccessPerms(std::tstring & sidOrAcc, std::string & argPermList,
+	PTRUSTEE trustee, PSID * trusteePSID, DWORD * accessPermissions)
 {
 	DWORD sidSize = SECURITY_MAX_SID_SIZE;
 	*trusteePSID = LocalAlloc(LMEM_FIXED, sidSize);
 	if (*trusteePSID == NULL)
-		return MakeError("Out of memory."), false;
+		return MakeError(_T("Out of memory.")), false;
 
 	// Successful, it's in SID format
 	if (sidOrAcc._Starts_with(_T("S-1-"sv)) && ConvertStringSidToSid(sidOrAcc.c_str(), trusteePSID) == 0)
@@ -250,7 +250,7 @@ bool Extension::Sub_BuildTrusteeAndAccessPerms(__in std::tstring & sidOrAcc, __i
 		if (!LookupAccountName(NULL, sidOrAcc.c_str(), *trusteePSID, &sidSize, ignoredDomain, &ignoredDomainSize, &ignoredPSIDNameUse))
 		{
 			*trusteePSID = NULL;
-			return MakeError("Account name \"%s\" wasn't mapped to a SID. Error %hs (%u).", sidOrAcc.c_str(), GetLastErrorAsString().c_str(), GetLastError()), false;
+			return MakeError(_T("Account name \"%s\" wasn't mapped to a SID. Error %hs (%u)."), sidOrAcc.c_str(), GetLastErrorAsString().c_str(), GetLastError()), false;
 		}
 	}
 
@@ -275,9 +275,9 @@ bool Extension::Sub_BuildTrusteeAndAccessPerms(__in std::tstring & sidOrAcc, __i
 		const std::vector permList2 = split(argPermList, ',');
 		if (permList2.empty())
 		{
-			return MakeError(R"(Invalid ACL access mode list ("%hs"). Must be "read", "write", "all", etc., comma-separated. See help file )"
+			return MakeError(_T(R"(Invalid ACL access mode list ("%hs"). Must be "read", "write", "all", etc., comma-separated. See help file )"
 					"for specifics. You can also specify a numeric mask based on GENERIC_READ, or more specific "
-					"number permission such as FILE_READ_EA.", argPermList.c_str()), false;
+					"number permission such as FILE_READ_EA."), argPermList.c_str()), false;
 		}
 
 		// Allow none in case you can set access to none, thereby revoking inherited perms?
@@ -288,9 +288,9 @@ bool Extension::Sub_BuildTrusteeAndAccessPerms(__in std::tstring & sidOrAcc, __i
 				auto accessPermIt = accessMaskList.find(p);
 				if (accessPermIt == accessMaskList.cend())
 				{
-					return MakeError(R"(Invalid ACL access mode ("%hs"). Must be "read", "write", "all", etc., comma-separated. See help file )"
+					return MakeError(_T(R"(Invalid ACL access mode ("%hs"). Must be "read", "write", "all", etc., comma-separated. See help file )"
 							"for specifics. You can also specify a numeric mask based on GENERIC_READ, or more specific "
-							"number permission such as FILE_READ_EA.", p.c_str()), false;
+							"number permission such as FILE_READ_EA."), p.c_str()), false;
 				}
 				accessPerms |= accessPermIt->second;
 			}
@@ -311,7 +311,7 @@ void Extension::ReadSystemObjectPerms(const TCHAR * itemPathPtr, const TCHAR * i
 	MakeStringLower(itemType);
 
 	if (includeSystemACLInt > 1 || includeSystemACLInt < 0)
-		return MakeError("Include system ACL is %d, not 0 or 1.", includeSystemACLInt);
+		return MakeError(_T("Include system ACL is %d, not 0 or 1."), includeSystemACLInt);
 	const bool includeSystemACL = includeSystemACLInt != 0;
 
 	// Some of these will see more use than others, I expect.
@@ -339,7 +339,7 @@ void Extension::ReadSystemObjectPerms(const TCHAR * itemPathPtr, const TCHAR * i
 
 	auto objectTypeIt = objectTypes.find(itemType);
 	if (objectTypeIt == objectTypes.cend())
-		return MakeError("Object type \"%s\" not recognised. Check the help file.", itemType.c_str());
+		return MakeError(_T("Object type \"%hs\" not recognised. Check the help file."), itemType.c_str());
 
 	SE_OBJECT_TYPE objectType = objectTypeIt->second;
 	lastReadPerms.readObjectType = objectType;
@@ -361,7 +361,7 @@ void Extension::ReadSystemObjectPerms(const TCHAR * itemPathPtr, const TCHAR * i
 			lastReadPerms.itemPath.find(prefix) != std::tstring::npos)
 		{
 			lastReadPerms.itemPath.clear();
-			return MakeError("When specifying a registry key, don't include the HKEY_ prefix in the root key, like you did with \"%s\".", itemPathPtr);
+			return MakeError(_T("When specifying a registry key, don't include the HKEY_ prefix in the root key, like you did with \"%s\"."), itemPathPtr);
 		}
 	}
 
@@ -373,7 +373,7 @@ void Extension::ReadSystemObjectPerms(const TCHAR * itemPathPtr, const TCHAR * i
 	{
 		SetLastError(d);
 		lastReadPerms.itemPath.clear();
-		return MakeError("Couldn't read DACL of \"%s\". Got error %hs (%hu).",
+		return MakeError(_T("Couldn't read DACL of \"%s\". Got error %hs (%hu)."),
 			itemPathPtr, GetLastErrorAsString().c_str(), GetLastError());
 	}
 	lastReadPerms.secDesc.reset((SECURITY_DESCRIPTOR *)tempSecDesc);
@@ -386,11 +386,13 @@ void Extension::ReadSystemObjectPerms(const TCHAR * itemPathPtr, const TCHAR * i
 void Extension::IterateLastReadSystemObjectDACL(const TCHAR * loopName, const TCHAR * allowDenyBothPtr, int includeInheritedInt, int includeInheritOnlyInt)
 {
 	if (includeInheritedInt > 1 || includeInheritedInt < 0)
-		return MakeError("Invalid \"include inherited\" parameter, must be 0 or 1, but you supplied %d.", includeInheritedInt);
+		return MakeError(_T("Invalid \"include inherited\" parameter, must be 0 or 1, but you supplied %d."), includeInheritedInt);
 	bool includeInherited = includeInheritedInt == 1;
 	if (includeInheritOnlyInt > 1 || includeInheritOnlyInt < 0)
-		return MakeError("Invalid \"include inherit-only\" parameter, must be 0 or 1, but you supplied %d.", includeInheritOnlyInt);
+		return MakeError(_T("Invalid \"include inherit-only\" parameter, must be 0 or 1, but you supplied %d."), includeInheritOnlyInt);
 	bool includeInheritOnly = includeInheritOnlyInt == 1;
+	(void)includeInherited;
+	(void)includeInheritOnly;
 
 	std::string allowDenyBoth = DarkEdif::TStringToANSI(allowDenyBothPtr);
 	MakeStringLower(allowDenyBoth);
@@ -399,14 +401,14 @@ void Extension::IterateLastReadSystemObjectDACL(const TCHAR * loopName, const TC
 	const bool includeDenied = (allowDenyBoth == "deny"sv || allowDenyBoth == "both"sv);
 
 	if (!includeAllowed && !includeDenied)
-		return MakeError(R"(You specified an invalid ACE entry type "%s". Valid types are "allow", "deny", or "both".)", allowDenyBothPtr);
+		return MakeError(_T(R"(You specified an invalid ACE entry type "%s". Valid types are "allow", "deny", or "both".)"), allowDenyBothPtr);
 
 	if (lastReadPerms.itemPath.empty())
-		return MakeError("Last read system object permissions is invalid, can't iterate through the permissions.");
+		return MakeError(_T("Last read system object permissions is invalid, can't iterate through the permissions."));
 
 #ifdef _WIN32
 	if (currentLoopAce != nullptr)
-		return MakeError("Can't do a nesting of two ACL entry loops. Already doing a loop called %s.", aceLoopName);
+		return MakeError(_T("Can't do a nesting of two ACL entry loops. Already doing a loop called %s."), aceLoopName);
 
 	// GetExplicitEntriesFromAcl() ignores inherited ACE entries.
 	// https://docs.microsoft.com/en-us/previous-versions/windows/desktop/msmq/ms700142(v=vs.85)#top
@@ -414,16 +416,16 @@ void Extension::IterateLastReadSystemObjectDACL(const TCHAR * loopName, const TC
 	ACL_SIZE_INFORMATION aclsizeinfo;
 	if (GetAclInformation(lastReadPerms.dacl, &aclsizeinfo, sizeof(aclsizeinfo), ACL_INFORMATION_CLASS::AclSizeInformation) == FALSE)
 	{
-		return MakeError("Couldn't read ACL size information. Got error %hs (%u).",
+		return MakeError(_T("Couldn't read ACL size information. Got error %hs (%u)."),
 			GetLastErrorAsString().c_str(), GetLastError());
 	}
 
 	aceLoopName = loopName;
-	for (size_t i = 0; i < aclsizeinfo.AceCount; i++)
+	for (std::size_t i = 0; i < aclsizeinfo.AceCount; ++i)
 	{
 		if (GetAce(lastReadPerms.dacl, i, (void **)&currentLoopAce) != 0)
 		{
-			MakeError("Couldn't read DACL entry at index %i. Got error %hs (%u).",
+			MakeError(_T("Couldn't read DACL entry at index %i. Got error %hs (%u)."),
 				i, GetLastErrorAsString().c_str(), GetLastError());
 			break;
 		}
@@ -460,7 +462,7 @@ void Extension::IterateLastReadSystemObjectDACL(const TCHAR * loopName, const TC
 
 #endif // _WIN32
 
-	MakeError("%s Not implemented", __FUNCTION__);
+	MakeError(_T("%s Not implemented"), _T(__FUNCTION__));
 }
 void Extension::AddNewDACLPermToSystemObject(const TCHAR * sidOrAccPtr, const TCHAR * allowDenyRevokePtr, const TCHAR * permListPtr, const TCHAR * inheritListPtr)
 {
@@ -500,7 +502,7 @@ void Extension::AddNewDACLPermToSystemObject(const TCHAR * sidOrAccPtr, const TC
 	auto accessModeIt = accessModeList.find(allowDenyRevoke);
 	if (accessModeIt == accessModeList.cend())
 	{
-		return MakeError(R"(Invalid ACL access mode ("%hs"). Must be "grant", "set", "deny", or "revoke".)", allowDenyRevoke.c_str());
+		return MakeError(_T(R"(Invalid ACL access mode ("%hs"). Must be "grant", "set", "deny", or "revoke".)"), allowDenyRevoke.c_str());
 	}
 	access.grfAccessMode = accessModeIt->second;
 
@@ -526,8 +528,8 @@ void Extension::AddNewDACLPermToSystemObject(const TCHAR * sidOrAccPtr, const TC
 		const std::vector argInheritList2 = split(argInheritList, ',');
 		if (argInheritList2.empty())
 		{
-			return MakeError(R"(Invalid ACL inheritance list ("%hs"). Must be "subcontainers", "subobjects", "inheritonly", etc., comma-separated.)"
-					" See help file for specifics.", argInheritList.c_str());
+			return MakeError(_T(R"(Invalid ACL inheritance list ("%hs"). Must be "subcontainers", "subobjects", "inheritonly", etc., comma-separated.)"
+					" See help file for specifics."), argInheritList.c_str());
 		}
 		// We could check for duplicates, but meh, it's a bitmask, so that'll be meaningless in practice.
 		for each (const std::string & i in argInheritList2)
@@ -535,8 +537,8 @@ void Extension::AddNewDACLPermToSystemObject(const TCHAR * sidOrAccPtr, const TC
 			auto inheritIt = inheritList.find(i);
 			if (inheritIt == inheritList.cend())
 			{
-				return MakeError(R"(Invalid ACL inheritance mode ("%hs"). Must be "subcontainers", "subobjects", "inheritonly", etc., comma-separated.)"
-					" See help file for specifics.", i.c_str());
+				return MakeError(_T(R"(Invalid ACL inheritance mode ("%hs"). Must be "subcontainers", "subobjects", "inheritonly", etc., comma-separated.)"
+					" See help file for specifics."), i.c_str());
 			}
 			inheritMode |= inheritIt->second;
 		}
@@ -548,7 +550,7 @@ void Extension::AddNewDACLPermToSystemObject(const TCHAR * sidOrAccPtr, const TC
 	DWORD res = SetEntriesInAcl(1UL, &access, lastReadPerms.dacl, &newACL);
 	if (ERROR_SUCCESS != res)
 	{
-		return MakeError("Couldn't set the new entry in the ACL. Got error %hs (%hu).",
+		return MakeError(_T("Couldn't set the new entry in the ACL. Got error %hs (%hu)."),
 			GetLastErrorAsString().c_str(), GetLastError());
 	}
 
@@ -560,7 +562,7 @@ void Extension::AddNewDACLPermToSystemObject(const TCHAR * sidOrAccPtr, const TC
 		  DACL_SECURITY_INFORMATION, NULL, NULL, newACL, NULL);
 	if (ERROR_SUCCESS != res) {
 		SetLastError(res);
-		MakeError("Couldn't set new ACL for \"%s\". Got error %hs (%hu).",
+		MakeError(_T("Couldn't set new ACL for \"%s\". Got error %hs (%u)."),
 			lastReadPerms.itemPath.c_str(), GetLastErrorAsString().c_str(), GetLastError());
 
 		// free newACL?
@@ -618,7 +620,7 @@ std::vector<int> memfind(void * startV, size_t size, void* lookFor, size_t lookF
 	std::vector<int> ret;
 	char* start = (char *)startV;
 	char* end = start + size;
-	for (char* c = start; c < end; c++)
+	for (char* c = start; c < end; ++c)
 	{
 		if (memcmp(c, lookFor, lookForSize) == 0)
 			ret.push_back((int)(c - start));
@@ -667,11 +669,11 @@ void Dump(std::stringstream &str2, void * v, size_t s)
 		{ 127, "DEL"},
 	};
 	char* c = (char*)v;
-	for (size_t i = 0; i < s; i++)
+	for (std::size_t i = 0; i < s; ++i)
 	{
-		str2 << std::dec << std::setfill('0') << std::setw(2) << i << ", ";
+		str2 << std::dec << std::setfill('0') << std::setw(2) << i << ", "sv;
 		if (!c[i])
-			str2 << "NUL";
+			str2 << "NUL"sv;
 		else
 		{
 			auto a = unprintable.find(c[i]);
@@ -680,7 +682,7 @@ void Dump(std::stringstream &str2, void * v, size_t s)
 			else
 				str2 << c[i];
 		}
-		str2 << ", 0x" << std::hex << std::setfill('0') << std::setw(2) << (unsigned int)(((unsigned char*)c)[i]) << "\n";
+		str2 << ", 0x"sv << std::hex << std::setfill('0') << std::setw(2) << (unsigned int)(((unsigned char*)c)[i]) << '\n';
 	}
 }
 
@@ -768,7 +770,7 @@ HANDLE GetHeaps(void * pointer, size_t expectedSize)
 		return NULL;
 	}
 
-	printf("Process has %d heaps.\n", NumberOfHeaps);
+	LOGI(_T("Process has %ud heaps.\n"), NumberOfHeaps);
 	for (HeapsIndex = 0; HeapsIndex < NumberOfHeaps; ++HeapsIndex) {
 		/*
 		if (HeapValidate(aHeaps[HeapsIndex], 0, pointer) == FALSE)
@@ -789,68 +791,12 @@ HANDLE GetHeaps(void * pointer, size_t expectedSize)
 		);
 		if (heapSize == expectedSize)
 			ret = aHeaps[HeapsIndex];
-		OutputDebugStringA(str);
+		LOGI(_T("%s"), DarkEdif::UTF8ToTString(str).c_str());
 	}
 
 	return ret;
 #endif
 }
-
-// Assumes rCom is there. rCom is optional, but it's included if anim/move is.
-// Since we check anim is available before using these funcs, we know rCom is available too.
-// What we don't know is whether movement is here, hence it's calculated
-
-// https://github.com/clickteam-plugin/rSDK/blob/5252a2a9ee8efe5ec90e37817ec83f4a7fa5071d/Inc/MagicRDATA.h
-
-rMvt * RunObject_GetMvt(RunObject * ro)
-{
-	if (!ro || (ro->roHo.OEFlags & OEFLAGS::MOVEMENTS) != OEFLAGS::MOVEMENTS)
-		return nullptr;
-
-	char * c = ((char *)&ro->roc) + sizeof(rCom);
-	return (rMvt *)c;
-}
-rAni * RunObject_GetAni(RunObject * ro)
-{
-	if (!ro || (ro->roHo.OEFlags & OEFLAGS::ANIMATIONS) != OEFLAGS::ANIMATIONS)
-		return nullptr;
-
-	char * c = ((char *)&ro->roc) + sizeof(rCom);
-	if ((ro->roHo.OEFlags & OEFLAGS::MOVEMENTS) == OEFLAGS::MOVEMENTS)
-		c += sizeof(rMvt);
-
-	return (rAni *)c;
-}
-Sprite * RunObject_GetSpr(RunObject * ro)
-{
-	if (!ro || (ro->roHo.OEFlags & OEFLAGS::SPRITES) != OEFLAGS::SPRITES)
-		return nullptr;
-
-	char * c = (( char *)&ro->roc) + sizeof(rCom);
-	if ((ro->roHo.OEFlags & OEFLAGS::MOVEMENTS) == OEFLAGS::MOVEMENTS)
-		c += sizeof(rMvt);
-	if ((ro->roHo.OEFlags & OEFLAGS::ANIMATIONS) == OEFLAGS::ANIMATIONS)
-		c += sizeof(rAni);
-
-	return (Sprite *)c;
-}
-AltVals *RunObject_GetVals(RunObject * ro)
-{
-	if (!ro || (ro->roHo.OEFlags & OEFLAGS::VALUES) != OEFLAGS::VALUES)
-		return nullptr;
-
-	/*
-	char *c = ((char *)&ro->roc) + sizeof(rCom);
-	if ((ro->roHo.OEFlags & OEFLAGS::MOVEMENTS) == OEFLAGS::MOVEMENTS)
-		c += sizeof(rMvt);
-	if ((ro->roHo.OEFlags & OEFLAGS::ANIMATIONS) == OEFLAGS::ANIMATIONS)
-		c += sizeof(rAni);
-	if ((ro->roHo.OEFlags & OEFLAGS::SPRITES) == OEFLAGS::SPRITES)
-		c += sizeof(Sprite);*/
-
-	return (AltVals*)(((char*)ro) + ro->roHo.OffsetValue);
-}
-
 
 int objectFV = -1;
 void Extension::AddBlankFramesToObject(int objectFV,
@@ -858,34 +804,35 @@ void Extension::AddBlankFramesToObject(int objectFV,
 	int numOfFrames, int insertIndexAt)
 {
 	::objectFV = objectFV;
-	OutputDebugStringA("Set FV for blank frames. Now waiting.\n");
+	LOGI(_T("Set FV for blank frames. Now waiting.\n"));
 
 	RunObject * runObj = Runtime.RunObjPtrFromFixed(objectFV);
 	if (!runObj)
-		return MakeError("Selecting Fixed Value %i for adding animation failed.", objectFV);
+		return MakeError(_T("Selecting Fixed Value %i for adding animation failed."), objectFV);
 
-	if (!RunObject_GetAni(runObj))
+	if (!runObj->get_roa())
 	{
 		//objInfoList oil = Runtime.ObjectSelection.GetOILFromOI(oc->roho.Oi);
-		return MakeError("Object with Fixed Value %i (%s) does not have animations.",
-			objectFV, runObj->roHo.OiList->name);
+		return MakeError(_T("Object with Fixed Value %i (%s) does not have animations."),
+			objectFV, runObj->get_rHo()->get_OiList()->get_name());
 	}
 
 	if (animNum < 0)
-		return MakeError("Direction param %i is invalid. Should be 0 or higher.", animNum);
+		return MakeError(_T("Direction param %i is invalid. Should be 0 or higher."), animNum);
 
 	if (dirNum < 0 || dirNum > 31)
-		return MakeError("Direction param %i is invalid. Should be between 0 and 31.", dirNum);
+		return MakeError(_T("Direction param %i is invalid. Should be between 0 and 31."), dirNum);
 
-	// Whether ti's too large is handled in Sub_AddImages
+	// Whether it's too large is handled in Sub_AddImages
 	if (insertIndexAt < -1)
-		return MakeError("Insert index param %i is invalid. Should be between 0+, or -1 for appending.", insertIndexAt);
+		return MakeError(_T("Insert index param %i is invalid. Should be between 0+, or -1 for appending."), insertIndexAt);
 
 	if (numOfFrames > 100)
-		return MakeError("Number of frames to insert (%i) surpassed common sense limit.", numOfFrames);
+		return MakeError(_T("Number of frames to insert (%i) surpassed common sense limit."), numOfFrames);
 
+#ifdef FUSION_INTERNAL_ACCESS
 #if 0
-	Objects_Common * oc = runObj->roHo.Common;
+	Objects_Common * oc = runObj->rHo.Common;
 	HANDLE heapOfRunObj = GetHeaps(oc, oc->size);
 	if (heapOfRunObj == NULL)
 		return MakeError("Can't track down the object's animation in memory, unable to alter it.");
@@ -902,88 +849,95 @@ void Extension::AddBlankFramesToObject(int objectFV,
 	if (mvCreateImageFromFile(::SDK->mV, &imageID, filename, &info) == FALSE)
 	{
 		return MakeError("Could not add anim frame %s Object %s ",
-
 	}
 #endif
 	std::vector<unsigned short> imgIDs(numOfFrames, blankImgNum);
 
 	size_t s = HeapSize(GetProcessHeap(), 0, runObj);
-	if (s != runObj->roHo.size)
+	if (s != runObj->rHo.hoSize)
 	{
 		DebugBreak();
 	}
-	s = HeapSize(GetProcessHeap(), 0, runObj->roHo.Common);
-	if (s != runObj->roHo.Common->size)
+	s = HeapSize(GetProcessHeap(), 0, runObj->rHo.hoCommon);
+	if (s != runObj->rHo.hoCommon->size)
 	{
 		DebugBreak();
 	}
-
 
 	Sub_AddImagesAtIndex(runObj, imgIDs, animNum, dirNum, SIZE_T_MAX);
+#else // FUSION_INTERNAL_ACCESS
+
+#endif
 }
 
 void OutputAnimations(const AnimHeader * const animHead)
 {
 	std::stringstream str5;
-	str5 << "===== ANIMATIONS:\n";
-	for (size_t lAniNum = 0; lAniNum < animHead->AnimMax; lAniNum++)
+	str5 << "===== ANIMATIONS:\n"sv;
+	for (std::size_t lAniNum = 0; lAniNum < animHead->AnimMax; ++lAniNum)
 	{
 		if (animHead->OffsetToAnim[lAniNum] < 0)
 			continue;
 
-		str5 << "Animation " << lAniNum << " directions:\n";
+		str5 << "Animation "sv << lAniNum << " directions:\n"sv;
 		Animation* lAnim = (Animation*)(((char*)animHead) + animHead->OffsetToAnim[lAniNum]);
-		for (size_t lAnimDirNum = 0; lAnimDirNum < 32; lAnimDirNum++)
+		for (std::size_t lAnimDirNum = 0; lAnimDirNum < 32; ++lAnimDirNum)
 		{
 			if (lAnim->OffsetToDir[lAnimDirNum] < 0)
 				continue;
 
 			AnimDirection* lAnimDir = (AnimDirection*)(((char*)lAnim) + lAnim->OffsetToDir[lAnimDirNum]);
-			str5 << "Dir " << lAnimDirNum << ", " << (int)lAnimDir->NumberOfFrame
-				<< " frames, (min speed " << (int)lAnimDir->MinSpeed << ", max " << (int)lAnimDir->MaxSpeed
-				<< "), loop " << (int)lAnimDir->Repeat << " times (back to " << (int)lAnimDir->RepeatFrame
-				<< ")\nImage nums: ";
+			str5 << "Dir "sv << lAnimDirNum << ", "sv << (int)lAnimDir->NumberOfFrame
+				<< " frames, (min speed "sv << (int)lAnimDir->MinSpeed << ", max "sv << (int)lAnimDir->MaxSpeed
+				<< "), loop "sv << (int)lAnimDir->Repeat << " times (back to "sv << (int)lAnimDir->RepeatFrame
+				<< ")\nImage nums: "sv;
 
-			for (size_t lAnimFrame = 0; lAnimFrame < lAnimDir->NumberOfFrame; lAnimFrame++)
+			for (std::size_t lAnimFrame = 0; lAnimFrame < lAnimDir->NumberOfFrame; ++lAnimFrame)
 			{
 				str5 << lAnimDir->Frame[lAnimFrame] <<
-					(lAnimFrame == lAnimDir->NumberOfFrame - 1 ? "\n" : ", ");
+					(lAnimFrame == lAnimDir->NumberOfFrame - 1 ? "\n"sv : ", "sv);
 			}
 
 		}
-		str5 << "Animation " << lAniNum << " directions done.\n";
+		str5 << "Animation "sv << lAniNum << " directions done.\n"sv;
 	}
-	str5 << "===== ANIMATIONS END\n";
-	OutputDebugStringA(str5.str().c_str());
+	str5 << "===== ANIMATIONS END\n"sv;
+	LOGI(_T("%s"), DarkEdif::UTF8ToTString(str5.str()).c_str());
 }
 
 
 void Extension::Sub_AddImagesAtIndex(RunObject * runObj, std::vector<unsigned short> imgIDs,
 	size_t animNum, size_t dirNum, size_t insertAtIndex = SIZE_T_MAX)
 {
-	if (HeapSize(GetProcessHeap(), 0, runObj) != runObj->roHo.size)
+#ifdef FUSION_INTERNAL_ACCESS
+	if (HeapSize(GetProcessHeap(), 0, runObj) != runObj->rHo.hoSize)
 	{
 		DebugBreak();
 	}
-	if (HeapSize(GetProcessHeap(), 0, runObj->roHo.Common) != runObj->roHo.Common->size)
+	if (HeapSize(GetProcessHeap(), 0, runObj->rHo.hoCommon) != runObj->rHo.hoCommon->size)
 	{
 		DebugBreak();
 	}
 
-	if ((runObj->roHo.OEFlags & OEFLAGS::ANIMATIONS) != OEFLAGS::ANIMATIONS)
+	if (!runObj->get_roa())
 	{
-		//objInfoList oil = Runtime.ObjectSelection.GetOILFromOI(oc->roho.Oi);
-		return MakeError("Object with Fixed Value %i (%s) does not have animations.",
-			objectFV, runObj->roHo.OiList->name);
+		return MakeError(_T("Object with Fixed Value %i (%s) does not have animations."),
+			objectFV, runObj->get_rHo()->get_OiList()->get_name());
 	}
 
 
-	Objects_Common* oc = runObj->roHo.Common;
+	Objects_Common* oc = runObj->rHo.hoCommon;
+	if (oc == NULL)
+	{
+		return MakeError(_T("Object with Fixed Value %i (%s) does not have Common?"),
+			objectFV, runObj->get_rHo()->get_OiList()->get_name());
+	}
+
 	HANDLE heapOfRunObj = GetHeaps(oc, oc->size);
 	if (heapOfRunObj == NULL)
 	{
-		return MakeError("Object with Fixed Value %i (%s): couldn't find memory heap associated with object."
-			"Unable to alter animations.", objectFV, runObj->roHo.OiList->name);
+		return MakeError(_T("Object with Fixed Value %i (%s): couldn't find memory heap associated with object."
+			"Unable to alter animations."), objectFV, runObj->get_rHo()->get_OiList()->get_name());
 	}
 
 	if (HeapValidate(heapOfRunObj, 0, NULL) == FALSE)
@@ -999,14 +953,14 @@ void Extension::Sub_AddImagesAtIndex(RunObject * runObj, std::vector<unsigned sh
 	AnimHeader* animHead = (AnimHeader *)(((char *)oc) + oc->Animations);
 	if (animHead->OffsetToAnim[animNum] < 0)
 	{
-		return MakeError("Object with Fixed Value %i (%s) does not have animation with ID %i.",
-			objectFV, runObj->roHo.OiList->name, animNum);
+		return MakeError(_T("Object with Fixed Value %i (%s) does not have animation with ID %i."),
+			objectFV, runObj->get_rHo()->get_OiList()->get_name(), animNum);
 	}
 	Animation* anim = (Animation *)(((char *)animHead) + animHead->OffsetToAnim[animNum]);
 	if (anim->OffsetToDir[dirNum] < 0)
 	{
-		return MakeError("Object with Fixed Value %i (%s) has anim ID %i, but no direction %i.",
-			objectFV, runObj->roHo.OiList->name, animNum, dirNum);
+		return MakeError(_T("Object with Fixed Value %i (%s) has anim ID %i, but no direction %i."),
+			objectFV, runObj->get_rHo()->get_OiList()->get_name(), animNum, dirNum);
 	}
 	AnimDirection* animDir = (AnimDirection *)(((char *)anim) + anim->OffsetToDir[dirNum]);
 
@@ -1014,9 +968,9 @@ void Extension::Sub_AddImagesAtIndex(RunObject * runObj, std::vector<unsigned sh
 		insertAtIndex = animDir->NumberOfFrame;
 	else if (insertAtIndex > animDir->NumberOfFrame)
 	{
-		return MakeError("Object with Fixed Value %i (%s): couldn't insert images at index %i, that's "
-			"not within anim ID %i, dir %i's valid image range (of 0 to %hu, or -1 for appending).",
-			objectFV, runObj->roHo.OiList->name, insertAtIndex, animNum, dirNum, animDir->NumberOfFrame);
+		return MakeError(_T("Object with Fixed Value %i (%s): couldn't insert images at index %i, that's "
+			"not within anim ID %i, dir %i's valid image range (of 0 to %hu, or -1 for appending)."),
+			objectFV, runObj->get_rHo()->get_OiList()->get_name(), insertAtIndex, animNum, dirNum, animDir->NumberOfFrame);
 	}
 
 	unsigned short numImagesToAdd = (unsigned short)imgIDs.size();
@@ -1025,10 +979,10 @@ void Extension::Sub_AddImagesAtIndex(RunObject * runObj, std::vector<unsigned sh
 	// Now we know it does exist...
 
 	// Just in case user tries to add 65k or dumb number of images
-	if (((size_t) animDir->NumberOfFrame) + (imgIDs.size() * sizeof (unsigned short)) > SHORT_MAX - 10)
+	if (((std::size_t) animDir->NumberOfFrame) + (imgIDs.size() * sizeof (unsigned short)) > SHORT_MAX - 10)
 	{
-		return MakeError("Object with Fixed Value %i (%s): anim ID %i, dir %i has too many frames (%i), can't add more.",
-			objectFV, runObj->roHo.OiList->name, insertAtIndex, animNum, dirNum, animDir->NumberOfFrame);
+		return MakeError(_T("Object with Fixed Value %i (%s): anim ID %i, dir %i has too many frames (%i), can't add more."),
+			objectFV, runObj->get_rHo()->get_OiList()->get_name(), animNum, dirNum, animDir->NumberOfFrame);
 	}
 
 
@@ -1039,13 +993,14 @@ void Extension::Sub_AddImagesAtIndex(RunObject * runObj, std::vector<unsigned sh
 		DebugBreak();
 	}
 #if 1
+	const Objects_Common* const oc3 = oc; // code analysis decides oc is uninited after HeapReAlloc, so dup it before
 	Objects_Common* oc2 = (Objects_Common *)HeapReAlloc(heapOfRunObj, 0, oc, oc->size + extraSizeNeeded);
 
 	if (oc2 == NULL)
-		return MakeError("Failed to reallocate %u bytes for new frame.", oc->size + extraSizeNeeded);
+		return MakeError(_T("Failed to reallocate %u bytes for new frame."), oc->size + extraSizeNeeded);
 
-	if (oc2 != oc)
-		OutputDebugStringA("WARNING: re-allocation produced entirely new memory address.\n");
+	if (oc2 != oc3)
+		LOGW(_T("WARNING: re-allocation produced entirely new memory address.\n"));
 #else
 	Objects_Common* oc2 = (Objects_Common *)HeapAlloc(heapOfRunObj, 0, oc->size + extraSizeNeeded);
 	if (oc2 == NULL)
@@ -1105,7 +1060,7 @@ void Extension::Sub_AddImagesAtIndex(RunObject * runObj, std::vector<unsigned sh
 	MoveMemory(&Frame[insertAtIndex + numImagesToAdd], &Frame[insertAtIndex], memCpySize);
 
 	// Add new image in
-	for (size_t i = 0; i < numImagesToAdd; i++)
+	for (std::size_t i = 0; i < numImagesToAdd; ++i)
 		animDir->Frame[insertAtIndex + i] = imgIDs[i];
 	animDir->NumberOfFrame += numImagesToAdd;
 
@@ -1113,7 +1068,7 @@ void Extension::Sub_AddImagesAtIndex(RunObject * runObj, std::vector<unsigned sh
 	animHead->size += extraSizeNeeded;
 
 	// Move all offsets for later directions in current animation
-	for (size_t i = dirNum + 1; i < 32; i++)
+	for (std::size_t i = dirNum + 1; i < 32; ++i)
 	{
 		if (anim->OffsetToDir[i] < 0)
 			continue;
@@ -1127,57 +1082,56 @@ void Extension::Sub_AddImagesAtIndex(RunObject * runObj, std::vector<unsigned sh
 	// There's potential for a mixmatch
 
 
-	for (size_t i = animNum + 1; i < animHead->AnimMax; i++)
+	for (std::size_t i = animNum + 1; i < animHead->AnimMax; ++i)
 	{
 		if (animHead->OffsetToAnim[i] < 0)
 			continue;
 
 		animHead->OffsetToAnim[i] += extraSizeNeeded;
-		std::stringstream str4; str4 << "AnimNum moving: moved offsetToAnim from " <<
-			(animHead->OffsetToAnim[i] - extraSizeNeeded) << " to " << (animHead->OffsetToAnim[i]) << ".\n";
+		std::stringstream str4; str4 << "AnimNum moving: moved offsetToAnim from "sv <<
+			(animHead->OffsetToAnim[i] - extraSizeNeeded) << " to "sv << (animHead->OffsetToAnim[i]) << ".\n"sv;
 		//Animation* anim = (Animation*)(((char*)animHead) + animHead->OffsetToAnim[i]);
 		//anim->OffsetToDir[0];
 		//str4 << "Now points to animation with first image %i.";
 
-		OutputDebugStringA(str4.str().c_str());
+		LOGI(_T("%s"), DarkEdif::UTF8ToTString(str4.str()).c_str());
 	}
 
-	OutputDebugStringA("PAST MOVE:\n");
+	LOGI(_T("PAST MOVE:\n"));
 	OutputAnimations(animHead);
 
 	// Animations updated, now update Common pointers
-	runObj->roHo.Common = oc;
+	runObj->rHo.hoCommon = oc;
 	// oc->Animations has unchanged offset, don't update it
 	oc->size += extraSizeNeeded;
 	//TODO:
 	runObj->roc.rcChanged = TRUE;
 
 	// If current or later-in-memory animation is in use, update to correct pointer
-	if (RunObject_GetAni(runObj))
+	if (runObj->get_roa())
 	{
-		rAni& ani = *RunObject_GetAni(runObj);
+		rAni& ani = *runObj->get_roa();
 		if (ani.Offset >= anim)
 		{
-			OutputDebugStringA("Moved runObj->roa.Offset.\n");
+			LOGI(_T("Moved runObj->roa.Offset.\n"));
 			*((char**)&ani.Offset) += extraSizeNeeded;
 			if (ani.DirOffset >= animDir)
 			{
-				OutputDebugStringA("Moved runObj->roa.DirOffset.\n");
+				LOGI(_T("Moved runObj->roa.DirOffset.\n"));
 				*((char**)& ani.DirOffset) += extraSizeNeeded;
 			}
 		}
 	}
 
-	runObj->roHo.OiList->OIFlags |= OILFlags::TO_RELOAD;
+	runObj->get_rHo()->get_OiList()->oilOIFlags |= OILFlags::TO_RELOAD;
 
-
-	short numObj = runObj->roHo.OiList->Object;
+	short numObj = runObj->get_rHo()->get_OiList()->get_Object();
 	while (numObj >= 0)
 	{
-		RunObject * ro = (RunObject *)runObj->roHo.AdRunHeader->ObjectList[numObj].oblOffset;
-		if (ro->roHo.Common != oc)
+		RunObjectMultiPlatPtr ro = runObj->get_rHo()->get_AdRunHeader()->GetObjectListOblOffsetByIndex(numObj);
+		if (ro->rHo.hoCommon != oc)
 		{
-			ro->roHo.Common = oc;
+			ro->rHo.hoCommon = oc;
 			(void)oc2;
 			DebugBreak();
 		}
@@ -1185,29 +1139,29 @@ void Extension::Sub_AddImagesAtIndex(RunObject * runObj, std::vector<unsigned sh
 		// Image is currently being displayed
 		if (ro->roc.rcAnim == animNum && ro->roc.rcDir == dirNum)
 		{
-			OutputDebugStringA("Note: Forcibly boosting anim num frames.\n");
-			if (RunObject_GetAni(ro))
-				RunObject_GetAni(ro)->NumberOfFrame += imgIDs.size();
+			LOGI(_T("Note: Forcibly boosting anim num frames.\n"));
+			if (ro->get_roa())
+				ro->get_roa()->NumberOfFrame += imgIDs.size();
 
 			if ((size_t)ro->roc.rcImage >= insertAtIndex - 1)
 			{
 				ro->roc.rcChanged = TRUE;
-				if (RunObject_GetMvt(ro))
-					RunObject_GetMvt(ro)->rmReverse += 1; // ro->getMvt()->rmReverse ? 1 : 2;
+				if (ro->get_rom())
+					ro->get_rom()->rmReverse += 1; // ro->getMvt()->rmReverse ? 1 : 2;
 				//ro->roc.rcOldDir = -1;
-				CallRunTimeFunction2((&ro->roHo), RFUNCTION::REDRAW, 0, 0);
+				CallRunTimeFunction2((&ro->rHo), RFUNCTION::REDRAW, 0, 0);
 				//	Runtime.Redraw();
-				OutputDebugStringA("Note: Forcibly re-animating.\n");
-				ro->roc.rcRoutineAnimation(&ro->roHo);
+				LOGI(_T("Note: Forcibly re-animating.\n"));
+				ro->roc.rcRoutineAnimation(&ro->rHo);
 				// runObj->roc.rcOldImage = -1;
 				// DebugBreak();
 			}
 		}
 
-		numObj = ro->roHo.NumNext;
+		numObj = ro->rHo.hoNumNext;
 	}
 
-	OutputDebugStringA("END RESULT:\n");
+	LOGI(_T("END RESULT:\n"));
 	OutputAnimations(animHead);
 	if (HeapValidate(heapOfRunObj, 0, NULL) == FALSE)
 	{
@@ -1225,6 +1179,8 @@ void Extension::Sub_AddImagesAtIndex(RunObject * runObj, std::vector<unsigned sh
 	of << "===== " << mode << str.str() << "=====\n";
 	of.close();
 #endif
+#else // FUSION_INTERNAL_ACCESS
+#endif
 }
 
 Objects_Common* copy = NULL;
@@ -1238,7 +1194,7 @@ void Extension::StoreDetails(int objectFV)
 	RunObject * runObj = Runtime.RunObjPtrFromFixed(objectFV);
 	if (!runObj)
 	{
-		return MakeError("Selecting Fixed Value %i for adding animation failed.", 0);
+		return MakeError(_T("Selecting Fixed Value %i for adding animation failed."), 0);
 	}
 //	runHeap = GetHeaps(runObj, sizeof(runObj->roHo->size));
 
@@ -1258,13 +1214,13 @@ void Extension::StoreDetails(int objectFV)
 	if (runNum > 2)
 	{
 		OutputDebugStringA("=== Starting diff check.\n");
-		for (size_t i = 0; i < _msize(copy2); i++)
+		for (std::size_t i = 0; i < _msize(copy2); ++i)
 		{
 			if (*(((char*)ro) + i) != *(((char*)copy2) + i))
 			{
 				std::stringstream str;
-				str << "Offset " << i << ", addr 0x" << std::hex << (long)(((char*)ro) + i)
-					<< " vals " << std::dec << (size_t)(*(((char*)ro) + i)) << " != " << (size_t)(*(((char*)copy2) + i)) << ".\n";
+				str << "Offset "sv << i << ", addr 0x"sv << std::hex << (long)(((char*)ro) + i)
+					<< " vals "sv << std::dec << (size_t)(*(((char*)ro) + i)) << " != "sv << (size_t)(*(((char*)copy2) + i)) << ".\n"sv;
 				OutputDebugStringA(str.str().c_str());
 			}
 		}
@@ -1274,8 +1230,8 @@ void Extension::StoreDetails(int objectFV)
 	{
 		free(copy2);
 		copy2 = (RunObject*)malloc(sizeof(RunObject));
-		if (memcpy_s(copy2, _msize(copy2), ro, sizeof(RunObject)) != 0)
-			MakeError("Copying RunHeader failed with %u.", errno);
+		if (!copy2 || memcpy_s(copy2, _msize(copy2), ro, sizeof(RunObject)) != 0)
+			MakeError(_T("Copying RunHeader failed with %d."), copy2 ? errno : ENOMEM);
 		OutputDebugStringA("Stored RunHeader for diff check.\n");
 	}
 
@@ -1287,13 +1243,13 @@ void Extension::StoreDetails(int objectFV)
 	if (runNum > 2)
 	{
 		OutputDebugStringA("=== Starting diff check.\n");
-		for (size_t i = 0; i < _msize(copy); i++)
+		for (std::size_t i = 0; i < _msize(copy); ++i)
 		{
 			if (*(((char*)oc) + i) != *(((char*)copy) + i))
 			{
 				std::stringstream str;
-				str << "Offset " << i << ", addr 0x" << std::hex << (long)(((char*)oc) + i)
-					<< " vals " << std::dec << (size_t)(*(((char*)oc) + i)) << " != " << (size_t)(*(((char*)copy) + i)) << ".\n";
+				str << "Offset "sv << i << ", addr 0x"sv << std::hex << (long)(((char*)oc) + i)
+					<< " vals "sv << std::dec << (size_t)(*(((char*)oc) + i)) << " != "sv << (size_t)(*(((char*)copy) + i)) << ".\n"sv;
 				OutputDebugStringA(str.str().c_str());
 			}
 		}
@@ -1332,13 +1288,13 @@ void Extension::CheckForDiff()
 
 	Objects_Common* oc = runObj->roHo.Address->Common;
 	OutputDebugStringA("=== Starting diff check.\n");
-	for (size_t i = 0; i < _msize(copy); i++)
+	for (std::size_t i = 0; i < _msize(copy); ++i)
 	{
 		if (*(((char*)oc) + i) != *(((char*)copy) + i))
 		{
 			std::stringstream str;
-			str << "Offset " << i << ", addr 0x" << std::hex << (long)(((char*)oc) + i)
-				<< " vals " << std::dec << (size_t)(*(((char*)oc) + i)) << " != " << (size_t)(*(((char*)copy) + i)) << ".\n";
+			str << "Offset "sv << i << ", addr 0x"sv << std::hex << (long)(((char*)oc) + i)
+				<< " vals "sv << std::dec << (size_t)(*(((char*)oc) + i)) << " != "sv << (size_t)(*(((char*)copy) + i)) << ".\n"sv;
 			OutputDebugStringA(str.str().c_str());
 		}
 	}
@@ -1349,7 +1305,7 @@ void Extension::CheckForDiff()
 }
 #endif // 0
 
-#elif defined(__ANDROID__)
+#else // if defined(__ANDROID__) or APPLE
 void Extension::Sub_AddImagesAtIndex(RunObject * runObj, std::vector<unsigned short> imgIDs,
 	size_t animNum, size_t dirNum, size_t insertAtIndex = SIZE_T_MAX)
 {
@@ -1380,84 +1336,32 @@ void Extension::AddImagesToObject(int objectFV,
 {
 }
 
-#ifdef _WIN32
-static void AddToList(Extension* ext, short oil, std::vector<HeaderObject*>& writeTo)
-{
-	// regular object
-	assert(oil >= 0);
-
-	auto poil = (objInfoList*)(((char*)ext->rhPtr->OiList) + ext->Runtime.ObjectSelection.oiListItemSize * oil);
-
-	// Object's selected instance list wasn't set by conditions for this event.
-	// It would be good if we could do Runtime.ObjectSelection.SelectAll(),
-	// but actions can't modify selection, so we'll not bother.
-	const bool selectAll = (poil->EventCount != ext->rhPtr->rh2.EventCount);
-
-	short num = selectAll ? poil->Object : poil->ListSelected, lastNum = -1;
-	// Iterate over list (until no other objects are found)
-	while (num >= 0)
-	{
-		// Get the object instance
-		auto pObl = ext->rhPtr->ObjectList + num;
-		HeaderObject* pHo = pObl->oblOffset;
-		if (pHo == nullptr)
-			break; // we hit end of list
-
-		// Make sure the obj wasn't already destroyed (e.g. Disappearing animation)
-		// and make sure obj has alt vals/strings
-		if ((pHo->Flags & HeaderObjectFlags::Destroyed) == HeaderObjectFlags::None && (pHo->OEFlags & OEFLAGS::VALUES) == OEFLAGS::VALUES)
-			writeTo.push_back(pHo);
-
-		// Jump to next instance in list
-		num = selectAll ? pHo->NumNext : pHo->NextSelected;
-	}
-}
-#endif
-
-void Extension::CopyAltVals(HeaderObject* obj, int startIndex, int numVals, int destIndex)
+void Extension::CopyAltVals(RunObject *, int startIndex, int numVals, int destIndex)
 {
 #if _WIN32
-	// The HeaderObject * points to the first instance of the selected objects this action
-	// has in its parameters.
-	// If you want your action to be called repeatedly, once for each object instance,
-	// you just run as if the HeaderObject * is the only instance it's being run on, and the Fusion runtime
-	// will cycle through each HeaderObject * that is the object instances passed by the event.
-	// Otherwise, you disable ACTFLAGS_REPEAT, and loop it yourself.
 	// Since we want the user to be able to cancel foreach loops midway, we'll do the loop ourselves.
-	rhPtr->rh4.ActionStart->evtFlags &= ~ACTFLAGS_REPEAT;
+	Runtime.CancelRepeatingObjectAction();
 
 	if (numVals == 0)
 		return;
 	if (startIndex < 0 || numVals < 0 || destIndex < 0 ||
 		(startIndex < destIndex ? (startIndex + numVals > destIndex) : (destIndex + numVals > startIndex)))
 	{
-		MakeError("Can't copy alt vals, indexes are invalid or overlap");
+		MakeError(_T("Can't copy alt vals, indexes are invalid or overlap"));
 		return;
 	}
 
-	short oil = (short)rdPtr->rHo.CurrentParam->evp.W[0];
-
-	std::vector<HeaderObject*> list;
-	// regular object
-	if (oil >= 0)
-		AddToList(this, oil, list);
-	// qualifier
-	else if (oil != -1)
-	{
-		for (auto pqoi = (qualToOi*)((std::uint8_t*)rhPtr->QualToOiList + (oil & 0x7FFF));
-			pqoi->OiList >= 0;
-			pqoi = (qualToOi*)((std::uint8_t*)pqoi + 4))
-		{
-			AddToList(this, pqoi->OiList, list);
-		}
-	}
-	// else -1, just leave list empty
 	// oil could be -1 if valid object type, but no instances - or invalid obj type, e.g. global events but no corresponding frame obj
+	short oil = Runtime.GetOIListIndexFromObjectParam(0);
+
+	std::vector<RunObjectMultiPlatPtr> list;
+	for (auto pHo : DarkEdif::ObjectIterator(rhPtr, oil, DarkEdif::Selection::Implicit))
+		list.push_back(pHo);
 
 	// No instances available
 	if (list.empty())
 	{
-		MakeError("Can't copy alt vals, no object instances available.");
+		MakeError(_T("Can't copy alt vals, no object instances available."));
 		return;
 	}
 
@@ -1465,23 +1369,19 @@ void Extension::CopyAltVals(HeaderObject* obj, int startIndex, int numVals, int 
 	{
 		for (size_t i = 0, j = startIndex, k = destIndex; i < (size_t)numVals; ++i, ++j, ++k)
 		{
-			AltVals* prv = (AltVals*)((LPBYTE)a + a->OffsetValue);
+			AltVals* prv = a->get_rov();
 			if (!prv)
 			{
-				MakeError("Aborting alt value copy for %s; null pointer.", list[0]->OiList->name);
+				MakeError(_T("Aborting alt value copy for %s; null pointer."), list[0]->get_rHo()->get_OiList()->get_name());
 				return;
 			}
 
-			if (DarkEdif::IsFusion25)
-			{
-				prv->CF25.Values[k].m_double = prv->CF25.Values[j].m_double;
-				prv->CF25.Values[k].m_type = prv->CF25.Values[j].m_type;
-			}
-			else
-			{
-				prv->MMF2.rvpValues[k].m_double = prv->MMF2.rvpValues[j].m_double;
-				prv->MMF2.rvpValues[k].m_type = prv->MMF2.rvpValues[j].m_type;
-			}
+			// if no value set there yet, this will be null
+			const auto thisAlt = prv->GetAltValueAtIndex(j);
+			if (thisAlt && thisAlt->m_type == TYPE_DOUBLE)
+				prv->SetAltValueAtIndex(k, thisAlt->m_double);
+			else // long, possibly does not exist
+				prv->SetAltValueAtIndex(k, thisAlt ? thisAlt->m_long : 0);
 		}
 	}
 #else
@@ -1489,50 +1389,31 @@ void Extension::CopyAltVals(HeaderObject* obj, int startIndex, int numVals, int 
 #endif
 }
 
-void Extension::CopyAltStrings(HeaderObject* obj, int startIndex, int numVals, int destIndex)
+void Extension::CopyAltStrings(RunObject *, int startIndex, int numVals, int destIndex)
 {
 #ifdef _WIN32
-	// The HeaderObject * points to the first instance of the selected objects this action
-	// has in its parameters.
-	// If you want your action to be called repeatedly, once for each object instance,
-	// you just run as if the HeaderObject * is the only instance it's being run on, and the Fusion runtime
-	// will cycle through each HeaderObject * that is the object instances passed by the event.
-	// Otherwise, you disable ACTFLAGS_REPEAT, and loop it yourself.
 	// Since we want the user to be able to cancel foreach loops midway, we'll do the loop ourselves.
-	rhPtr->rh4.ActionStart->evtFlags &= ~ACTFLAGS_REPEAT;
+	Runtime.CancelRepeatingObjectAction();
 
 	if (numVals == 0)
 		return;
 	if (startIndex < 0 || numVals < 0 || destIndex < 0 ||
 		(startIndex < destIndex ? (startIndex + numVals > destIndex) : (destIndex + numVals > startIndex)))
 	{
-		MakeError("Can't copy alt strings, indexes are invalid or overlap");
+		MakeError(_T("Can't copy alt strings, indexes are invalid or overlap"));
 		return;
 	}
 
-	short oil = (short)rdPtr->rHo.CurrentParam->evp.W[0];
+	short oil = Runtime.GetOIListIndexFromObjectParam(0);
 
-	std::vector<HeaderObject*> list;
-	// regular object
-	if (oil >= 0)
-		AddToList(this, oil, list);
-	// qualifier
-	else if (oil != -1)
-	{
-		for (auto pqoi = (qualToOi*)((std::uint8_t*)rhPtr->QualToOiList + (oil & 0x7FFF));
-			pqoi->OiList >= 0;
-			pqoi = (qualToOi*)((std::uint8_t*)pqoi + 4))
-		{
-			AddToList(this, pqoi->OiList, list);
-		}
-	}
-	// else -1, just leave list empty
-	// oil could be -1 if valid object type, but no instances - or invalid obj type, e.g. global events but no corresponding frame obj
+	std::vector<RunObjectMultiPlatPtr> list;
+	for (auto pq : DarkEdif::ObjectIterator(rhPtr, oil, DarkEdif::Selection::Implicit))
+		list.push_back(pq);
 
 	// No instances available
 	if (list.empty())
 	{
-		MakeError("Can't copy alt vals, no object instances available.");
+		MakeError(_T("Can't copy alt vals, no object instances available."));
 		return;
 	}
 
@@ -1541,7 +1422,7 @@ void Extension::CopyAltStrings(HeaderObject* obj, int startIndex, int numVals, i
 	// Unicode exts can only load in Unicode
 	if (!isUnicode)
 	{
-		MakeError("Copying alt strings failed - Non-Unicode app using Unicode ext?!");
+		MakeError(_T("Copying alt strings failed - Non-Unicode app using Unicode ext?!"));
 		return;
 	}
 #endif
@@ -1549,47 +1430,22 @@ void Extension::CopyAltStrings(HeaderObject* obj, int startIndex, int numVals, i
 	// Unicode exts can only load in Unicode
 	if (DarkEdif::IsFusion25 && !isUnicode)
 	{
-		MakeError("Copying alt strings failed - CF2.5 not using a Unicode app?!");
+		MakeError(_T("Copying alt strings failed - CF2.5 not using a Unicode app?!"));
 		return;
 	}
 
 	for (const auto a : list)
 	{
-		for (size_t i = 0, j = startIndex, k = destIndex; i < (size_t)numVals; ++i, ++j, ++k)
+		for (std::size_t i = 0, j = startIndex, k = destIndex; i < (std::size_t)numVals; ++i, ++j, ++k)
 		{
-			AltVals* prv = (AltVals*)((LPBYTE)a + a->OffsetValue);
+			AltVals* prv = a->get_rov();
 			if (!prv)
 			{
-				MakeError("Aborting alt string copy for %s; null pointer.", list[0]->OiList->name);
+				MakeError(_T("Aborting alt string copy for %s; null pointer."), list[0]->get_rHo()->get_OiList()->get_name());
 				return;
 			}
 
-			if (DarkEdif::IsFusion25)
-			{
-				mvFree(Edif::SDK->mV, (void *)prv->CF25.Strings[k]);
-				if (prv->CF25.Strings[j] == NULL)
-					*(TCHAR**)&prv->CF25.Strings[k] = NULL;
-				else
-				{
-					size_t numBytes = isUnicode ? ((wcslen((wchar_t*)prv->CF25.Strings[j]) + 1) * 2) : (strlen((char*)prv->CF25.Strings[j]) + 1);
-					char* data = (char*)mvMalloc(Edif::SDK->mV, numBytes);
-					memcpy(data, prv->CF25.Strings[j], numBytes);
-					*(TCHAR**)&prv->CF25.Strings[k] = (TCHAR*)data;
-				}
-			}
-			else
-			{
-				mvFree(Edif::SDK->mV, prv->MMF2.rvStrings[k]);
-				if (prv->MMF2.rvStrings[j] == NULL)
-					prv->MMF2.rvStrings[k] = NULL;
-				else
-				{
-					size_t numBytes = isUnicode ? ((wcslen((wchar_t*)prv->MMF2.rvStrings[j]) + 1) * 2) : (strlen((char *)prv->MMF2.rvStrings[j]) + 1);
-					char * data = (char *)mvMalloc(Edif::SDK->mV, numBytes);
-					memcpy(data, prv->MMF2.rvStrings[j], numBytes);
-					prv->MMF2.rvStrings[k] = (TCHAR *)data;
-				}
-			}
+			prv->SetAltStringAtIndex(k, prv->GetAltStringAtIndex(j));
 		}
 	}
 #else

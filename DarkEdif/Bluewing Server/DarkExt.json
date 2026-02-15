@@ -5,7 +5,7 @@
 		"About": {
 			"Name": "Lacewing Blue Server",
 			"Author": "Darkwire Software",
-			"Copyright": "Copyright \u00A9 2023 by Darkwire Software",
+			"Copyright": "Copyright \u00A9 2026 by Darkwire Software",
 			"Comment": "Multiplayer server, for use over LAN or internet. \"Bluewing\" recreation of Lacewing Relay Server. (b%i, %s)",
 			"Help": "Help/Lacewing Help.chm",
 			"URL": "https://dark-wire.com/relay/"
@@ -13,7 +13,9 @@
 		"ActionMenu": [
 			[ "Relay Server",
 				[ 0, "Host" ],
-				[ 1, "Stop hosting" ]
+				[ 1, "Stop hosting" ],
+				"---",
+				[ 94, "Hole punch to future client" ]
 			],
 			[ "Flash Player Policy Server",
 				[ 68, "Host" ],
@@ -31,14 +33,12 @@
 			[ 88, "(Advanced) Set Unicode allowlist" ],
 			"---",
 			[ "Enable/disable conditions",
-				// [ 9, "On message from client to channel" ],
-				// [ 11, "On message from client to peer" ],
 				[ 74, "On connect request" ],
 				[ 81, "On name set request" ],
 				[ 75, "On join channel request" ],
 				[ 76, "On leave channel request" ],
-				[ 77, "On message from client to channel" ],
-				[ 78, "On message from client to peer" ],
+				[ 77, "On message from client to channel" ], // Relay ID: 9
+				[ 78, "On message from client to peer" ], // Relay ID: 11
 				[ 79, "On message from client to server" ]
 			],
 			[ "On interactive condition",
@@ -51,6 +51,7 @@
 
 			[ "Channel",
 				[ 27, "Select by name" ],
+				[ 93, "Select by ID" ],
 				"---",
 				[ 28, "Loop all channels" ],
 				[ 64, "Loop all channels (with loop name)" ],
@@ -176,7 +177,7 @@
 				[ 51, "Is channel set to close automatically?" ],
 				"---",
 				[ 55, "Does channel name exist?" ],
-			//	[ 56, "Does channel ID exist?" ],
+				[ 56, "Does channel ID exist?" ],
 				[ 59, "On channel close" ]
 			],
 			[ "Client",
@@ -195,6 +196,8 @@
 				"---",
 				[ 54, "Is client name joined to channel name?" ],
 				[ 53, "Is client ID joined to channel name?" ],
+				[ 62, "Is client name joined to channel ID?" ],
+				[ 61, "Is client ID joined to channel ID?" ],
 				"---",
 				[ 57, "Does client name exist?" ],
 				[ 58, "Does client ID exist?" ]
@@ -233,6 +236,7 @@
 					[ 35, "On any message to peer" ]
 				]
 			],
+			[ 63, "On network changed"],
 			"---"
 		],
 		"ExpressionMenu": [
@@ -249,7 +253,7 @@
 			"---",
 			[ "Channel",
 				[ 5, "Name" ],
-			//	[ 50, "ID" ],
+				[ 50, "ID" ],
 				[ 6, "Client count" ],
 				[ 40, "Get local channel data" ],
 				"---",
@@ -837,6 +841,19 @@
 				"Parameters": [
 					[ "Text", "Which to unhost, \"secure\", \"insecure\" or \"both\"?" ]
 				]
+			},
+			{
+				"Title": "Select channel by ID %0",
+				"Parameters": [
+					[ "Integer", "Channel ID (0 to 65534, inclusive)" ]
+				]
+			},
+			{
+				"Title": "Hole punch connect to future client IP %0 (local port %1)",
+				"Parameters": [
+					[ "Text", "Remote IP address (with port)" ],
+					[ "Integer", "Local port, or 0 to pick free port" ]
+				]
 			}
 		],
 		"Conditions": [
@@ -1199,6 +1216,27 @@
 				"Parameters": [
 					[ "Text", "Which server types? (\"secure\", \"insecure\", \"both\", or \"either\")" ]
 				]
+			},
+			{
+				"Title": "%o : Is client ID %0 joined to channel ID %1",
+				"Parameters": [
+					[ "Integer", "Client ID to test" ],
+					[ "Integer", "Channel ID to test" ]
+				]
+			},
+			{
+				"Title": "%o : Is client name %0 joined to channel ID %1",
+				"Parameters": [
+					[ "Text", "Client name to test" ],
+					[ "Integer", "Channel ID to test" ]
+				]
+			},
+			{
+				"Title": "%o : Network was %0",
+				"Triggered": true,
+				"Parameters": [
+					[ "Text", "Change type (\"added\", \"lost\", or \"changed\" for both)" ]
+				]
 			}
 		],
 		"Expressions": [
@@ -1537,7 +1575,7 @@
 		"About": {
 			"Name": "Servidor Lacewing Blue",
 			"Author": "Darkwire Software",
-			"Copyright": "Copyright \u00A9 2022 por Darkwire Software",
+			"Copyright": "Copyright \u00A9 2026 por Darkwire Software",
 			"Comment": "Servidor multijogador para usar em LAN ou através da internet. \"Bluewing\" recriação do Servidor Lacewing Relay. (b%i, %s)",
 			"Help": "Help/BluewingServer.chm",
 			"URL": "https://dark-wire.com/relay/"
@@ -1581,6 +1619,7 @@
 			"---",
 			[ "Canal",
 				[ 27, "Seleccionar por nome" ],
+				[ 93, "Seleccionar por ID" ],
 				"---",
 				[ 28, "Reciclar todos so canais" ],
 				[ 64, "Reciclar todos os canais (com nome a reciclar)" ],
@@ -1766,6 +1805,8 @@
 					[ 35, "Em qualquer mensagem enviada ao par" ]
 				]
 			],
+			// PORTUGUESE: RETRANSLATE 1 LINE
+			[ 63, "On network changed" ],
 			"---"
 		],
 		"ExpressionMenu": [
@@ -2374,6 +2415,19 @@
 				"Parameters": [
 					[ "Text", "Which to unhost, \"secure\", \"insecure\" or \"both\"?" ]
 				]
+			},
+			{
+				"Title": "Seleccionar canal por ID %0",
+				"Parameters": [
+					[ "Integer", "ID" ]
+				]
+			},
+			{ // TODO: Translate
+				"Title": "Hole punch connect to future client IP %0 (local port %1)",
+				"Parameters": [
+					[ "Text", "IP address (with port)" ],
+					[ "Integer", "Local port, or 0 to pick free port" ]
+				]
 			}
 		],
 		"Conditions": [
@@ -2739,6 +2793,28 @@
 				"Parameters": [
 					[ "Text", "Which server types? (\"secure\", \"insecure\", \"both\", or \"either\")" ]
 				]
+			},
+			// Retranslate!
+			{
+				"Title": "%o : Is client ID %0 joined to channel ID %1",
+				"Parameters": [
+					[ "Integer", "Client ID to test" ],
+					[ "Integer", "Channel ID to test" ]
+				]
+			},
+			{
+				"Title": "%o : Is client name %0 joined to channel ID %1",
+				"Parameters": [
+					[ "Text", "Client name to test" ],
+					[ "Integer", "Channel ID to test" ]
+				]
+			},
+			{
+				"Title": "%o : Network was %0",
+				"Triggered": true,
+				"Parameters": [
+					[ "Text", "Change type (\"added\", \"lost\", \"changed\")" ]
+				]
 			}
 		],
 		"Expressions": [
@@ -3078,7 +3154,7 @@
 		"About": {
 			"Name": "Serveur Lacewing Blue",
 			"Author": "Darkwire Software",
-			"Copyright": "Copyright \u00A9 2022 par Darkwire Software",
+			"Copyright": "Copyright \u00A9 2026 par Darkwire Software",
 			"Comment": "Serveur multijoueur, pour utilisation par LAN ou internet. \"Bluewing\", une refonte de Lacewing Relay Server. (b%i, %s)",
 			"Help": "Help/BluewingServer.chm",
 			"URL": "https://dark-wire.com/relay/"
@@ -3123,6 +3199,7 @@
 			"---",
 			[ "Canal",
 				[ 27, "Sélectionner un canal par nom" ],
+				[ 93, "Sélectionner un canal par ID" ],
 				"---",
 				[ 28, "Pour chaque canaux" ],
 				[ 64, "Pour chaque canaux (avec nom de boucle)" ],
@@ -3303,6 +3380,7 @@
 					[ 35, "Lors de n'importe quel message à un pair" ]
 				]
 			],
+			[ 63, "On network changed" ],
 			"---"
 		],
 		"ExpressionMenu": [
@@ -3901,6 +3979,19 @@
 				"Parameters": [
 					[ "Text", "Which to unhost, \"secure\", \"insecure\" or \"both\"?" ]
 				]
+			},
+			{
+				"Title": "Sélectionner le canal de ID %0",
+				"Parameters": [
+					[ "Integer", "ID" ]
+				]
+			},
+			{ // TODO: Translate
+				"Title": "Hole punch connect to future client IP %0 (local port %1)",
+				"Parameters": [
+					[ "Text", "IP address (with port)" ],
+					[ "Integer", "Local port, or 0 to pick free port" ]
+				]
 			}
 		],
 		"Conditions": [
@@ -4263,6 +4354,27 @@
 				"Title": "%o : Serveur WebSocket est hébergé",
 				"Parameters": [
 					[ "Text", "Which server types? (\"secure\", \"insecure\", \"both\", or \"either\")" ]
+				]
+			},
+			{
+				"Title": "%o : Is client ID %0 joined to channel ID %1",
+				"Parameters": [
+					[ "Integer", "Client ID to test" ],
+					[ "Integer", "Channel ID to test" ]
+				]
+			},
+			{
+				"Title": "%o : Is client name %0 joined to channel ID %1",
+				"Parameters": [
+					[ "Text", "Client name to test" ],
+					[ "Integer", "Channel ID to test" ]
+				]
+			},
+			{
+				"Title": "%o : Network was %0",
+				"Triggered": true,
+				"Parameters": [
+					[ "Text", "Change type (\"added\", \"lost\", \"changed\")" ]
 				]
 			}
 		],

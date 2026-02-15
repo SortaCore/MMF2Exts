@@ -1,11 +1,11 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
  * Copyright (C) 2013 James McLaughlin.
- * Copyright (C) 2012-2022 Darkwire Software.
+ * Copyright (C) 2012-2026 Darkwire Software.
  * All rights reserved.
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
 
 #include "../../common.h"
@@ -23,12 +23,13 @@ void lwp_eventqueue_delete (lwp_eventqueue queue)
 
 void lwp_eventqueue_add (lwp_eventqueue queue,
 						 int fd,
+						 const char * desc,
 						 lw_bool read,
 						 lw_bool write,
 						 lw_bool edge_triggered,
 						 void * tag)
 {
-	lwp_eventqueue_update (queue, fd,
+	lwp_eventqueue_update (queue, fd, desc,
 						  lw_false, read,
 						  lw_false, write,
 						  lw_false, edge_triggered,
@@ -36,7 +37,7 @@ void lwp_eventqueue_add (lwp_eventqueue queue,
 }
 
 void lwp_eventqueue_update (lwp_eventqueue queue,
-							int fd,
+							int fd, const char* updateReason,
 							lw_bool was_reading, lw_bool read,
 							lw_bool was_writing, lw_bool write,
 							lw_bool was_edge_triggered, lw_bool edge_triggered,

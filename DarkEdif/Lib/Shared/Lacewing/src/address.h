@@ -1,12 +1,17 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
  * Copyright (C) 2011, 2012 James McLaughlin et al.
- * Copyright (C) 2012-2022 Darkwire Software.
+ * Copyright (C) 2012-2026 Darkwire Software.
  * All rights reserved.
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
+
+#pragma once
+#ifndef lw_addr_h
+#define lw_addr_h
+
 #ifndef _WIN32
 #include <netdb.h>
 #endif
@@ -24,6 +29,7 @@ struct _lw_addr
 
 	lw_error error;
 
+	lw_addr_tostring_flags laststringflags;
 	char buffer [64]; /* for to_string */
 
 	void * tag;
@@ -34,6 +40,10 @@ void lwp_addr_init (lw_addr ctx, const char * hostname,
 
 void lwp_addr_cleanup (lw_addr ctx);
 
+lw_bool lwp_sockaddr_equal_netmask(struct sockaddr* a, struct sockaddr* b, struct sockaddr* netmask);
+lw_bool lwp_sockaddr_equal(struct sockaddr* a, struct sockaddr* b);
+
 lw_addr lwp_addr_new_sockaddr (struct sockaddr *);
 void lwp_addr_set_sockaddr (lw_addr ctx, struct sockaddr *);
 
+#endif // lw_addr_h - include guard

@@ -45,7 +45,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Inc\iOS\MMFiOSMasterHeader.h">
+    <ClInclude Include="..\Inc\Mac\MMFMacMasterHeader.hpp">
       <Filter>Global to all extensions</Filter>
     </ClInclude>
     <ClInclude Include="$(ProjectDir)\DarkExt.PostMinify.json">
@@ -116,10 +116,10 @@
     <ClCompile Include="..\Lib\Shared\Lacewing\src\openssl\sslclient.c">
       <Filter>Source Files\Lacewing\src\openssl</Filter>
     </ClCompile>
-    <ClInclude Include="$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(ExtNameUnderscores).hpp">
+    <ClInclude Include="$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(TargetNameUnderscores).hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClCompile Include="$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(ExtNameUnderscores).mm">
+    <ClCompile Include="$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(TargetNameUnderscores).mm">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

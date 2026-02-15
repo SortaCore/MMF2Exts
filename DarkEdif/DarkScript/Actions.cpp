@@ -1,9 +1,9 @@
-#include "Common.h"
+#include "Common.hpp"
 
 void Extension::Template_SetFuncSignature(const TCHAR * funcSig, int delayable, int repeatable, int recursable)
 {
 	if (funcSig[0] == _T('\0'))
-		return CreateErrorT("%s: You must supply a function signature, not blank.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), funcSig);
+		return CreateErrorT("%s: You must supply a function signature, not blank.", _T(__FUNCTION__) + (sizeof("Extension::") - 1));
 
 	// Test these first cos they're faster
 	if ((recursable & 1) != recursable)
@@ -13,14 +13,10 @@ void Extension::Template_SetFuncSignature(const TCHAR * funcSig, int delayable, 
 	if (repeatable < 0 || repeatable > 2)
 		return CreateErrorT("%s: Parameter \"repeating expected\" must be 0, 1 or 2, you supplied %i.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), repeatable);
 
-	// Complicated escaping here; to convert regex to C++ string, take original regex, double the backslashes, and escape double quotes with one backslash.
-	// Original regex:
-	// (any|int|string|float)\s+([^\s(]+)\s*\(((?:\s*(?:[^\s]+)\s+(?:[^,\s]+)(?:\s*=\s*(?:[^",]+|(?:"(?:(?=(?:\\?)).)+?")))?,\s*)*(?:\s*(?:[^\s]+)\s+(?:[^,)\s=]+)(?:\s*=\s*(?:[^",]+|(?:"(?:(?=(?:\\?)).)*?")))?)?)\)
-	//
 	// This regex takes into account strings with backslash escaping in default values, double quotes, etc.
 	// Anything is allowed for parameter names, as long as it's 1+ character, does not contain whitespace or brackets, and is unique.
 	// So, to confuse yourself, {} and [] are allowed as parameter names.
-	const std::basic_regex<TCHAR> funcSigParser(_T("(any|int|string|float)\\s+([^\\s(]+)\\s*\\(((?:\\s*(?:[^\\s]+)\\s+(?:[^,\\s]+)(?:\\s*=\\s*(?:[^\",]+|(?:\"(?:(?=(?:\\\\?)).)+?\")))?,\\s*)*(?:\\s*(?:[^\\s]+)\\s+(?:[^,)\\s=]+)(?:\\s*=\\s*(?:[^\",]+|(?:\"(?:(?=(?:\\\\?)).)*?\")))?)?)\\)"s));
+	const std::basic_regex<TCHAR> funcSigParser(_T(R"X((any|int|string|float)\s+([^\s(]+)\s*\(((?:\s*(?:[^\s]+)\s+(?:[^,\s]+)(?:\s*=\s*(?:[^",]+|(?:"(?:(?=(?:\\?)).)+?")))?,\s*)*(?:\s*(?:[^\s]+)\s+(?:[^,)\s=]+)(?:\s*=\s*(?:[^",]+|(?:"(?:(?=(?:\\?)).)*?")))?)?)\))X"s));
 
 	std::match_results<std::tstring::const_iterator> funcSigBreakdown;
 	const std::tstring funcSigStr(funcSig);
@@ -48,7 +44,7 @@ void Extension::Template_SetFuncSignature(const TCHAR * funcSig, int delayable, 
 		// Regex is dumb and for repeating groups, only the last one will be considered;
 		// so we re-run a regex on the parameter list, looping all matches.
 		// .NET regex does capture repeating groups nicely, but no other regex engines support it.
-		const std::basic_regex<TCHAR> paramListParser(_T("\\s*([^\\s]+)\\s+([^,)\\s=]+)(?:\\s*=\\s*([^\",]+|(?:\"(?:(?=(?:\\\\?)).)*?\")))?,"s));
+		const std::basic_regex<TCHAR> paramListParser(_T(R"X(\s*([^\s]+)\s+([^,)\s=]+)(?:\s*=\s*([^",]+|(?:"(?:(?=(?:\\?)).)*?")))?\s*,)X"s));
 		const std::tstring paramList = funcSigBreakdown[3].str() + _T(',');
 		size_t j = 1;
 		for (auto i = std::regex_iterator<std::tstring::const_iterator>(
@@ -114,7 +110,7 @@ void Extension::Template_SetFuncSignature(const TCHAR * funcSig, int delayable, 
 			"You have %zu parameters, but max is %hi. Consider using scoped vars instead.",
 			_T(__FUNCTION__) + (sizeof("Extension::") - 1),
 			funcSigBreakdown[2].str().c_str(),
-			params.size(), Edif::SDK->ExpressionInfos.back()->NumOfParams - 2);
+			params.size(), (short)(Edif::SDK->ExpressionInfos.back()->NumOfParams - (short)2));
 	}
 
 	std::shared_ptr<FunctionTemplate> func;
@@ -123,7 +119,7 @@ void Extension::Template_SetFuncSignature(const TCHAR * funcSig, int delayable, 
 	);
 	if (funcExisting == globals->functionTemplates.end())
 	{
-		func = std::make_shared<FunctionTemplate>(this, funcSigBreakdown[2].str().c_str(),(Expected)delayable, (Expected)repeatable, recursable != 0, returnTypeValid);
+		func = std::make_shared<FunctionTemplate>(this, funcSigBreakdown[2].str().c_str(), (Expected)delayable, (Expected)repeatable, recursable != 0, returnTypeValid);
 		globals->functionTemplates.push_back(func);
 	}
 	else
@@ -357,8 +353,7 @@ void Extension::Template_SetGlobalID(const TCHAR* funcName, const TCHAR* globalI
 	if (!f)
 		return;
 
-	std::tstring key = _T("DarkScript"s) + globalIDToRunOn;
-	const GlobalData * const gd = (GlobalData *)Runtime.ReadGlobal(key.c_str());
+	GlobalData * const gd = ReadGlobalDataByID(globalIDToRunOn);
 	if (gd == NULL)
 		return CreateErrorT("Couldn't set global ID to \"%s\" for function template \"%s\", no matching extension with that global ID found.", globalIDToRunOn, funcName);
 	if (gd->exts.size() == 0)
@@ -367,6 +362,9 @@ void Extension::Template_SetGlobalID(const TCHAR* funcName, const TCHAR* globalI
 		CreateErrorT("Warning: global ID \"%s\" has more than one extension owning it. The first created one will be used.", globalIDToRunOn);
 	f->globalID = globalIDToRunOn;
 	f->ext = gd->exts[0];
+	// We should have this f's ext edited if its current ext becomes non-existent
+	if (std::find(gd->updateTheseGlobalsWhenMyExtCycles.cbegin(), gd->updateTheseGlobalsWhenMyExtCycles.cend(), globals) == gd->updateTheseGlobalsWhenMyExtCycles.cend())
+		gd->updateTheseGlobalsWhenMyExtCycles.push_back(globals);
 }
 void Extension::Template_SetEnabled(const TCHAR* funcName, int funcEnabled)
 {
@@ -399,10 +397,10 @@ void Extension::Template_RedirectFunction(const TCHAR* funcName, const TCHAR* re
 }
 void Extension::Template_Loop(const TCHAR* loopName)
 {
-	if (loopName == _T('\0'))
-		return CreateErrorT("%s: Empty loop name not allowed.");
+	if (loopName[0] == _T('\0'))
+		return CreateErrorT("%s: Empty loop name not allowed.", _T(__FUNCTION__) + (sizeof("Extension::") - 1));
 	if (curLoopName[0] != _T('\0'))
-		return CreateErrorT("%s: Can't run two internal loops at once; already running loop \"%s\", can't run loop \"%s\".", curLoopName.c_str(), loopName);
+		return CreateErrorT("%s: Can't run two internal loops at once; already running loop \"%s\", can't run loop \"%s\".", _T(__FUNCTION__) + (sizeof("Extension::") - 1), curLoopName.c_str(), loopName);
 
 	internalLoopIndex = 0;
 	for (const auto& f : globals->functionTemplates)
@@ -432,8 +430,7 @@ void Extension::Template_ImportFromAnotherFrame(const TCHAR* funcName, const TCH
 		return CreateErrorT("Can't import function \"%s\" from global ID \"%s\"; a function template with that name already exists.", funcName, globalIDToImportFrom);
 	}
 
-	const std::tstring key = _T("DarkScript"s) + globalIDToImportFrom;
-	const GlobalData* const gd = (GlobalData*)Runtime.ReadGlobal(key.c_str());
+	GlobalData* const gd = ReadGlobalDataByID(globalIDToImportFrom);
 	if (gd == NULL)
 		return CreateErrorT("Couldn't import function template \"%s\" from global ID \"%s\", no matching extension with that global ID found.", funcName, globalIDToImportFrom);
 	auto ft = std::find_if(gd->functionTemplates.cbegin(), gd->functionTemplates.cend(),
@@ -444,6 +441,9 @@ void Extension::Template_ImportFromAnotherFrame(const TCHAR* funcName, const TCH
 
 	// By the power of std::shared_ptr, we now have it linked up
 	globals->functionTemplates.push_back(*ft);
+	// We should have this ft's ext edited if its current ext becomes non-existent
+	if (std::find(gd->updateTheseGlobalsWhenMyExtCycles.cbegin(), gd->updateTheseGlobalsWhenMyExtCycles.cend(), globals) == gd->updateTheseGlobalsWhenMyExtCycles.cend())
+		gd->updateTheseGlobalsWhenMyExtCycles.push_back(globals);
 }
 
 void Extension::DelayedFunctions_CancelByPrefix(const TCHAR * funcName)
@@ -459,10 +459,10 @@ void Extension::DelayedFunctions_CancelByPrefix(const TCHAR * funcName)
 }
 void Extension::DelayedFunctions_Loop(const TCHAR* loopName)
 {
-	if (loopName == _T('\0'))
-		return CreateErrorT("%s: Empty loop name not allowed.");
+	if (loopName[0] == _T('\0'))
+		return CreateErrorT("%s: Empty loop name not allowed.", _T(__FUNCTION__) + (sizeof("Extension::") - 1));
 	if (curLoopName[0] != _T('\0'))
-		return CreateErrorT("%s: Can't run two internal loops at once; already running loop \"%s\", can't run loop \"%s\".", curLoopName.c_str(), loopName);
+		return CreateErrorT("%s: Can't run two internal loops at once; already running loop \"%s\", can't run loop \"%s\".", _T(__FUNCTION__) + (sizeof("Extension::") - 1), curLoopName.c_str(), loopName);
 
 	internalLoopIndex = 0;
 	for (const auto &f : globals->pendingFuncs)
@@ -476,164 +476,65 @@ void Extension::DelayedFunctions_Loop(const TCHAR* loopName)
 	internalLoopIndex = -1;
 }
 
-/*
-int numSelected(HeaderObject * obj);
-int numSelectedQualifier(Extension* ext, int qualID);
-extern std::tstringstream str;
-extern int fixedValue;
-extern bool inTestFunc;*/
 void Extension::RunFunction_ActionDummy_Num(int result)
 {
 	// Ignore params, this action just allows user to run an expression's functions.
-
-	/*RunObject* runObj = Runtime.RunObjPtrFromFixed(fixedValue ? fixedValue : result);
-
-	str << _T("Event #"sv) << DarkEdif::GetCurrentFusionEventNum(this) <<
-		_T(" inside action func: "sv) << numSelected(&runObj->roHo) <<
-		_T(", rh2 event count = "sv) << rhPtr->rh2.EventCount << _T(", rh4 eventCount = "sv) << rhPtr->rh4.eventCount
-		<< _T(", rh4 eventCountOR = "sv) << rhPtr->rh4.EventCountOR << _T(".\n"sv);
-	if (!inTestFunc) {
-		LOGI(_T("%s"), str.str().c_str());
-		str.str(std::tstring());
-	}
-	*/
 }
 void Extension::RunFunction_ActionDummy_String(const TCHAR * result)
 {
 	// Ignore params, this action just allows user to run an expression's functions.
-
-	/*
-	if (Oi & 0x8000)
-	{
-		Oi &= 0x7FFF;	//Mask out the qualifier part
-		int numberSelected = 0;
-
-		qualToOi* CurrentQualToOiStart = (qualToOi*)rhPtr->QualToOiList;
-		qualToOi* CurrentQualToOi = CurrentQualToOiStart;
-
-		while (CurrentQualToOi->OiList >= 0)
-		{
-			objInfoList* CurrentOi = GetOILFromOI(CurrentQualToOi->OiList);
-			numberSelected += CurrentOi->NumOfSelected;
-			CurrentQualToOi = (qualToOi*)((char*)CurrentQualToOi + 4);
-		}
-		return numberSelected;
-	}
-
-	LOGI("======== starting loop.\n");
-	struct dep
-	{
-		int qualID;
-		int objCount;
-		int instanceCount;
-	};
-	std::vector<dep> qualifiers;
-	for (int i = 0; i < rhPtr->NumberOi; ++i)
-	{
-		objInfoList* oil = (objInfoList*)(((char*)rhPtr->OiList) + Runtime.ObjectSelection.oiListItemSize * i);
-		for (size_t unwindToRunningFuncIndex = 0; unwindToRunningFuncIndex < std::size(oil->Qualifiers); unwindToRunningFuncIndex++) {
-			if (oil->Qualifiers[unwindToRunningFuncIndex] == -1)
-				break;
-
-			auto dp = std::find_if(qualifiers.begin(), qualifiers.end(),
-				[&](const dep& d) { return d.qualID == oil->Qualifiers[unwindToRunningFuncIndex]; });
-			if (dp == qualifiers.cend())
-			{
-				qualifiers.push_back({ oil->Qualifiers[unwindToRunningFuncIndex], 1, 0 });
-				dp = --qualifiers.end();
-			}
-			else
-				++dp->objCount;
-			LOGI("Object %s has qualifier ID %i.\n", oil->name, oil->Qualifiers[unwindToRunningFuncIndex]);
-
-			short num = oil->Object;
-			if (num != -1)
-				dp->instanceCount += numSelected((rdPtr->rHo.AdRunHeader->ObjectList + num)->oblOffset);
-		}
-	}
-	for (size_t i = 0; i < qualifiers.size(); i++)
-		LOGI("Detected qualifier ID: %i, with %i objects (%i instances) using it.\n", qualifiers[i].qualID, qualifiers[i].objCount, qualifiers[i].instanceCount);
-
-	/*
-	int numberSelected = 0;
-
-	for (size_t i = 0; i < qualifiers.size(); i++)
-	{
-		numberSelected = 0;
-		qualToOi* CurrentQualToOiStart = (qualToOi*)&rhPtr->QualToOiList[i];
-		qualToOi* CurrentQualToOi = CurrentQualToOiStart;
-
-		while (CurrentQualToOi->OiList >= 0)
-		{
-			objInfoList* CurrentOi = Runtime.ObjectSelection.GetOILFromOI(CurrentQualToOi->OiList);
-			numberSelected += numSelected((rdPtr->rHo.AdRunHeader->ObjectList + CurrentQualToOi->OiList)->oblOffset);
-			CurrentQualToOi = (qualToOi*)((char*)CurrentQualToOi + 4);
-		}
-		LOGI("New calculation: qualifer ID %zu had %i instances.\n", i, numberSelected);
-	}
-	LOGI("======== ended loop.\n");
-	qualToOi* q = (qualToOi*)rhPtr->QualToOiList;
-	int i = 0;
-	while (q != NULL)
-	{
-		LOGI(_T("Got q [%i] = %p.\n"), i++, q);
-		q = &q[1];
-	}
-	qualToOi* CurrentQualToOi = CurrentQualToOiStart;
-
-	Runtime.ObjectSelection.SelectOneObject
-	RunObject* runObj = Runtime.RunObjPtrFromFixed(fixedValue);
-
-	str << _T("Event #"sv) << DarkEdif::GetCurrentFusionEventNum(this) <<
-		_T(" inside action func [qualifier]: "sv) << numSelectedQualifier(this, runObj->roHo.OiList->Qualifiers[0]) <<
-		_T(", rh2 event count = "sv) << rhPtr->rh2.EventCount << _T(", rh4 eventCount = "sv) << rhPtr->rh4.eventCount
-		<< _T(", rh4 eventCountOR = "sv) << rhPtr->rh4.EventCountOR << _T(".\n"sv);
-	if (!inTestFunc) {
-		LOGI(_T("%s"), str.str().c_str());
-		str.str(std::tstring());
-	}*/
 }
-void Extension::RunFunction_Foreach_Num(HeaderObject* obj, int dummy)
+void Extension::RunFunction_Foreach_Num(RunObject*, int dummy)
 {
-	// No expression executed when loading the "int dummy" used for this action, we don't know what func to run foreach on
+	// No expression executed when reading the "int dummy" used for this action, so we don't know what func to run foreach on
 	if (foreachFuncToRun == nullptr)
 		return CreateErrorT("%s: Did not find any expression-function that was run in the foreach action.", _T(__FUNCTION__));
 
-	// We store temp copies, so a Foreach expression's can run a Foreach itself without corrupting
+	// We store temp copies of the current foreach function, so a Foreach expression
+	// can run a Foreach itself without corrupting.
 	const auto funcToRun = foreachFuncToRun;
 	foreachFuncToRun = nullptr;
-	const short oil = (short)rdPtr->rHo.CurrentParam->evp.W[0];
+
+	// Ignore the RunObject * passed and look up OI number. This is necessary due to the passed object being
+	// a qualifier, which we can't tell from reading the RunObject *. However, the qualifier OI number is
+	// hard-coded as a variable in the event sheet, and you can't modify which object is in a parameter live,
+	// so we can read it back from the event sheet directly.
+	const short oil = Runtime.GetOIListIndexFromObjectParam(0);
 
 	globals->runningFuncs.push_back(funcToRun);
 	Sub_RunPendingForeachFunc(oil, funcToRun);
 	globals->runningFuncs.erase(--globals->runningFuncs.cend());
 
-	// The HeaderObject * points to the first instance of the selected objects this action
-	// has in its parameters.
+	// The RunObject * passed to Foreach_Num ^ points to the first instance of the selected objects
+	// this action has in its parameters.
 	// If you want your action to be called repeatedly, once for each object instance,
-	// you just run as if the HeaderObject * is the only instance it's being run on, and the Fusion runtime
-	// will cycle through each HeaderObject * that is the object instances passed by the event.
-	// Otherwise, you disable ACTFLAGS_REPEAT, and loop it yourself.
-	// Since we want the user to be able to cancel foreach loops midway, we'll do the loop ourselves.
-	rhPtr->rh4.ActionStart->evtFlags &= ~ACTFLAGS_REPEAT;
+	// you just run as if the RunObject * is the only instance this action is being run on, and the
+	// Fusion runtime will cycle through each selected object, changing the RunObject * passed by the event.
+	// Otherwise, you cancel this behaviour, and loop the selection yourself.
+	//
+	// We want fine-tuned control over loop behaviour - qualifier <-> singular, and stopping loops
+	// midway - so we do it ourselves.
+	// We run this at end of the action, after foreach, as the generated events may cause the cancel
+	// to be overwritten otherwise.
+	Runtime.CancelRepeatingObjectAction();
 }
-void Extension::RunFunction_Foreach_String(HeaderObject* obj, const TCHAR* dummy)
+void Extension::RunFunction_Foreach_String(RunObject*, const TCHAR* dummy)
 {
-	// No expression executed when loading the "int dummy" used for this action, we don't know what func to run foreach on
+	// No expression executed when loading the "TCHAR * dummy" used for this action, we don't know what func to run foreach on
 	if (foreachFuncToRun == nullptr)
-		return CreateErrorT("%s: Did not find any expression-function that was run in the foreach action.", _T(__FUNCTION__));
+		return CreateErrorT("%s: Did not find any expression-function that was run in the foreach action.", _T(__FUNCTION__) + (sizeof("Extension::") - 1));
 
 	// We store temp copies, so a Foreach expression's can run a Foreach itself without corrupting
 	auto funcToRun = foreachFuncToRun;
 	foreachFuncToRun = nullptr;
-	short oil = (short)rdPtr->rHo.CurrentParam->evp.W[0];
+	short oil = Runtime.GetOIListIndexFromObjectParam(0);
 
 	globals->runningFuncs.push_back(funcToRun);
 	Sub_RunPendingForeachFunc(oil, funcToRun);
 	globals->runningFuncs.erase(--globals->runningFuncs.cend());
 
 	// For an explanation of this flag, see RunFunction_Foreach_Num()
-	rhPtr->rh4.ActionStart->evtFlags &= ~ACTFLAGS_REPEAT;
+	Runtime.CancelRepeatingObjectAction();
 }
 void Extension::RunFunction_Delayed_Num_MS(int timeFirst, int numRepeats, int timeSubsequent, int crossFrames, int funcDummy)
 {
@@ -658,82 +559,219 @@ void Extension::RunFunction_Delayed_String_Ticks(int timeFirst, int numRepeats, 
 void Extension::RunFunction_Script(const TCHAR* script)
 {
 	// TODO: Create If, Else etc sort of functions, + operators, nested funcs, etc
-	std::basic_regex<TCHAR> funcCallMatcher(_T("([^\\s(]+)\\s*\\((?:\\s*([^\\s]+)\\s+([^,\\s]*),\\s*)*(?:\\s*([^\\s]+)\\s+([^,)\\s]*))?\\)"s));
+	std::basic_regex<TCHAR> funcCallMatcher(_T(R"X(([^\s(]+)\s*\(((?:\s*(?:[^",]+|(?:"(?:(?=(?:\\?)).)*?"))?,\s*)*(?:\s*(?:[^",]+|(?:"(?:(?=(?:\\?)).)*?"))))?\))X"s));
 
 	std::match_results<std::tstring::iterator> funcCallBreakdown;
 	std::tstring test(script);
 	if (!std::regex_match(test.begin(), test.end(), funcCallBreakdown, funcCallMatcher))
 		return CreateErrorT("%s: Function script \"%s\" not parseable.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), script);
 
-	std::tstring funcName = funcCallBreakdown[1].str();
+	std::tstring funcName = funcCallBreakdown[1].str(), redirectedFrom;
 	std::tstring funcNameL(ToLower(funcName));
 	// Make sure it's not a KRFuncXXX() function name. That would work, but the script engine
 	// (used in "run text as script") will find it ambiguous.
-	const std::basic_regex<TCHAR> isKRFunc(_T("(k?r?f?)func([fis]*)(\\$?)"s));
+	const std::basic_regex<TCHAR> isKRFunc(_T("(k?r?f?)func(?:[fis]*)(?:\\$?)"s));
 	std::match_results<std::tstring::const_iterator> isKRFuncCallBreakdown;
+	bool funcNameIsParam = false, repeatCountExists = false, keepSelection = false;
 	if (std::regex_match(funcNameL.cbegin(), funcNameL.cend(), isKRFuncCallBreakdown, isKRFunc))
 	{
 		const std::tstring prefix = isKRFuncCallBreakdown[1].str();
 		const std::tstring params = isKRFuncCallBreakdown[2].str();
-		const std::tstring suffix = isKRFuncCallBreakdown[3].str();
-
-		return CreateErrorT("%s: Function name \"%s\" is invalid; KRFuncXX format will confuse the script parser.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName.c_str());
-	}
-
-	std::shared_ptr<FunctionTemplate> funcTemplate;
-	// Match by name
-	auto res = std::find_if(globals->functionTemplates.begin(), globals->functionTemplates.end(),
-		[&](const std::shared_ptr<FunctionTemplate>& f) { return f->nameL == funcNameL;
-	});
-
-	if (res == globals->functionTemplates.end())
-	{
-		if (funcsMustHaveTemplate)
-			return CreateErrorT("%s: Function script uses function name \"%s\", which has no template.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName.c_str());
-
-		funcTemplate = std::make_shared<FunctionTemplate>(this, funcName.c_str(), Expected::Either, Expected::Either, false, Type::Any);
-		TCHAR name[3] = { _T('a'), _T('\0') };
-		// skip index 0, full match, and index 1, func name
-		for (size_t i = 2; i < (size_t)funcCallBreakdown.size(); i++, ++name[0])
-		{
-			// Note the ++name[0] in for(;;><), gives variable names a, b, c
-			funcTemplate->params.push_back(Param(name, Type::Any));
-		}
-		lastReturn = Value(Type::Any);
-	}
-	else
-	{
-		funcTemplate = *res;
-		if (funcTemplate->delaying == Expected::Always)
-			return CreateErrorT("%s: Function script uses function name \"%s\", which is expected to be called delayed only.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName.c_str());
-		if (funcTemplate->repeating == Expected::Always)
-			return CreateErrorT("%s: Function script uses function name \"%s\", which is expected to be called repeating only.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName.c_str());
-
-		if (!funcTemplate->isEnabled)
-		{
-			lastReturn = funcTemplate->defaultReturnValue;
-			if (funcTemplate->defaultReturnValue.type == Type::Any)
-				CreateErrorT("%s: Function script uses function name \"%s\", which is set to disabled, and has no default return value.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName.c_str());
-			return;
-		}
+		//const std::tstring paramTypes = isKRFuncCallBreakdown[3].str();
+		if (prefix.find('k') != std::tstring::npos)
+			keepSelection = true;
+		if (prefix.find('r') != std::tstring::npos)
+			repeatCountExists = true;
+		// TODO: We currently ignore param types, we could instead use it as a reference for what
+		// an otherwise ambiguous parameter is, e.g. int -> float. But with allowing f suffix, that
+		// seems unnecessary.
+		funcNameIsParam = true;
 	}
 
 	std::tstring info = _T("Script run of ") + funcName;
+
 	std::vector<Value> values;
-	Value writeTo(Type::Any);
-	for (size_t i = 0; i < funcCallBreakdown.size() - 2U; i++)
+	size_t repeatCount = 0;
+	std::shared_ptr<FunctionTemplate> funcTemplate;
+
+	const auto FindFuncOrDie = [&]()
 	{
-		if (!Sub_ParseParamValue(info.c_str(), funcCallBreakdown[i + 2].str(),
-			funcTemplate->params[i], i, writeTo))
+		// Match by name
+		auto funcTemplateIt = std::find_if(globals->functionTemplates.begin(), globals->functionTemplates.end(),
+			[&](const std::shared_ptr<FunctionTemplate>& f) { return f->nameL == funcNameL;
+		});
+
+		if (funcTemplateIt == globals->functionTemplates.end())
 		{
-			return;
+			if (funcsMustHaveTemplate)
+				return CreateErrorT("%s: Function script uses function name \"%s\", which has no template.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName.c_str()), false;
+
+			funcTemplate = std::make_shared<FunctionTemplate>(this, funcName.c_str(), Expected::Either, Expected::Either, false, Type::Any);
+			TCHAR name[3] = { _T('a'), _T('\0') };
+			// allow 6 params, we'll delete excess ones later
+			for (size_t i = 0; i < 6; i++, ++name[0])
+			{
+				// Note the ++name[0] in for(;;><), gives variable names a, b, c
+				funcTemplate->params.push_back(Param(name, Type::Any));
+			}
+			lastReturn = Value(Type::Any);
+			funcTemplate->isAnonymous = true;
 		}
-		values.push_back(writeTo);
+		else
+		{
+			// Disabling takes priority over possible redirect
+			if (!funcTemplate->isEnabled)
+			{
+				lastReturn = funcTemplate->defaultReturnValue;
+				if (funcTemplate->defaultReturnValue.type == Type::Any)
+					CreateErrorT("%s: Function script uses function name \"%s\", which is set to disabled, and has no default return value.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName.c_str());
+				LOGV(_T("Script function \"%s\" is disabled; returning default return value to lastReturn.\n"), funcName.c_str());
+				return false;
+			}
+
+			if ((**funcTemplateIt).redirectFunc.empty())
+				funcTemplate = *funcTemplateIt;
+			else
+			{
+				funcTemplate = (**funcTemplateIt).redirectFuncPtr;
+				LOGV(_T("Script redirecting from function \"%s\" to \"%s\".\n"), funcName.c_str(), (**funcTemplateIt).redirectFunc.c_str());
+				redirectedFrom = funcName;
+				funcName = funcTemplate->name;
+				funcNameL = funcTemplate->nameL;
+
+				// Disabling the redirected function
+				if (!funcTemplate->isEnabled)
+				{
+					lastReturn = funcTemplate->defaultReturnValue;
+					if (funcTemplate->defaultReturnValue.type == Type::Any)
+					{
+						CreateErrorT("%s: Function script uses function name \"%s\", which was redirected to function \"%s\", which is set to disabled, and has no default return value.",
+							_T(__FUNCTION__) + (sizeof("Extension::") - 1), redirectedFrom.c_str(), funcName.c_str());
+					}
+					LOGV(_T("Redirected script function \"%s\" is disabled; returning default return value to lastReturn.\n"), funcName.c_str());
+					return false;
+				}
+			}
+
+			if (funcTemplate->delaying == Expected::Always)
+				return CreateErrorT("%s: Function script uses function name \"%s\", which is expected to be called delayed only.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName.c_str()), false;
+			if (funcTemplate->repeating == Expected::Always)
+				return CreateErrorT("%s: Function script uses function name \"%s\", which is expected to be called repeating only.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName.c_str()), false;
+
+			// This template was made with a valid global ID, but the ext vanished
+			if (funcTemplate->ext == NULL)
+				return CreateErrorT("%s: Function script uses function name \"%s\", which runs on a now non-existent global ID \"%s\".", _T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName.c_str(), funcTemplate->globalID.c_str()), false;
+		}
+
+		return true;
+	};
+
+	if (!funcNameIsParam && !FindFuncOrDie())
+		return;
+
+	if (funcCallBreakdown[2].matched)
+	{
+		Value writeTo(Type::Any);
+		// Regex is dumb and for repeating groups, only the last one will be considered;
+		// so we re-run a regex on the parameter list, looping all matches.
+		// .NET regex does capture repeating groups nicely, but no other regex engines support it.
+		const std::basic_regex<TCHAR> paramListParser(_T(R"X(\s*([^",]+|(?:"(?:(?=(?:\\?)).)*?"))\s*,)X"s));
+		const std::tstring paramList = funcCallBreakdown[2].str() + _T(',');
+
+		// We backtrack 1 because regex is 1-based, but C++ params vector is 0-based. We use this to skip KR func parameters.
+		const size_t funcParamIndex = 1 + (funcNameIsParam ? (repeatCountExists ? 2 : 1) : 0);
+		size_t j = 1;
+		for (auto i = std::regex_iterator<std::tstring::const_iterator>(
+			paramList.cbegin(), paramList.cend(), paramListParser),
+			rend = std::regex_iterator<std::tstring::const_iterator>();
+			i != rend;
+			++i, ++j)
+		{
+			std::tstring valueTextToParse = (*i)[1].str();
+			if (valueTextToParse.empty())
+			{
+				return CreateErrorT("Couldn't run function \"%s\" from script, param value at index %zu was empty or whitespace.",
+					funcName.empty() ? _T("<unknown>") : funcName.c_str(), j - 1);
+			}
+
+			// Func type of run, where instead of Bob("a",2), you run Func("Bob", "a", 2),
+			// or possibly RFunc("Bob", repeat count, "a", 2)
+			if (funcNameIsParam)
+			{
+				// func name, 1st param
+				if (j == 1)
+				{
+					if (valueTextToParse[0] != _T('"') || valueTextToParse.back() != _T('"') || valueTextToParse.size() <= 2)
+						return CreateErrorT("Couldn't run KR-function script,  function name argument [%s] is not in quotes, or not a valid function name.", valueTextToParse.c_str());
+					funcName = valueTextToParse.substr(1, valueTextToParse.size() - 2);
+					funcNameL = ToLower(funcName);
+					if (funcName.find_first_of(_T("\"\r\n',\\"sv)) != std::tstring::npos)
+						return CreateErrorT("Couldn't run KR-function script, function name argument \"%s\" uses forbidden characters.", valueTextToParse.c_str());
+					if (!FindFuncOrDie())
+						return; // error reported already
+					continue;
+				}
+				// repeat count, 2nd param
+				else if (j == 2 && repeatCountExists)
+				{
+					TCHAR* endPos = NULL;
+					const long d = _tcstol(valueTextToParse.c_str(), &endPos, 0);
+					// Returns 0 and endPos should be set to start pos if failed to convert
+					// If out of bounds of long, should return ERANGE
+					// If 64-bit long, make sure value within is in bounds of 32-bit long
+					if (d < 0 ||
+						(d == 0 && (endPos == valueTextToParse.c_str() || errno == ERANGE)) ||
+						(sizeof(d) == 8 && d > INT32_MAX))
+					{
+						return CreateErrorT("%s: Couldn't run function %s from script, has invalid repeat count \"%s\".",
+							_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName.c_str(), valueTextToParse.c_str());
+					}
+					repeatCount = (int)d;
+					continue;
+				}
+			}
+			// This works for anonymous parameters as well, as we pre-init params to size 6 above
+			if (values.size() >= funcTemplate->params.size())
+			{
+				return CreateErrorT("Couldn't run function %s from script; only expects %zu arguments, but script has extra passed; starting from index %zu, [%.20s].",
+					funcName.c_str(), funcTemplate->params.size(), &*i->cbegin()->first - &paramList[0], &*i->cbegin()->first);
+			}
+
+			if (!Sub_ParseParamValue(info.c_str(), valueTextToParse,
+				funcTemplate->params[j - funcParamIndex], j - funcParamIndex, writeTo))
+			{
+				return; // error already reported by Sub_ParseParamValue
+			}
+			values.push_back(writeTo);
+		}
+		if (funcNameIsParam && j < (repeatCountExists ? 2u : 1u)) // no params supplied, but we need them because it's KR style
+			return CreateErrorT("KR-function argument list is incomplete; expected function name%s.", repeatCountExists ? _T(", repeat count") : _T(""));
+	}
+	else if (funcNameIsParam) // no params supplied, but we need them because it's KR style
+		return CreateErrorT("KR-function argument list is incomplete; expected function name%s.", repeatCountExists ? _T(", repeat count") : _T(""));
+
+	const size_t numPassedExpFuncParams = values.size();
+	if (!funcTemplate->isAnonymous)
+	{
+		// No default value, and none provided
+		while (values.size() < funcTemplate->params.size())
+		{
+			if (funcTemplate->params[values.size()].defaultVal.type == Type::Any)
+			{
+				return CreateErrorT("Couldn't run function %s from script; didn't pass a value for parameter \"%s\" (index %zu), and no default value in the template.",
+					funcName.c_str(), funcTemplate->params[values.size()].name.c_str(), values.size());
+			}
+			values.push_back(funcTemplate->params[values.size() - 1].defaultVal);
+		}
 	}
 
-	const std::shared_ptr<RunningFunction> runningFunc = std::make_shared<RunningFunction>(funcTemplate, true, 0);
-	for (size_t i = 0; i < values.size(); i++)
+	const std::shared_ptr<RunningFunction> runningFunc = std::make_shared<RunningFunction>(funcTemplate, true, repeatCount - 1);
+	for (std::size_t i = 0; i < values.size(); ++i)
 		runningFunc->paramValues[i] = values[i];
+	runningFunc->numPassedParams = numPassedExpFuncParams;
+	runningFunc->keepObjectSelection = keepSelection;
+	runningFunc->isVoidRun = true;
+	runningFunc->redirectedFromFunctionName = redirectedFrom;
 
 	std::vector<FusionSelectedObjectListCache> selObjList;
 	evt_SaveSelectedObjects(selObjList);
@@ -745,12 +783,12 @@ void Extension::RunFunction_Script(const TCHAR* script)
 
 void Extension::RunningFunc_Params_Loop(const TCHAR* loopName, int includeNonPassed)
 {
-	if (loopName == _T('\0'))
-		return CreateErrorT("%s: Empty loop name not allowed.");
+	if (loopName[0] == _T('\0'))
+		return CreateErrorT("%s: Empty loop name not allowed.", _T(__FUNCTION__) + (sizeof("Extension::") - 1));
 	if (curLoopName[0] != _T('\0'))
-		return CreateErrorT("%s: Can't run two internal loops at once; already running loop \"%s\", can't run loop \"%s\".", curLoopName.c_str(), loopName);
+		return CreateErrorT("%s: Can't run two internal loops at once; already running loop \"%s\", can't run loop \"%s\".", _T(__FUNCTION__) + (sizeof("Extension::") - 1), curLoopName.c_str(), loopName);
 	if ((includeNonPassed & 1) != includeNonPassed)
-		return CreateErrorT("%s: Can't run params loop; \"include non-passed\" parameter was %d, not 0 or 1.", includeNonPassed);
+		return CreateErrorT("%s: Can't run params loop; \"include non-passed\" parameter was %d, not 0 or 1.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), includeNonPassed);
 
 	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__) + (sizeof("Extension::") - 1), _T(""));
 	if (!rf)
@@ -770,12 +808,12 @@ void Extension::RunningFunc_Params_Loop(const TCHAR* loopName, int includeNonPas
 }
 void Extension::RunningFunc_ScopedVar_Loop(const TCHAR* loopName, int includeInherited)
 {
-	if (loopName == _T('\0'))
-		return CreateErrorT("%s: Empty loop name not allowed.");
+	if (loopName[0] == _T('\0'))
+		return CreateErrorT("%s: Empty loop name not allowed.", _T(__FUNCTION__) + (sizeof("Extension::") - 1));
 	if (curLoopName[0] != _T('\0'))
-		return CreateErrorT("%s: Can't run two internal loops at once; already running loop \"%s\", can't run loop \"%s\".", curLoopName.c_str(), loopName);
+		return CreateErrorT("%s: Can't run two internal loops at once; already running loop \"%s\", can't run loop \"%s\".", _T(__FUNCTION__) + (sizeof("Extension::") - 1), curLoopName.c_str(), loopName);
 	if ((includeInherited & 1) != includeInherited)
-		return CreateErrorT("%s: Can't run params loop; \"include inherited\" parameter was %d, not 0 or 1.", includeInherited);
+		return CreateErrorT("%s: Can't run scoped variables loop; \"include inherited\" parameter was %d, not 0 or 1.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), includeInherited);
 
 	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__) + (sizeof("Extension::") - 1), _T(""));
 	if (!rf)
@@ -802,13 +840,12 @@ void Extension::RunningFunc_SetReturnI(int value)
 	Value * const val = &rf->returnValue;
 	// TODO: Complain or ignore delayed func return types?
 	// Delayed func return types will be Any.
-	if (val->type != Type::Integer)
+	if (rf->expectedReturnType != Type::Integer && rf->expectedReturnType != Type::Any)
 	{
-		std::tstring typeName = _T("no return value"s);
-		if (val->type != Type::Any)
-			typeName = TypeToString(val->type) + _T(" return type"s);
+		// TODO: Check conversion here.
+		//if (conversionStrictness == ConversionStrictness::Numeric)
 		return CreateErrorT("Can't return type %s from function %s, expected %s.",
-			_T("integer"), rf->funcTemplate->name.c_str(), typeName.c_str());
+			_T("integer"), rf->funcTemplate->name.c_str(), TypeToString(rf->expectedReturnType));
 	}
 	if (val->type == Type::String)
 		free(val->data.string);
@@ -824,13 +861,10 @@ void Extension::RunningFunc_SetReturnF(float value)
 		return;
 
 	Value * const val = &rf->returnValue;
-	if (val->type != Type::Float)
+	if (rf->expectedReturnType != Type::Float && rf->expectedReturnType != Type::Any)
 	{
-		std::tstring typeName = _T("no return value");
-		if (val->type != Type::Any)
-			typeName = TypeToString(val->type) + std::tstring(_T(" return type"));
 		return CreateErrorT("Can't return type %s from function %s, expected %s.",
-			_T("float"), rf->funcTemplate->name.c_str(), typeName.c_str());
+			_T("float"), rf->funcTemplate->name.c_str(), TypeToString(rf->expectedReturnType));
 	}
 	if (val->type == Type::String)
 		free(val->data.string);
@@ -846,13 +880,10 @@ void Extension::RunningFunc_SetReturnS(const TCHAR * newVal)
 		return;
 
 	Value * const val = &rf->returnValue;
-	if (val->type != Type::String)
+	if (rf->expectedReturnType != Type::String && rf->expectedReturnType != Type::Any)
 	{
-		std::tstring typeName = _T("no return value");
-		if (val->type != Type::Any)
-			typeName = TypeToString(val->type) + std::tstring(_T(" return type"));
-		return CreateErrorT("Can't return type %s from function %s, expected %s.",
-			_T("string"), rf->funcTemplate->name.c_str(), typeName.c_str());
+		return CreateErrorT("Can't return type %s from function %s, expected %s return type.",
+			_T("string"), rf->funcTemplate->name.c_str(), TypeToString(rf->expectedReturnType));
 	}
 
 	// TODO: realloc, combine size_t measurements for dup alloc and copy

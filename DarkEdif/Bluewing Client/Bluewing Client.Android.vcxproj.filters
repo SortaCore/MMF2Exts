@@ -87,9 +87,6 @@
     <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\global2.c">
       <Filter>Source files\Lacewing\src\unix</Filter>
     </ClCompile>
-    <ClCompile Include="..\Lib\Shared\Lacewing\src\openssl\sslclient.c">
-      <Filter>Source files\Lacewing\src\unix\openssl</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\unix common.h">
@@ -101,7 +98,7 @@
     <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\fdstream.h">
       <Filter>Header files\Lacewing\src\unix</Filter>
     </ClInclude>
-    <ClInclude Include="..\Inc\Android\MMFAndroidMasterHeader.h">
+    <ClInclude Include="..\Inc\Android\MMFAndroidMasterHeader.hpp">
       <Filter>Global to all extensions</Filter>
     </ClInclude>
     <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\android config.h">

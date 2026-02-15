@@ -1,8 +1,8 @@
-/* vim: set noet ts=4 sw=4 ft=cpp:
+/* vim: set noet ts=4 sw=4 sts=4 ft=cpp:
  *
  * Copyright (C) 2012 James McLaughlin et al.  All rights reserved.
  * https://github.com/udp/json-parser
- * Copyright (C) 2012-2023 Darkwire Software. All rights reserved.
+ * Copyright (C) 2012-2026 Darkwire Software. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,12 +29,15 @@
  */
 
 #include "json.hpp"
-#include "Edif.h"
+#include "Edif.hpp"
 
 #ifdef _MSC_VER
 	#ifndef _CRT_SECURE_NO_WARNINGS
-	  #define _CRT_SECURE_NO_WARNINGS
+		#define _CRT_SECURE_NO_WARNINGS
 	#endif
+	// Disable warnings about use of enum instead of enum class
+	#pragma warning (push)
+	#pragma warning (disable: 26812)
 #endif
 
 #ifdef __cplusplus
@@ -52,13 +55,13 @@
 static unsigned char hex_value (json_char c)
 {
 	if (c >= 'A' && c <= 'F')
-	  return (c - 'A') + 10;
+		return (c - 'A') + 10;
 
 	if (c >= 'a' && c <= 'f')
-	  return (c - 'a') + 10;
+		return (c - 'a') + 10;
 
 	if (c >= '0' && c <= '9')
-	  return c - '0';
+		return c - '0';
 
 	return 0xFF;
 }
@@ -76,12 +79,12 @@ static void default_free (void * ptr, void * user_data)
 static void * json_alloc (json_state * state, unsigned long size, int zero)
 {
 	if ((state->ulong_max - state->used_memory) < size)
-	  return 0;
+		return 0;
 
 	if (state->settings.max_memory
 		 && (state->used_memory += size) > state->settings.max_memory)
 	{
-	  return 0;
+		return 0;
 	}
 
 	return state->settings.mem_alloc (size, zero, state->settings.user_data);
@@ -95,71 +98,71 @@ static int new_value
 
 	if (!state->first_pass)
 	{
-	  value = *top = *alloc;
-	  *alloc = (*alloc)->_reserved.next_alloc;
+		value = *top = *alloc;
+		*alloc = (*alloc)->_reserved.next_alloc;
 
-	  if (!*root)
-		 *root = value;
+		if (!*root)
+			*root = value;
 
-	  switch (value->type)
-	  {
-		 case json_array:
+		switch (value->type)
+		{
+			case json_array:
 
-			if (! (value->u.array.values = (json_value **) json_alloc
-				(state, value->u.array.length * sizeof (json_value *), 0)) )
-			{
-				return 0;
-			}
+				if (! (value->u.array.values = (json_value **) json_alloc
+					(state, value->u.array.length * sizeof (json_value *), 0)) )
+				{
+					return 0;
+				}
 
-			value->u.array.length = 0;
-			break;
+				value->u.array.length = 0;
+				break;
 
-		 case json_object:
+			case json_object:
 
-			values_size = sizeof (*value->u.object.values) * value->u.object.length;
+				values_size = sizeof (*value->u.object.values) * value->u.object.length;
 
-			if (! ((*(void **) &value->u.object.values) = json_alloc
-				  (state, values_size + ((unsigned long) value->u.object.values), 0)) )
-			{
-				return 0;
-			}
+				if (! ((*(void **) &value->u.object.values) = json_alloc
+						(state, values_size + ((unsigned long) value->u.object.values), 0)) )
+				{
+					return 0;
+				}
 
-			value->_reserved.object_mem = (*(char **) &value->u.object.values) + values_size;
+				value->_reserved.object_mem = (*(char **) &value->u.object.values) + values_size;
 
-			value->u.object.length = 0;
-			break;
+				value->u.object.length = 0;
+				break;
 
-		 case json_string:
+			case json_string:
 
-			if (! (value->u.string.ptr = (json_char *) json_alloc
-				(state, (value->u.string.length + 1) * sizeof (json_char), 0)) )
-			{
-				return 0;
-			}
+				if (! (value->u.string.ptr = (json_char *) json_alloc
+					(state, (value->u.string.length + 1) * sizeof (json_char), 0)) )
+				{
+					return 0;
+				}
 
-			value->u.string.length = 0;
-			break;
+				value->u.string.length = 0;
+				break;
 
-		 default:
-			break;
-	  };
+			default:
+				break;
+		};
 
-	  return 1;
+		return 1;
 	}
 
 	value = (json_value *) json_alloc (state, sizeof (json_value), 1);
 
 	if (!value)
-	  return 0;
+		return 0;
 
 	if (!*root)
-	  *root = value;
+		*root = value;
 
 	value->type = type;
 	value->parent = *top;
 
 	if (*alloc)
-	  (*alloc)->_reserved.next_alloc = value;
+		(*alloc)->_reserved.next_alloc = value;
 
 	*alloc = *top = value;
 
@@ -170,23 +173,23 @@ static int new_value
 	((int) (i - cur_line_begin))
 
 #define whitespace \
-	case '\n': ++ cur_line;  cur_line_begin = i; \
-	case ' ': case '\t': case '\r'
+	case '\n': ++ cur_line; cur_line_begin = i; [[fallthrough]]; \
+	case ' ': [[fallthrough]]; case '\t': [[fallthrough]]; case '\r'
 
 #define string_add(b)  \
 	do { if (!state.first_pass) string [string_length] = b;  ++ string_length; } while (0);
 
 const static long
-	flag_next			 = 1 << 0,
+	flag_next			= 1 << 0,
 	flag_reproc			= 1 << 1,
 	flag_need_comma		= 1 << 2,
 	flag_seek_value		= 1 << 3,
-	flag_escaped		  = 1 << 4,
+	flag_escaped		= 1 << 4,
 	flag_string			= 1 << 5,
 	flag_need_colon		= 1 << 6,
-	flag_done			 = 1 << 7,
-	flag_num_negative	 = 1 << 8,
-	flag_num_zero		 = 1 << 9,
+	flag_done			= 1 << 7,
+	flag_num_negative	= 1 << 8,
+	flag_num_zero		= 1 << 9,
 	flag_num_e			= 1 << 10,
 	flag_num_e_got_sign	= 1 << 11,
 	flag_num_e_negative	= 1 << 12;
@@ -222,11 +225,8 @@ json_value * json_parse_ex (json_settings * settings,
 	state.uint_max -= 8; /* limit of how much can be added before next check */
 	state.ulong_max -= 8;
 
-//	#pragma warning(disable:4133)
-
 	if (!json_clean_comments (&json, &state, error, sizeof(error), &length))
 		goto e_failed;
-//	#pragma warning(default:4133)
 
 	end = (json + length); // json_clean_comments changes length
 
@@ -390,6 +390,11 @@ json_value * json_parse_ex (json_settings * settings,
 						continue;
 
 					case ']':
+						if (!top)
+						{
+							sprintf_s(error, std::size(error), "Line %d, char %d: Unexpected ]", cur_line, e_off);
+							goto e_failed;
+						}
 
 						if (top->type == json_array)
 							flags = (flags & ~ (flag_need_comma | flag_seek_value)) | flag_next;
@@ -496,15 +501,14 @@ json_value * json_parse_ex (json_settings * settings,
 								break;
 
 							default:
-
-								if (isdigit (b) || b == '-')
+								if (std::isdigit ((unsigned char)b) || b == '-')
 								{
 									if (!new_value (&state, &top, &root, &alloc, json_integer))
 										goto e_alloc_failure;
 
 									if (!state.first_pass)
 									{
-										while (isdigit (b) || b == '+' || b == '-'
+										while (std::isdigit ((unsigned char)b) || b == '+' || b == '-'
 													 || b == 'e' || b == 'E' || b == '.')
 										{
 											b = *++ i;
@@ -573,7 +577,7 @@ json_value * json_parse_ex (json_settings * settings,
 									flags &= ~ flag_need_comma;
 									break;
 								}
-
+								[[fallthrough]];
 							default:
 								sprintf_s (error, std::size(error), b ? "Line %d, char %d: Unexpected `%c` in object" : "Line %d, char %d: Unexpected `\\0` in object", cur_line, e_off, b);
 								goto e_failed;
@@ -584,7 +588,7 @@ json_value * json_parse_ex (json_settings * settings,
 
 					case json_integer:
 					case json_double:
-						if (isdigit (b))
+						if (std::isdigit ((unsigned char)b))
 						{
 							++ num_digits;
 
@@ -607,11 +611,11 @@ json_value * json_parse_ex (json_settings * settings,
 									continue;
 								}
 
-								top->u.integer = (top->u.integer * 10) + (b - '0');
+								top->u.integer = (top->u.integer * 10) + (((json_int_t)b) - '0');
 								continue;
 							}
 
-							num_fraction = (num_fraction * 10) + (b - '0');
+							num_fraction = (num_fraction * 10) + (((json_int_t)b) - '0');
 							continue;
 						}
 
@@ -798,48 +802,48 @@ void json_value_free_ex (json_settings * settings, json_value * value)
 	json_value * cur_value;
 
 	if (!value)
-	  return;
+		return;
 
 	value->parent = 0;
 
 	while (value)
 	{
-	  switch (value->type)
-	  {
-		 case json_array:
+		switch (value->type)
+		{
+			case json_array:
 
-			if (!value->u.array.length)
-			{
-				settings->mem_free (value->u.array.values, settings->user_data);
+				if (!value->u.array.length)
+				{
+					settings->mem_free (value->u.array.values, settings->user_data);
+					break;
+				}
+
+				value = value->u.array.values [-- value->u.array.length];
+				continue;
+
+			case json_object:
+
+				if (!value->u.object.length)
+				{
+					settings->mem_free (value->u.object.values, settings->user_data);
+					break;
+				}
+
+				value = value->u.object.values [-- value->u.object.length].value;
+				continue;
+
+			case json_string:
+
+				settings->mem_free (value->u.string.ptr, settings->user_data);
 				break;
-			}
 
-			value = value->u.array.values [-- value->u.array.length];
-			continue;
-
-		 case json_object:
-
-			if (!value->u.object.length)
-			{
-				settings->mem_free (value->u.object.values, settings->user_data);
+			default:
 				break;
-			}
+		};
 
-			value = value->u.object.values [-- value->u.object.length].value;
-			continue;
-
-		 case json_string:
-
-			settings->mem_free (value->u.string.ptr, settings->user_data);
-			break;
-
-		 default:
-			break;
-	  };
-
-	  cur_value = value;
-	  value = value->parent;
-	  settings->mem_free (cur_value, settings->user_data);
+		cur_value = value;
+		value = value->parent;
+		settings->mem_free (cur_value, settings->user_data);
 	}
 }
 
@@ -856,17 +860,17 @@ int json_clean_comments (const json_char ** json_input, json_state * state, char
 {
 #if EditorBuild
 	#pragma warning(push)
-	#pragma warning(disable: 4133)
-	#pragma warning(disable: 4018)
+	#pragma warning(disable: 4133 4018)
 
 	unsigned int size = *_size;
 	// Used as an indicator whether i is currently inside a string var.
 	int string = 0;
 	int comment = 0;
 	const char * json = *json_input, * i;
+	bool utf8Bom = false;
 
 	// Doesn't start with brace, comment or space: is it a BOM?
-	if (json[0] != '{' && json[0] != '/' && ((unsigned)json[0] > 0x7F || !std::isspace(json[0])))
+	if (json[0] != '{' && json[0] != '/' && !std::isspace((unsigned char)json[0]))
 	{
 		// It's not a UTF-8 BOM
 		if (size < 3 || json[0] != '\xEF' || json[1] != '\xBB' || json[2] != '\xBF')
@@ -877,12 +881,19 @@ int json_clean_comments (const json_char ** json_input, json_state * state, char
 
 		// it is UTF-8 BOM, skip it
 		json = &json[3];
+		utf8Bom = true;
 		size -= 3;
 	}
 
 	// No '/', so no comments; skip the cleaning of comments
 	if (memchr(json, '/', size) == NULL)
+	{
+		if (utf8Bom) {
+			*_size -= 3;
+			*json_input += 3;
+		}
 		return 1;
+	}
 
 	char * newJSON = (char *)json_alloc(state, size, 1);
 	char * j = newJSON;
@@ -972,6 +983,10 @@ int json_clean_comments (const json_char ** json_input, json_state * state, char
 	if (size == newSize - 1)
 	{
 		free(newJSON);
+		if (utf8Bom) {
+			*_size -= 3;
+			*json_input += 3;
+		}
 		return 1;
 	}
 
@@ -998,8 +1013,8 @@ int json_clean_comments (const json_char ** json_input, json_state * state, char
 	if (json[0] != '/' || json[1] != '/' || !newlineAt)
 		goto WrongFormat;
 
-	for (const char* j = &json[2]; j < newlineAt; j++)
-		if (!isdigit(*j))
+	for (const char* j = &json[2]; j < newlineAt; ++j)
+		if (!std::isdigit((unsigned char)*j))
 			goto WrongFormat;
 
 	*_size = size - ((newlineAt + 1) - (*json_input));
@@ -1010,6 +1025,8 @@ int json_clean_comments (const json_char ** json_input, json_state * state, char
 	strcpy_s(error, error_len, "JSON was not minified; does not start with //.");
 	return 0;
 #endif
-
 }
 
+#ifdef _MSC_VER
+	#pragma warning (pop)
+#endif

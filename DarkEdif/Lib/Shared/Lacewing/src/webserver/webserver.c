@@ -1,11 +1,11 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
  * Copyright (C) 2011, 2012 James McLaughlin et al.
- * Copyright (C) 2012-2022 Darkwire Software.
+ * Copyright (C) 2012-2026 Darkwire Software.
  * All rights reserved.
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
 
 #include "common.h"
@@ -68,6 +68,8 @@ size_t lw_webserver_sink_websocket(lw_ws webserver, lwp_ws_httpclient client, co
 	static char error2[256];
 	lw_ui32 errorCode = 0;
 #define data_remove_prefix(i) data += i; size -= i;
+
+	// use a do loop so we can break out for errors
 	do {
 		// Minimum packet size - fin/opcode byte, mask + content len byte, 4-byte mask key
 		if (size < 1 + 1 + 4)
@@ -180,9 +182,14 @@ size_t lw_webserver_sink_websocket(lw_ws webserver, lwp_ws_httpclient client, co
 
 		// Unmask the packet
 		unmaskedData = (char *)malloc(size);
-		for (size_t i = 0; i < size; i++)
+		if (unmaskedData == NULL)
+		{
+			error = "out of memory";
+			errorCode = 1002;
+			break;
+		}
+		for (size_t i = 0; i < size; ++i)
 			unmaskedData[i] = data[i] ^ ((char *)&mask)[i % 4];
-		data = unmaskedData;
 
 		// If we've started a disconnect (!= -1), we'll ignore everything except an acknowledging close response.
 		// (if the client is dodgy and won't acknowledge, they'll get timed out anyway)
@@ -249,7 +256,9 @@ size_t lw_webserver_sink_websocket(lw_ws webserver, lwp_ws_httpclient client, co
 	if (error != NULL)
 	{
 		lw_error err = lw_error_new();
-		lw_error_addf(err, "Disconnecting client %s due to %s.", lw_server_client_addr(client->client.socket), error);
+		lw_error_addf(err, "Disconnecting client %s due to %s.",
+			lw_addr_tostring(lw_server_client_remote_addr(client->client.socket), lw_addr_tostring_flags_default),
+			error);
 		if (webserver->on_error)
 			webserver->on_error(webserver, err);
 		lw_error_delete(err);
@@ -310,7 +319,7 @@ lw_ws lw_ws_new (lw_pump pump)
 	ctx->timeout = 5; // time to respond to first request
 	ctx->websocket = lw_false;
 
-	ctx->timer = lw_timer_new (ctx->pump);
+	ctx->timer = lw_timer_new (ctx->pump, "webserver timer");
 	lw_timer_set_tag (ctx->timer, ctx);
 	lw_timer_on_tick (ctx->timer, on_timer_tick);
 

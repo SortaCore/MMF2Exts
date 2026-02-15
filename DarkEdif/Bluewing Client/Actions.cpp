@@ -1,4 +1,4 @@
-#include "Common.h"
+#include "Common.hpp"
 
 static char errtext[1024];
 static void ErrNoToErrText()
@@ -137,7 +137,12 @@ void Extension::BlastTextToServer(int subchannel, const TCHAR * textToSend)
 	if (subchannel > 255 || subchannel < 0)
 		CreateError("Blast Text to Server was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
 	else
-		Cli.blastserver(subchannel, DarkEdif::TStringToUTF8(textToSend), 0);
+	{
+		const std::string utf8Msg = DarkEdif::TStringToUTF8(textToSend);
+		if (utf8Msg.size() > globals->maxUDPSize)
+			return CreateError("Blast Text to Server was called with text too large (%zu bytes).", utf8Msg.size());
+		Cli.blastserver(subchannel, utf8Msg, 0);
+	}
 }
 void Extension::BlastTextToChannel(int subchannel, const TCHAR * textToSend)
 {
@@ -148,7 +153,12 @@ void Extension::BlastTextToChannel(int subchannel, const TCHAR * textToSend)
 	else if (selChannel->readonly())
 		CreateError("Blast Text to Channel was called with read-only channel \"%s\".", selChannel->name().c_str());
 	else
-		selChannel->blast(subchannel, DarkEdif::TStringToUTF8(textToSend), 0);
+	{
+		const std::string utf8Msg = DarkEdif::TStringToUTF8(textToSend);
+		if (utf8Msg.size() > globals->maxUDPSize)
+			return CreateError("Blast Text to Channel was called with text too large (%zu bytes).", utf8Msg.size());
+		selChannel->blast(subchannel, utf8Msg, 0);
+	}
 }
 void Extension::BlastTextToPeer(int subchannel, const TCHAR * textToSend)
 {
@@ -159,7 +169,12 @@ void Extension::BlastTextToPeer(int subchannel, const TCHAR * textToSend)
 	else if (selPeer->readonly())
 		CreateError("Blast Text to Peer was called with read-only peer \"%s\".", selPeer->name().c_str());
 	else
-		selPeer->blast(subchannel, DarkEdif::TStringToUTF8(textToSend), 0);
+	{
+		const std::string utf8Msg = DarkEdif::TStringToUTF8(textToSend);
+		if (utf8Msg.size() > globals->maxUDPSize)
+			return CreateError("Blast Text to Peer was called with text too large (%zu bytes).", utf8Msg.size());
+		selPeer->blast(subchannel, utf8Msg, 0);
+	}
 }
 void Extension::BlastNumberToServer(int subchannel, int numToSend)
 {
@@ -352,9 +367,9 @@ void Extension::RequestChannelList()
 void Extension::LoopListedChannels()
 {
 	const auto origLoopName = loopName;
-	const auto origChannelList = threadData->channelListing;
+	const auto origChannelListing = channelListing;
 
-	std::vector<decltype(threadData->channelListing)> channelListingDup;
+	std::vector<decltype(channelListing)> channelListingDup;
 	{
 		auto clientReadLock = Cli.lock.createReadLock();
 		channelListingDup = Cli.getchannellisting();
@@ -362,12 +377,12 @@ void Extension::LoopListedChannels()
 
 	for (const auto &chLst : channelListingDup)
 	{
-		threadData->channelListing = chLst;
+		channelListing = chLst;
 		loopName = std::tstring_view();
 		Runtime.GenerateEvent(27);
 	}
 
-	threadData->channelListing = origChannelList;
+	channelListing = origChannelListing;
 	loopName = std::tstring_view();
 	Runtime.GenerateEvent(28);
 
@@ -415,6 +430,8 @@ void Extension::BlastBinaryToServer(int subchannel)
 {
 	if (subchannel > 255 || subchannel < 0)
 		CreateError("Blast Binary to Server was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
+	else if (SendMsgSize > globals->maxUDPSize)
+		CreateError("Blast Binary to Server was called with binary too large (%zu bytes).", SendMsgSize);
 	else
 		Cli.blastserver(subchannel, std::string_view(SendMsg, SendMsgSize), 2);
 
@@ -429,6 +446,8 @@ void Extension::BlastBinaryToChannel(int subchannel)
 		CreateError("Blast Binary to Channel was called without a channel being selected.");
 	else if (selChannel->readonly())
 		CreateError("Blast Binary to Channel was called with read-only channel \"%s\".", selChannel->name().c_str());
+	else if (SendMsgSize > globals->maxUDPSize)
+		CreateError("Blast Binary to Channel was called with binary too large (%zu bytes).", SendMsgSize);
 	else
 		selChannel->blast(subchannel, std::string_view(SendMsg, SendMsgSize), 2);
 
@@ -443,6 +462,8 @@ void Extension::BlastBinaryToPeer(int subchannel)
 		CreateError("Blast Binary to Peer was called without a peer being selected.");
 	else if (selPeer->readonly())
 		CreateError("Blast Binary to Peer was called with a read-only peer.");
+	else if (SendMsgSize > globals->maxUDPSize)
+		CreateError("Blast Binary to Peer was called with binary too large (%zu bytes).", SendMsgSize);
 	else
 		selPeer->blast(subchannel, std::string_view(SendMsg, SendMsgSize), 2);
 
@@ -524,6 +545,8 @@ void Extension::SendMsg_Clear()
 }
 void Extension::RecvMsg_SaveToFile(int position, int size, const TCHAR * filename)
 {
+	if (!threadData->IsRecvMsg())
+		return CreateError("Cannot save received binary to file; not a received message event.");
 	if (position < 0)
 		return CreateError("Cannot save received binary to file; supplied position %i is less than 0.", position);
 	if (size <= 0)
@@ -531,8 +554,9 @@ void Extension::RecvMsg_SaveToFile(int position, int size, const TCHAR * filenam
 	if (filename[0] == _T('\0'))
 		return CreateError("Cannot save received binary to file; supplied filename \"\" is invalid.");
 
-	if (((unsigned int)position) + size > threadData->receivedMsg.content.size())
-		return CreateError("Cannot save received binary to file; message doesn't the supplied position range %i to %i.", position, position + size);
+	const RecvMsg& msg = threadData->GetRecvMsg();
+	if (((unsigned int)position) + size > msg.content.size())
+		return CreateError("Cannot save received binary to file; message doesn't have the supplied position range %i to %i.", position, position + size);
 
 #ifdef _WIN32
 	FILE * File = _tfsopen(filename, _T("wb"), SH_DENYWR);
@@ -543,11 +567,12 @@ void Extension::RecvMsg_SaveToFile(int position, int size, const TCHAR * filenam
 	if (!File)
 	{
 		ErrNoToErrText();
-		return CreateError("Cannot save received binary to file \"%s\", error number %i \"%s\" occurred with opening the file.", DarkEdif::TStringToUTF8(filename).c_str(), errno, errtext);
+		return CreateError("Cannot save received binary to file \"%s\", error number %i \"%s\" occurred with opening the file.",
+			DarkEdif::TStringToUTF8(filename).c_str(), errno, errtext);
 	}
 
 	size_t amountWritten;
-	if ((amountWritten = fwrite(threadData->receivedMsg.content.data() + position, 1, size, File)) != size)
+	if ((amountWritten = fwrite(msg.content.data() + position, 1, size, File)) != size)
 	{
 		ErrNoToErrText();
 		CreateError("Cannot save received binary to file, error %i \"%s\" occurred with writing the file. Wrote %zu"
@@ -563,6 +588,8 @@ void Extension::RecvMsg_SaveToFile(int position, int size, const TCHAR * filenam
 }
 void Extension::RecvMsg_AppendToFile(int position, int size, const TCHAR * filename)
 {
+	if (!threadData->IsRecvMsg())
+		return CreateError("Cannot append received binary to file; not a received message event.");
 	if (position < 0)
 		return CreateError("Cannot append received binary to file; supplied position %i is less than 0.", position);
 	if (size <= 0)
@@ -570,7 +597,8 @@ void Extension::RecvMsg_AppendToFile(int position, int size, const TCHAR * filen
 	if (filename[0] == _T('\0'))
 		return CreateError("Cannot append received binary to file; supplied filename \"\" is invalid.");
 
-	if (((unsigned int)position) + size > threadData->receivedMsg.content.size())
+	const RecvMsg& msg = threadData->GetRecvMsg();
+	if (((unsigned int)position) + size > msg.content.size())
 		return CreateError("Cannot append received binary to file; message doesn't have the supplied index range %i to %i.", position, position + size);
 
 	// Open while denying write of other programs
@@ -586,7 +614,7 @@ void Extension::RecvMsg_AppendToFile(int position, int size, const TCHAR * filen
 	}
 
 	size_t amountWritten;
-	if ((amountWritten = fwrite(threadData->receivedMsg.content.data() + position, 1, size, File)) != size)
+	if ((amountWritten = fwrite(msg.content.data() + position, 1, size, File)) != size)
 	{
 		fseek(File, 0, SEEK_END);
 #ifdef _WIN32
@@ -742,7 +770,11 @@ void Extension::SendMsg_CompressBinary()
 }
 void Extension::RecvMsg_DecompressBinary()
 {
-	if (threadData->receivedMsg.content.size() <= 4)
+	if (!threadData->IsRecvMsg())
+		return CreateError("Cannot decompress received binary; not a received message event.");
+
+	RecvMsg& msg = threadData->GetRecvMsg();
+	if (msg.content.size() <= 4)
 		return CreateError("Cannot decompress received binary; message is too small.");
 
 	z_stream strm = { };
@@ -754,11 +786,11 @@ void Extension::RecvMsg_DecompressBinary()
 	}
 
 	// Lacewing provides a precursor to the compressed data, with uncompressed size.
-	lw_ui32 expectedUncompressedSize = *(lw_ui32 *)threadData->receivedMsg.content.data();
+	lw_ui32 expectedUncompressedSize = *(lw_ui32 *)msg.content.data();
 	if (expectedUncompressedSize > 0x0F000000U)
 		return CreateError("Decompression failed; message anticipated to be too large. Expected %u byte output.", expectedUncompressedSize);
 
-	const std::string_view inputData(threadData->receivedMsg.content.data() + sizeof(lw_ui32), threadData->receivedMsg.content.size() - sizeof(lw_ui32));
+	const std::string_view inputData(msg.content.data() + sizeof(lw_ui32), msg.content.size() - sizeof(lw_ui32));
 
 	// Has exception support
 #if !defined(__clang__) || defined(__EXCEPTIONS)
@@ -790,17 +822,21 @@ void Extension::RecvMsg_DecompressBinary()
 	inflateEnd(&strm);
 
 	// Used to assign all exts in a questionable way, but threadData is now std::shared_ptr, so no need.
-	threadData->receivedMsg.content.assign((char *)output_buffer.get(), expectedUncompressedSize);
-	threadData->receivedMsg.cursor = 0;
+	msg.content.assign((char *)output_buffer.get(), expectedUncompressedSize);
+	msg.cursor = 0;
 }
 void Extension::RecvMsg_MoveCursor(int position)
 {
+	if (!threadData->IsRecvMsg())
+		return CreateError("Cannot move cursor; not a received message event.");
+
 	if (position < 0)
 		return CreateError("Cannot move cursor; Position %d is less than 0.", position);
-	if (threadData->receivedMsg.content.size() - position <= 0)
-		return CreateError("Cannot move cursor to position %d; message indexes are 0 to %zu.", position, threadData->receivedMsg.content.size());
+	RecvMsg& msg = threadData->GetRecvMsg();
+	if (msg.content.size() - position <= 0)
+		return CreateError("Cannot move cursor to position %d; message indexes are 0 to %zu.", position, msg.content.size());
 
-	threadData->receivedMsg.cursor = position;
+	msg.cursor = position;
 }
 void Extension::LoopListedChannelsWithLoopName(const TCHAR * passedLoopName)
 {
@@ -809,22 +845,22 @@ void Extension::LoopListedChannelsWithLoopName(const TCHAR * passedLoopName)
 
 	const std::tstring_view loopNameDup(passedLoopName);
 	const auto origLoopName = loopName;
-	const auto origChannelList = threadData->channelListing;
+	const auto origThreadData = threadData;
+	const auto origChannelListing = channelListing;
 
-	std::vector<decltype(threadData->channelListing)> channelListingDup;
+	std::vector<decltype(channelListing)> channelListingDup;
 	{
 		auto cliReadLock = Cli.lock.createReadLock();
 		channelListingDup = Cli.getchannellisting();
 	}
-
 	for (const auto &chLst : channelListingDup)
 	{
-		threadData->channelListing = chLst;
+		channelListing = chLst;
 		loopName = loopNameDup;
 		Runtime.GenerateEvent(59);
 	}
 
-	threadData->channelListing = nullptr;
+	channelListing = origChannelListing;
 	loopName = loopNameDup;
 	Runtime.GenerateEvent(60);
 
@@ -899,15 +935,18 @@ void Extension::Connect(const TCHAR * hostname)
 		return CreateError("Cannot connect to server: invalid hostname supplied.");
 
 	int Port = 6121;
-	const TCHAR * portPtr = _tcsrchr(hostname, _T(':'));
-	if (portPtr)
+	std::string hostnameU8(DarkEdif::TStringToUTF8(hostname));
+	const std::size_t colonCount = std::count(hostnameU8.cbegin(), hostnameU8.cend(), ':');
+	const bool isIPv6Box = hostnameU8.find('[') != std::string::npos;
+	const TCHAR* portPtr = (colonCount == 1 || isIPv6Box) ? _tcsrchr(hostname, _T(':')) : NULL;
+	// IPv4/hostname, or IPv6 [ip]:port layout - with check for : not being index 0
+	if (portPtr && (colonCount == 1 || (isIPv6Box && portPtr > hostname && *(portPtr - 1) == _T(']'))))
 	{
 		Port = _ttoi(portPtr + 1);
 
 		if (Port <= 0 || Port > 0xFFFF)
-			return CreateError("Invalid port in hostname: too many numbers. Ports are limited from 1 to 65535.");
+			return CreateError("Invalid port in hostname (%s). Ports are limited from 1 to 65535.", DarkEdif::TStringToUTF8(portPtr + 1).c_str());
 	}
-	std::string hostnameU8(DarkEdif::TStringToUTF8(hostname));
 	Cli.connect(hostnameU8.c_str(), Port);
 }
 void Extension::SendMsg_Resize(int newSize)
@@ -917,9 +956,7 @@ void Extension::SendMsg_Resize(int newSize)
 
 	char * NewMsg = (char *)realloc(SendMsg, newSize);
 	if (!NewMsg)
-	{
 		return CreateError("Cannot change size of binary to send: reallocation of memory failed. Size has not been modified.");
-	}
 	// Clear new bytes to 0
 	if ((size_t)newSize > SendMsgSize)
 		memset(NewMsg + SendMsgSize, 0, newSize - SendMsgSize);
@@ -932,4 +969,24 @@ void Extension::SetDestroySetting(int enabled)
 	if (enabled > 1 || enabled < 0)
 		return CreateError("Invalid setting passed to SetDestroySetting, expecting 0 or 1.");
 	globals->fullDeleteEnabled = enabled != 0;
+}
+void Extension::SetLocalPortForHolePunch(int port)
+{
+	if (port < 1 || port > std::numeric_limits<unsigned short>::max())
+		return CreateError("Invalid local port passed, expecting 1 through 65535, got %d.", port);
+	Cli.setlocalport(globals->localPort = (unsigned short)port);
+}
+void Extension::RunNetworkScan(int port, int timeout)
+{
+	if (port < 1 || port > std::numeric_limits<unsigned short>::max())
+		return CreateError("Invalid remote port passed, expecting 1 through 65535, got %d.", port);
+	if (timeout == 0 || timeout > std::numeric_limits<unsigned short>::max())
+		return CreateError("Invalid timeout passed, expecting 1ms through 65535ms, got %d.", timeout);
+#ifdef __ANDROID__
+	if (DarkEdif::Android::AppTargetAPI >= 36 && !DarkEdif::Android::HasPermissionGranted("NEARBY_WIFI_DEVICES"sv))
+		return CreateError("Can't run network scan: don't have NEARBY_WIFI_DEVICES perm. "
+			"Android apps targeting API 36+ require NEARBY_WIFI_DEVICES perm to broadcast or receive broadcast replies.");
+#endif
+
+	Cli.scanforservers((lw_ui16)port, (lw_ui16)timeout);
 }

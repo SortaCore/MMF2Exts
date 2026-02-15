@@ -1,5 +1,5 @@
 // Handles all Lacewing functions.
-#include "Common.h"
+#include "Common.hpp"
 
 #define Ext (*((Extension::GlobalInfo *) client.tag)->_ext)
 #define globals ((Extension::GlobalInfo *) client.tag)
@@ -7,15 +7,12 @@
 
 void OnError(lacewing::relayclient &client, lacewing::error error)
 {
-	globals->AddEvent1(0, nullptr, nullptr, nullptr, error->tostring());
+	globals->AddEvent1<ErrorEvent>(0, error->tostring());
 }
 void OnConnect(lacewing::relayclient &client)
 {
-	lacewing::address addr = client.serveraddress();
-	char ipAddr[64];
-	lw_addr_prettystring(addr->tostring(), ipAddr, sizeof(ipAddr));
-	HostIP = ipAddr;
-	HostPort = addr->port();
+	HostIP = client.serveraddress()->tostring();
+	HostPort = client.serveraddress()->port();
 	globals->AddEvent1(1);
 }
 void OnConnectDenied(lacewing::relayclient &client, std::string_view denyReason)
@@ -23,15 +20,11 @@ void OnConnectDenied(lacewing::relayclient &client, std::string_view denyReason)
 	// On Connect is not called during TCP Connect but when a Lacewing Connect Response
 	// message is received. Ditto for On Connect Denied.
 	// The serveraddress() is set during TCP Connect, so it should be valid here.
-	lacewing::address addr = client.serveraddress();
-	char ipAddr[64];
-	lw_addr_prettystring(addr->tostring(), ipAddr, sizeof(ipAddr));
-
 	if (GThread.joinable())
 		globals->lock.edif_lock();
 
-	HostIP = ipAddr;
-	HostPort = addr->port();
+	HostIP = client.serveraddress()->tostring();
+	HostPort = client.serveraddress()->port();
 	DenyReasonBuffer = denyReason;
 
 	if (GThread.joinable())
@@ -40,8 +33,7 @@ void OnConnectDenied(lacewing::relayclient &client, std::string_view denyReason)
 }
 void OnDisconnect(lacewing::relayclient &client)
 {
-	// CLEAR_EVTNUM: Empty all channels and peers, and reset HostIP
-	globals->AddEvent2(3, CLEAR_EVTNUM);
+	globals->AddEvent1<DisconnectEvent>(3);
 }
 void OnChannelListReceived(lacewing::relayclient &client)
 {
@@ -49,22 +41,7 @@ void OnChannelListReceived(lacewing::relayclient &client)
 }
 void OnJoinChannel(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> target)
 {
-#if 0
-	if (GThread)
-		globals->lock.edif_lock();
-
-	// Autoselect the first channel?
-	if (client.getchannelcount() == 1U)
-	{
-		auto cliReadLock = client.lock.createReadLock();
-		selChannel = client.getchannels()[0];
-	}
-
-	if (GThread)
-		globals->lock.edif_unlock();
-#endif
-
-	globals->AddEvent1(4, target);
+	globals->AddEvent1<ChannelJoinOrLeaveSuccessEvent>(4, target);
 }
 void OnJoinChannelDenied(lacewing::relayclient &client, std::string_view channelName, std::string_view denyReason)
 {
@@ -75,12 +52,11 @@ void OnJoinChannelDenied(lacewing::relayclient &client, std::string_view channel
 
 	if (GThread.joinable())
 		globals->lock.edif_unlock();
-	globals->AddEvent1(5, nullptr, nullptr, nullptr, channelName);
+	globals->AddEvent1<NameDeniedEvent>(5, channelName, denyReason);
 }
 void OnLeaveChannel(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> target)
 {
-	// CLEAR_EVTNUM: Clear channel copy after this event is handled
-	globals->AddEvent2(43, CLEAR_EVTNUM, target);
+	globals->AddEvent1<ChannelJoinOrLeaveSuccessEvent>(43, target);
 }
 void OnLeaveChannelDenied(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> target, std::string_view denyReason)
 {
@@ -91,7 +67,7 @@ void OnLeaveChannelDenied(lacewing::relayclient &client, std::shared_ptr<lacewin
 
 	if (GThread.joinable())
 		globals->lock.edif_unlock();
-	globals->AddEvent1(44, target);
+	globals->AddEvent1<ChannelLeaveDeniedEvent>(44, target, denyReason);
 }
 void OnNameSet(lacewing::relayclient &client)
 {
@@ -106,7 +82,7 @@ void OnNameDenied(lacewing::relayclient &client, std::string_view deniedName, st
 
 	if (GThread.joinable())
 		globals->lock.edif_unlock();
-	globals->AddEvent1(7);
+	globals->AddEvent1<NameDeniedEvent>(7, deniedName, denyReason);
 }
 void OnNameChanged(lacewing::relayclient &client, std::string_view oldName)
 {
@@ -121,17 +97,17 @@ void OnNameChanged(lacewing::relayclient &client, std::string_view oldName)
 }
 void OnPeerConnect(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> channel, std::shared_ptr<lacewing::relayclient::channel::peer> peer)
 {
-	globals->AddEvent1(10, channel, nullptr, peer);
+	globals->AddEvent1<PeerJoinOrLeaveEvent>(10, channel, peer);
 }
 void OnPeerDisconnect(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> channel,
 	std::shared_ptr<lacewing::relayclient::channel::peer> peer)
 {
-	globals->AddEvent2(11, CLEAR_EVTNUM, channel, nullptr, peer);
+	globals->AddEvent1<PeerJoinOrLeaveEvent>(11, channel, peer);
 }
 void OnPeerNameChanged(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> channel,
 	std::shared_ptr<lacewing::relayclient::channel::peer> peer, std::string oldName)
 {
-	globals->AddEvent1(45, channel, nullptr, peer, oldName);
+	globals->AddEvent1<PeerNameChangedEvent>(45, channel, peer, oldName);
 }
 void OnPeerMessage(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> channel,
 	std::shared_ptr<lacewing::relayclient::channel::peer> peer,
@@ -144,9 +120,10 @@ void OnPeerMessage(lacewing::relayclient &client, std::shared_ptr<lacewing::rela
 	// First pair is text, then number, then binary.
 	static const std::pair<std::uint16_t, std::uint16_t> eventNumsBlasted[] = { { 52, 39 }, { 52, 40 }, { 52, 41 } };
 	static const std::pair<std::uint16_t, std::uint16_t> eventNumsSent[] = { { 49, 36 }, { 49, 37 }, { 49, 38 } };
-
 	const auto & eventNums = blasted ? eventNumsBlasted[variant] : eventNumsSent[variant];
-	globals->AddEvent2(eventNums.first, eventNums.second, channel, nullptr, peer, message, subchannel, variant);
+	globals->AddEvent2<PeerMsgEvent>(eventNums.first, eventNums.second,
+		message, subchannel, variant,
+		channel, peer);
 }
 void OnChannelMessage(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> channel,
 	std::shared_ptr<lacewing::relayclient::channel::peer> peer,
@@ -161,7 +138,7 @@ void OnChannelMessage(lacewing::relayclient &client, std::shared_ptr<lacewing::r
 	static const std::pair<std::uint16_t, std::uint16_t> eventNumsSent[] = { { 48, 9 }, { 48, 16 }, { 48, 33 } };
 
 	const auto & eventNums = blasted ? eventNumsBlasted[variant] : eventNumsSent[variant];
-	globals->AddEvent2(eventNums.first, eventNums.second, channel, nullptr, peer, message, subchannel, variant);
+	globals->AddEvent2<ChannelMsgEvent>(eventNums.first, eventNums.second, message, subchannel, variant, channel, peer);
 }
 void OnServerMessage(lacewing::relayclient &client,
 	bool blasted, lw_ui8 subchannel, std::string_view message, lw_ui8 variant)
@@ -175,7 +152,7 @@ void OnServerMessage(lacewing::relayclient &client,
 	static const std::pair<std::uint16_t, std::uint16_t> eventNumsSent[] = { { 47, 8 }, { 47, 15 }, { 47, 32 } };
 
 	const auto & eventNums = blasted ? eventNumsBlasted[variant] : eventNumsSent[variant];
-	globals->AddEvent2(eventNums.first, eventNums.second, nullptr, nullptr, nullptr, message, subchannel, variant);
+	globals->AddEvent2<ServerMsgEvent>(eventNums.first, eventNums.second, message, subchannel, variant);
 }
 void OnServerChannelMessage(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> channel,
 	bool blasted, lw_ui8 subchannel, std::string_view message, lw_ui8 variant)
@@ -189,7 +166,7 @@ void OnServerChannelMessage(lacewing::relayclient &client, std::shared_ptr<lacew
 	static const std::pair<std::uint16_t, std::uint16_t> eventNumsSent[] = { { 68, 65 }, { 68, 66 }, { 68, 67 } };
 
 	const auto & eventNums = blasted ? eventNumsBlasted[variant] : eventNumsSent[variant];
-	globals->AddEvent2(eventNums.first, eventNums.second, channel, nullptr, nullptr, message, subchannel, variant);
+	globals->AddEvent2<ServerChannelMsgEvent>(eventNums.first, eventNums.second, message, subchannel, variant, channel);
 }
 
 extern "C" void always_log(const char* str, ...)
@@ -200,7 +177,8 @@ extern "C" void always_log(const char* str, ...)
 
 	// Unicode %s is UTF-16, not a UTF-8 %s; if always_log is passing %s, it means UTF-8
 	std::tstring tcharStr = DarkEdif::UTF8ToTString(str);
-	tcharStr += _T('\n');
+	if (tcharStr.back() != _T('\n'))
+		tcharStr += _T('\n');
 #if defined (_WIN32) && defined(_UNICODE)
 	// always_log reports UTF-8, DarkEdif::Log uses TCHAR, so we'll convert
 	if (tcharStr.find(_T("%s")) != std::tstring::npos)
@@ -208,10 +186,10 @@ extern "C" void always_log(const char* str, ...)
 		va_list v;
 		va_start(v, str);
 		char utf8Output[1024];
-		if (vsprintf_s(utf8Output, std::size(utf8Output), "%s", v) <= 0)
-			DarkEdif::MsgBox::Error(_T("always_log error"), _T("Couldn't convert format \"%s\" to UTF-8."), utf8Output);
+		if (vsprintf_s(utf8Output, std::size(utf8Output), str, v) <= 0)
+			DarkEdif::MsgBox::Error(_T("always_log error"), _T("Couldn't print format \"%s\" in always_log."), tcharStr.c_str());
 
-		LOGW(_T("%s"), utf8Output);
+		LOGW(_T("%s"), DarkEdif::UTF8ToTString(utf8Output).c_str());
 		va_end(v);
 	}
 	else
@@ -223,6 +201,33 @@ extern "C" void always_log(const char* str, ...)
 		va_end(v);
 	}
 #endif
+}
+
+void OnNetworkScanReply(lacewing::relayclient& client, lacewing::relayclient::netscanreply& rply)
+{
+	const std::string remoteIP = rply.remoteAddr->tostring((lw_addr_tostring_flags)(lw_addr_tostring_flag_box_ipv6 | lw_addr_tostring_flag_unmap_ipv6));
+
+	// Server requests a client build later than we have; this is likely to cause issues
+	if (rply.minClientBuild > lacewing::relayclient::buildnum)
+	{
+		globals->CreateError("Server \"%s\" replied to scan, but network client build is too low for server (client build is b%i, server minimum is b%i).",
+			remoteIP.c_str(), lacewing::relayclient::buildnum, rply.minClientBuild);
+		return;
+	}
+	// Server was released earlier than this client version - new client features may be unrecognised.
+	// We'll treat this as non-error, as we change how client/server works very rarely.
+	if (rply.clientBuildNum > lacewing::relayclient::buildnum)
+	{
+		always_log("Server \"%s\" replied to scan, but this client build b%i is later than server had at release (b%i). Server may not understand client features added after b%i.",
+			remoteIP.c_str(), lacewing::relayclient::buildnum, rply.clientBuildNum, rply.clientBuildNum);
+	}
+	std::stringstream srvVersion;
+	srvVersion << "Bluewing Server b"sv << (lw_ui32)rply.serverBuildNum << " running on "sv << rply.serverVersion;
+	globals->AddEvent1<NetScanReplyEvent>(76, remoteIP, srvVersion.str(), rply.welcomeMessage, rply.minClientBuild, rply.clientBuildNum, rply.serverBuildNum, rply.responseTime);
+}
+void OnNetworkScanComplete(lacewing::relayclient& client)
+{
+	globals->AddEvent1(77);
 }
 
 

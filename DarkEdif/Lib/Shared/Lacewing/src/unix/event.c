@@ -1,11 +1,11 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
  * Copyright (C) 2011, 2012, 2013 James McLaughlin et al.
- * Copyright (C) 2012-2022 Darkwire Software.
+ * Copyright (C) 2012-2026 Darkwire Software.
  * All rights reserved.
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
 
 #include "../common.h"
@@ -20,10 +20,13 @@ struct _lw_event
 lw_event lw_event_new ()
 {
 	lw_event ctx = (lw_event) malloc (sizeof (*ctx));
+	if (!ctx)
+		return NULL;
 
 	int p [2];
 	if (pipe(p) == -1)
 	{
+		always_log ("error %d creating pipe for lw_event\n", errno);
 		free(ctx);
 		return NULL;
 	}
@@ -39,7 +42,7 @@ lw_event lw_event_new ()
 void lw_event_delete (lw_event ctx)
 {
 	if (!ctx)
-	  return;
+		return;
 
 	close (ctx->pipe_w);
 	close (ctx->pipe_r);

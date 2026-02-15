@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Inc\Android\MMFAndroidMasterHeader.h">
+    <ClInclude Include="..\Inc\Android\MMFAndroidMasterHeader.hpp">
       <Filter>Global to all extensions</Filter>
     </ClInclude>
   </ItemGroup>

@@ -54,63 +54,96 @@
   </ImportGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <ClCompile>
-      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;always_log=server_always_log;_lacewing_debug;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;always_log=server_always_log;lacewing=fusion_server_lacewing;_lacewing_debug;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-fno-aligned-allocation %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|ARM'">
     <ClCompile>
-      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;always_log=server_always_log;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;always_log=server_always_log;lacewing=fusion_server_lacewing;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-fno-aligned-allocation %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <ClCompile>
-      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;always_log=server_always_log;_lacewing_debug;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;always_log=server_always_log;lacewing=fusion_server_lacewing;_lacewing_debug;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-fno-aligned-allocation %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|ARM64'">
     <ClCompile>
-      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;always_log=server_always_log;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;always_log=server_always_log;lacewing=fusion_server_lacewing;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-fno-aligned-allocation %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;always_log=server_always_log;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;always_log=server_always_log;lacewing=fusion_server_lacewing;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-fno-aligned-allocation %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;always_log=server_always_log;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;always_log=server_always_log;lacewing=fusion_server_lacewing;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-fno-aligned-allocation %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
     <ClCompile>
-      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;always_log=server_always_log;_lacewing_debug;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;always_log=server_always_log;lacewing=fusion_server_lacewing;_lacewing_debug;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-fno-aligned-allocation %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|x86'">
     <ClCompile>
-      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;always_log=server_always_log;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;always_log=server_always_log;lacewing=fusion_server_lacewing;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-fno-aligned-allocation %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\Inc\iOS\MMFiOSMasterHeader.h" />
     <ClInclude Condition="exists('$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp')" Include="$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\Array.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CActExtension.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CBitmap.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CCndExtension.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CCreateObjectInfo.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CEffectEx.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CEventProgram.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CEvents.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CExtension.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CFont.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CFontBank.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CFontInfo.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CImage.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CImageBank.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CImageUtils.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CObject.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CObjInfo.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CoreMath.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CQualToOiList.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRCom.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRect.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRenderer.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRenderToTexture.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRenderUtils.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRSpr.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRun.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRunApp.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRunExtension.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRVal.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CShader.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CTexture.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CValue.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\IDrawable.h" />
+    <ClInclude Include="..\Inc\iOS\MMFiOSMasterHeader.hpp" />
     <ClInclude Include="..\Lib\Shared\Lacewing\src\flashpolicy.h" />
     <ClInclude Include="..\Lib\Shared\Lacewing\src\openssl\sslclient.h" />
     <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\common.h" />

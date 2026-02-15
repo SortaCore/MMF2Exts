@@ -7,68 +7,7 @@
 // If your object does not use any of those, a simple non-displaying object,
 // you can safely exclude this file.
 // ============================================================================
-#include "Common.h"
-
-
-// ============================================================================
-// RUNTIME DISPLAY: EFFECTS, TRANSISTIONS, COLLISION MASKS
-// ============================================================================
-
-// Implement this function instead of DisplayRunObject if your extension
-// supports ink effects and transitions. Note: you can support ink effects
-// in DisplayRunObject too, but this is automatically done if you implement
-// GetRunObjectSurface (MMF applies the ink effect to the surface).
-/*
-cSurface * FusionAPI GetRunObjectSurface(RUNDATA * rdPtr)
-{
-	#pragma DllExportHint
-	return NULL;
-}
-*/
-
-// Implement this function if your extension supports fine collision mode (OEPREFS_FINECOLLISIONS),
-// Or if it's a background object and you want Obstacle properties for this object.
-//
-// Just return NULL if the object is opaque.
-//
-/*
-LPSMASK FusionAPI GetRunObjectCollisionMask(RUNDATA * rdPtr, LPARAM lParam)
-{
-	#pragma DllExportHint
-	// Typical example for active objects
-	// ----------------------------------
-	// Opaque? collide with box
-	if ((rdPtr->rs.rsEffect & EFFECTFLAG_TRANSPARENT) == 0)	// Note: only if your object has the OEPREFS_INKEFFECTS option
-		return NULL;
-
-	// Transparent? Create mask
-	LPSMASK pMask = rdPtr->m_pColMask;
-	if (pMask == NULL)
-	{
-		if (rdPtr->m_pSurface != NULL )
-		{
-			unsigned int dwMaskSize = rdPtr->m_pSurface->CreateMask(NULL, lParam);
-			if(dwMaskSize != 0 )
-			{
-				pMask = (LPSMASK)calloc(dwMaskSize, 1);
-				if ( pMask != NULL )
-				{
-					rdPtr->m_pSurface->CreateMask(pMask, lParam);
-					rdPtr->m_pColMask = pMask;
-				}
-			}
-		}
-	}
-
-	// Note: for active objects, lParam is always the same.
-	// For background objects (OEFLAG_BACKGROUND), lParam maybe be different if the user uses your object
-	// as obstacle and as platform. In this case, you should store 2 collision masks
-	// in your data: one if lParam is 0 and another one if lParam is different from 0.
-
-	return pMask;
-}
-*/
-
+#include "Common.hpp"
 
 // ============================================================================
 // START APP / END APP / START FRAME / END FRAME routines
@@ -76,6 +15,7 @@ LPSMASK FusionAPI GetRunObjectCollisionMask(RUNDATA * rdPtr, LPARAM lParam)
 
 /*
 // Called when the application starts or restarts. Also called for subapps.
+// @remarks Introduced in MMF1.5, missing in MMF1.2 and below.
 void FusionAPI StartApp(mv *mV, CRunApp* pApp)
 {
 	#pragma DllExportHint
@@ -87,12 +27,13 @@ void FusionAPI StartApp(mv *mV, CRunApp* pApp)
 //	if ( pData != NULL )
 //	{
 //		delete pData;
-//		mV->mvSetExtUserData(pApp, hInstLib, NULL);
+//		mV->SetExtUserData(pApp, hInstLib, NULL);
 //	}
 }*/
 
 /*
 // Called when the application ends or restarts. Also called for subapps.
+// @remarks Introduced in MMF1.5, missing in MMF1.2 and below.
 void FusionAPI EndApp(mv *mV, CRunApp* pApp)
 {
 	#pragma DllExportHint
@@ -103,12 +44,13 @@ void FusionAPI EndApp(mv *mV, CRunApp* pApp)
 //	if ( pData != NULL )
 //	{
 //		delete pData;
-//		mV->mvSetExtUserData(pApp, hInstLib, NULL);
+//		mV->SetExtUserData(pApp, hInstLib, NULL);
 //	}
 }*/
 
 /*
 // Called when the frame starts or restarts.
+// @remarks Introduced in MMF1.5, missing in MMF1.2 and below.
 void FusionAPI StartFrame(mv *mV, std::uint32_t dwReserved, int nFrameIndex)
 {
 	#pragma DllExportHint
@@ -116,65 +58,15 @@ void FusionAPI StartFrame(mv *mV, std::uint32_t dwReserved, int nFrameIndex)
 
 /*
 // Called when the frame ends.
+// @remarks Introduced in MMF1.5, missing in MMF1.2 and below.
 void FusionAPI EndFrame(mv *mV, std::uint32_t dwReserved, int nFrameIndex)
 {
 	#pragma DllExportHint
 }*/
 
-
-// ============================================================================
-// TEXT ROUTINES (if OEFLAG_TEXT)
-// ============================================================================
-
-// Return the font used by the object.
-/*
-void FusionAPI GetRunObjectFont(RUNDATA * rdPtr, LOGFONT* pLf)
-{
-	#pragma DllExportHint
-	// Example
-	// -------
-	// GetObject(rdPtr->m_hFont, sizeof(LOGFONT), pLf);
-}
-
-// Change the font used by the object.
-void FusionAPI SetRunObjectFont(RUNDATA * rdPtr, LOGFONT* pLf, RECT* pRc)
-{
-	#pragma DllExportHint
-	// Example
-	// -------
-//	HFONT hFont = CreateFontIndirect(pLf);
-//	if ( hFont != NULL )
-//	{
-//		if (rdPtr->m_hFont!=0)
-//			DeleteObject(rdPtr->m_hFont);
-//		rdPtr->m_hFont = hFont;
-//		SendMessage(rdPtr->m_hWnd, WM_SETFONT, (WPARAM)rdPtr->m_hFont, FALSE);
-//	}
-}
-
-// Return the text color of the object.
-COLORREF FusionAPI GetRunObjectTextColor(RUNDATA * rdPtr)
-{
-	#pragma DllExportHint
-	// Example
-	// -------
-	return 0;	// e.g. RGB()
-}
-
-// Change the text color of the object.
-void FusionAPI SetRunObjectTextColor(RUNDATA * rdPtr, COLORREF rgb)
-{
-	#pragma DllExportHint
-	// Example
-	// -------
-	rdPtr->m_dwColor = rgb;
-	InvalidateRect(rdPtr->m_hWnd, NULL, TRUE);
-}
-*/
-
-
 // ============================================================================
 // WINDOWPROC (interception of messages sent to hMainWin and hEditWin)
+// Requires OEFLAGS::WINDOW_PROC
 // ============================================================================
 
 /*
@@ -194,14 +86,17 @@ LRESULT FusionAPI WindowProc(RunHeader * rhPtr, HWND hWnd, UINT nMsg, WPARAM wPa
 {
 	#pragma DllExportHint
 
-#ifndef VISUAL_EXTENSION
-	// If you do not define this, DisplayRunObject() isn't exposed to Fusion runtime.
+	// If you do not define WINDOW_PROC, this function won't be called even if it's defined.
+	static_assert((Extension::OEFLAGS & OEFLAGS::WINDOW_PROC) == OEFLAGS::WINDOW_PROC,
+		"Missing Window Proc OEFLAG, this function won't be called");
+
+#if WNDPROC_OEFLAG_EXTENSION==0
 	// When a window is redisplayed, e.g. after resizing, all exts with OEFLAGS::WNDPROC are assumed to need their
 	// DisplayRunObject functions called, and if it's missing for an ext, the Fusion runtime crashes.
 	//
 	// To test if it's working for you, simply make a Fusion application, drop your ext in,
 	// change the application property to "resize display to fill window size" to true, then run the app and resize it.
-	#error Define VISUAL_EXTENSION in project properties!
+	#error Define WNDPROC_OEFLAG_EXTENSION in project properties!
 #endif
 
 	RUNDATA * rdPtr = NULL;

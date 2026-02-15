@@ -249,21 +249,24 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\webserver\webserver.c">
       <Filter>Source Files\Lacewing\src\webserver</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\SurfaceMultiPlat.cpp">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\address.h">
       <Filter>Header Files\Lacewing\src</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)Common.h">
+    <ClInclude Include="$(MSBuildThisFileDirectory)Common.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)Extension.h">
+    <ClInclude Include="$(MSBuildThisFileDirectory)Extension.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\Lacewing.h">
       <Filter>Header Files\Lacewing</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)LacewingFunctions.h">
+    <ClInclude Include="$(MSBuildThisFileDirectory)LacewingFunctions.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\streamgraph.h">
@@ -287,7 +290,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\heapbuffer.h">
       <Filter>Header Files\Lacewing\src</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)MultiThreading.h">
+    <ClInclude Include="$(MSBuildThisFileDirectory)MultiThreading.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\FrameBuilder.h">
@@ -302,13 +305,13 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\MessageReader.h">
       <Filter>Header Files\Lacewing</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\DarkEdif.h">
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\DarkEdif.hpp">
       <Filter>Global to all extensions\Edif</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\Edif.h">
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\Edif.hpp">
       <Filter>Global to all extensions\Edif</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\ObjectSelection.h">
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\ObjectSelection.hpp">
       <Filter>Global to all extensions</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\common.h">
@@ -529,6 +532,9 @@
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\x509_vfy.h">
       <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\SurfaceMultiPlat.hpp">
+      <Filter>Global to all extensions\Edif</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

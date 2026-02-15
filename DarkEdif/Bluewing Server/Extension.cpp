@@ -1,4 +1,4 @@
-#include "Common.h"
+#include "Common.hpp"
 #include <assert.h>
 
 ///
@@ -11,14 +11,15 @@
 std::atomic<bool> Extension::AppWasClosed(false);
 
 #ifdef _WIN32
-Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr) :
-	rdPtr(_rdPtr), rhPtr(_rdPtr->rHo.AdRunHeader), Runtime(&_rdPtr->rHo), FusionDebugger(this)
+Extension::Extension(RunObject* const _rdPtr, const EDITDATA* const edPtr, const CreateObjectInfo* const cobPtr) :
+	rdPtr(_rdPtr), rhPtr(_rdPtr->get_rHo()->get_AdRunHeader()), Runtime(this), FusionDebugger(this)
 #elif defined(__ANDROID__)
-Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, jobject javaExtPtr) :
-	runFuncs(runFuncs), javaExtPtr(javaExtPtr, "Extension::javaExtPtr from Extension ctor"), Runtime(runFuncs, this->javaExtPtr), FusionDebugger(this)
+Extension::Extension(const EDITDATA* const edPtr, const jobject javaExtPtr, const CreateObjectInfo* const cobPtr) :
+	javaExtPtr(javaExtPtr, "Extension::javaExtPtr from Extension ctor"),
+	Runtime(this, this->javaExtPtr), FusionDebugger(this)
 #else
-Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCExtPtr) :
-	runFuncs(runFuncs), objCExtPtr(objCExtPtr), Runtime(runFuncs, objCExtPtr), FusionDebugger(this)
+Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const CreateObjectInfo* const cobPtr) :
+	objCExtPtr(objCExtPtr), Runtime(this, objCExtPtr), FusionDebugger(this)
 #endif
 {
 	// Does nothing in non-Debug builds, even with _CRTDBG_MAP_ALLOC defined
@@ -129,6 +130,8 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		LinkAction(90, WebSocketServer_LoadHostCertificate_FromSystemStore);
 		LinkAction(91, WebSocketServer_EnableHosting);
 		LinkAction(92, WebSocketServer_DisableHosting);
+		LinkAction(93, Channel_SelectByID);
+		LinkAction(94, Relay_DoHolePunchToFutureClient);
 	}
 	{
 		LinkCondition(0, AlwaysTrue /* OnError */);
@@ -185,14 +188,17 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		LinkCondition(51, ChannelIsSetToCloseAutomatically);
 		LinkCondition(52, AlwaysFalseWithTextParam /* DUPLICATE IN ORIG, NOT USED IN BLUE: OnAllClientsLoopWithNameFinished */);
 		// Added conditions:
-		LinkCondition(53, IsClientOnChannel_ByClientID);
-		LinkCondition(54, IsClientOnChannel_ByClientName);
+		LinkCondition(53, IsClientOnChannel_ByChannelNameClientID);
+		LinkCondition(54, IsClientOnChannel_ByChannelNameClientName);
 		LinkCondition(55, DoesChannelNameExist);
 		LinkCondition(56, DoesChannelIDExist);
 		LinkCondition(57, DoesClientNameExist);
 		LinkCondition(58, DoesClientIDExist);
 		LinkCondition(59, AlwaysTrue /* UponChannelClose */);
 		LinkCondition(60, IsWebSocketHosting);
+		LinkCondition(61, IsClientOnChannel_ByChannelIDClientID);
+		LinkCondition(62, IsClientOnChannel_ByChannelIDClientName);
+		LinkCondition(63, OnNetworkChange);;
 	}
 	{
 		LinkExpression(0, Error);
@@ -253,6 +259,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 	}
 
 #if EditorBuild
+	// Strangely, ext version is stuck at 2 at runtime. Is it reading it from Lacewing Server?
 	if (edPtr->eHeader.extSize < sizeof(EDITDATA))
 	{
 		DarkEdif::MsgBox::Error(_T("Property size mismatch"), _T("Properties are the wrong size (MFA size %lu, extension size %zu). "
@@ -348,7 +355,6 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 	else if (!edPtr->multiThreading)
 		Runtime.Rehandle();
 
-
 	// Set up Fusion debugger (it uses globals, so we have to do it after)
 	// The server could be hosting already if this Extension() is being run after a Fusion frame switch.
 	const auto hostingDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
@@ -357,7 +363,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		else
 			writeTo = _T("Hosting: Not hosting."sv);
 	};
-	FusionDebugger.AddItemToDebugger(hostingDebugItemReader, NULL, 500, NULL);
+	FusionDebugger.AddItemToDebugger(NULL, hostingDebugItemReader, NULL, 500, NULL);
 
 	const auto hostingWebSocketDebugItemReader = [](Extension* ext, std::tstring& writeTo) {
 		if (ext->Srv.websocket->hosting() && ext->Srv.websocket->hosting_secure())
@@ -373,7 +379,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		else
 			writeTo = _T("WebSocket: Not hosting "sv);
 	};
-	FusionDebugger.AddItemToDebugger(hostingWebSocketDebugItemReader, NULL, 500, NULL);
+	FusionDebugger.AddItemToDebugger(NULL, hostingWebSocketDebugItemReader, NULL, 500, NULL);
 
 	const auto clientCountDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
 		if (ext->Srv.hosting() || ext->Srv.websocket->hosting() || ext->Srv.websocket->hosting_secure())
@@ -381,7 +387,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		else
 			writeTo = _T("All client count: N/A"sv);
 	};
-	FusionDebugger.AddItemToDebugger(clientCountDebugItemReader, NULL, 500, NULL);
+	FusionDebugger.AddItemToDebugger(NULL, clientCountDebugItemReader, NULL, 500, NULL);
 
 	const auto channelCountDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
 		if (ext->Srv.hosting() || ext->Srv.websocket->hosting() || ext->Srv.websocket->hosting_secure())
@@ -389,7 +395,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		else
 			writeTo = _T("All channel count: N/A"sv);
 	};
-	FusionDebugger.AddItemToDebugger(channelCountDebugItemReader, NULL, 500, NULL);
+	FusionDebugger.AddItemToDebugger(NULL, channelCountDebugItemReader, NULL, 500, NULL);
 
 	const auto selChannelDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
 		if (ext->selChannel)
@@ -397,7 +403,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		else
 			writeTo = _T("Selected channel: (none)"sv);
 	};
-	FusionDebugger.AddItemToDebugger(selChannelDebugItemReader, NULL, 100, NULL);
+	FusionDebugger.AddItemToDebugger(NULL, selChannelDebugItemReader, NULL, 100, NULL);
 
 	const auto selChannelNumClientsDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
 		if (ext->selChannel)
@@ -405,7 +411,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		else
 			writeTo = _T("> Client count: (no selected channel)"sv);
 	};
-	FusionDebugger.AddItemToDebugger(selChannelNumClientsDebugItemReader, NULL, 100, NULL);
+	FusionDebugger.AddItemToDebugger(NULL, selChannelNumClientsDebugItemReader, NULL, 100, NULL);
 
 	const auto selClientDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
 		if (ext->selClient)
@@ -413,7 +419,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		else
 			writeTo = _T("Selected client: (none)"sv);
 	};
-	FusionDebugger.AddItemToDebugger(selClientDebugItemReader, NULL, 100, NULL);
+	FusionDebugger.AddItemToDebugger(NULL, selClientDebugItemReader, NULL, 100, NULL);
 
 	const auto selClientNumChannelsDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
 		if (ext->selClient)
@@ -421,7 +427,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		else
 			writeTo = _T("> Channel count: (no selected client)"sv);
 	};
-	FusionDebugger.AddItemToDebugger(selClientNumChannelsDebugItemReader, NULL, 100, NULL);
+	FusionDebugger.AddItemToDebugger(NULL, selClientNumChannelsDebugItemReader, NULL, 100, NULL);
 }
 
 void Extension::LacewingLoopThread(Extension * ext)
@@ -473,7 +479,7 @@ void Extension::LacewingLoopThread(Extension * ext)
 	LOGV(_T("" PROJECT_NAME " - LacewingLoopThread has exited.\n"));
 }
 
-Extension::GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
+Extension::GlobalInfo::GlobalInfo(Extension * e, const EDITDATA * const edPtr)
 	: _objEventPump(lacewing::eventpump_new(), eventpumpdeleter),
 	_server(_objEventPump.get()),
 	_sendMsg(nullptr), _sendMsgSize(0),
@@ -545,10 +551,18 @@ Extension::GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
 
 	_server.setcodepointsallowedlist(lacewing::relayserver::codepointsallowlistindex::ClientNames, list);
 	_server.setcodepointsallowedlist(lacewing::relayserver::codepointsallowlistindex::ChannelNames, list);
+
+	if (!lw_network_change_sub(lw_true, Extension::GlobalInfo::Static_NetworkChanged, this))
+		CreateError("Couldn't subscribe extension to network change notifs. OnNetworkChange condition will not trigger if IP changes.");
 }
 
 Extension::GlobalInfo::~GlobalInfo() noexcept(false)
 {
+	// Globals is dying, so there's probably no ext to report this error to,
+	// and if this handler is called it's going to read bad memory.
+	if (!lw_network_change_sub(lw_false, Extension::GlobalInfo::Static_NetworkChanged, this))
+		LOGE(_T("Couldn't unsubscribe extension from network change notifs."));
+
 	if (!extsHoldingGlobals.empty())
 		assert(false && "GlobalInfo dtor called prematurely.");
 
@@ -582,7 +596,7 @@ void Extension::GlobalInfo::MarkAsPendingDelete()
 	if (!_thread.joinable())
 		_objEventPump->tick();
 
-	_objEventPump->post_eventloop_exit();
+	//_objEventPump->post_eventloop_exit();
 
 	if (_server.flash->hosting())
 		_server.flash->unhost();
@@ -622,7 +636,7 @@ void Extension::GlobalInfo::MarkAsPendingDelete()
 void Extension::eventpumpdeleter(lacewing::eventpump pump)
 {
 	LOGV(_T("" PROJECT_NAME " - pump deleting...\n"));
-	lacewing::pump_delete(pump);
+	lacewing::eventpump_delete(pump);
 	LOGV(_T("" PROJECT_NAME " - pump deleted.\n"));
 	_CrtCheckMemory();
 }
@@ -712,6 +726,10 @@ void Extension::GlobalInfo::AddEventF(bool twoEvents, int event1ID, int event2ID
 	newEvent2.InteractiveType = interactiveType;
 	newEvent2.channelCreate_Hidden = channelCreate_Hidden;
 	newEvent2.channelCreate_AutoClose = channelCreate_AutoClose;
+
+	// Extension::OnNetworkChange
+	if (event1ID == 63)
+		newEvent2.networkChanged.networkChangeType = (lw_network_change_type)subchannel;
 
 	lock.edif_lock(); // Needed before we access Extension
 
@@ -1101,6 +1119,11 @@ void Extension::GlobalInfo::ClearLocalData(std::shared_ptr<lacewing::relayserver
 		[&](const auto &c) { return c.ptr == channel; }), channelLocal.end());
 }
 
+void Extension::GlobalInfo::Static_NetworkChanged(lw_network_change_type type, void* globals)
+{
+	((Extension::GlobalInfo*)globals)->AddEvent1(63, nullptr, nullptr, std::string_view(), type);
+}
+
 REFLAG Extension::Handle()
 {
 	// If thread is not working, use Tick functionality. This may add events, so do it before the event-loop check.
@@ -1124,7 +1147,7 @@ REFLAG Extension::Handle()
 	// we have to run next loop even if there's no events in EventsToRun to deal with.
 	bool RunNextLoop = !globals->_thread.joinable();
 
-	for (size_t maxTrig = 0; maxTrig < 10; maxTrig++)
+	for (std::size_t maxTrig = 0; maxTrig < 10; ++maxTrig)
 	{
 		// Attempt to Enter, break if we can't get it instantly
 		if (!globals->lock.edif_try_lock())
@@ -1255,8 +1278,6 @@ void Extension::HandleInteractiveEvent(std::shared_ptr<EventToRun> evt)
 			EnterSectionIfMultiThread(globals->lock);
 			Srv.nameset_response(evt->senderClient, NewClientName, DenyReason.c_str());
 
-			if (!DenyReason.empty())
-				evt->senderClient->name(NewClientName);
 			LeaveSectionIfMultiThread(globals->lock);
 		}
 	}
@@ -1583,24 +1604,6 @@ Extension::~Extension()
 	}
 	selClient = nullptr;
 	selChannel = nullptr;
-}
-// Called when Fusion wants your extension to redraw, due to window scrolling/resize, etc,
-// or from you manually causing it.
-REFLAG Extension::Display()
-{
-	// Return REFLAG::DISPLAY in Handle() to run this manually, or use Runtime.Redisplay().
-
-	return REFLAG::NONE;
-}
-
-// Called when Fusion runtime is pausing due to the menu option Pause or an extension causing it.
-short Extension::FusionRuntimePaused() {
-	return 0; // OK
-}
-
-// Called when Fusion runtime is resuming after a pause.
-short Extension::FusionRuntimeContinued() {
-	return 0; // OK
 }
 
 // These are called if there's no function linked to an ID

@@ -1,12 +1,11 @@
-#include "Common.h"
-
+#include "Common.hpp"
 
 ///
 /// EXTENSION CONSTRUCTOR/DESTRUCTOR
 ///
 
-Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr)
-	: rdPtr(_rdPtr), rhPtr(_rdPtr->rHo.AdRunHeader), Runtime(&_rdPtr->rHo)
+Extension::Extension(RunObject* const _rdPtr, const EDITDATA* const edPtr, const CreateObjectInfo* const cobPtr) :
+	rdPtr(_rdPtr), rhPtr(_rdPtr->get_rHo()->get_AdRunHeader()), Runtime(this)
 {
 	/*
 		Link all your action/condition/expression functions to their IDs to match the
@@ -198,10 +197,11 @@ Extension::~Extension()
 }
 
 
+// Runs every tick of Fusion's runtime, can be toggled off and back on
 REFLAG Extension::Handle()
 {
-	size_t maxNumEvents = 10;
-	for (size_t i = 0; i < maxNumEvents; i++)
+	std::size_t maxNumEvents = 10;
+	for (std::size_t i = 0; i < maxNumEvents; ++i)
 	{
 		if (!globals->threadsafe.edif_try_lock())
 			return REFLAG::NONE;
@@ -233,7 +233,7 @@ REFLAG Extension::Handle()
 			cpy->source->pendingDataToRead.append(cpy->msg);
 
 		// chance of crash here, if a generated event destroys the ext k?
-		for (size_t k = 0; k < globals->extsHoldingGlobals.size(); k++)
+		for (std::size_t k = 0; k < globals->extsHoldingGlobals.size(); ++k)
 		{
 			auto curEventBackup = globals->extsHoldingGlobals[k]->curEvent;
 			globals->extsHoldingGlobals[k]->curEvent = cpy;
@@ -243,27 +243,6 @@ REFLAG Extension::Handle()
 	}
 	return REFLAG::NONE;
 }
-
-
-// Called when Fusion wants your extension to redraw, due to window scrolling/resize, etc,
-// or from you manually causing it.
-REFLAG Extension::Display()
-{
-	// Return REFLAG::DISPLAY in Handle() to run this manually, or use Runtime.Redisplay().
-
-	return REFLAG::NONE;
-}
-
-// Called when Fusion runtime is pausing due to the menu option Pause or an extension causing it.
-short Extension::FusionRuntimePaused() {
-	return 0; // OK
-}
-
-// Called when Fusion runtime is resuming after a pause.
-short Extension::FusionRuntimeContinued() {
-	return 0; // OK
-}
-
 
 // These are called if there's no function linked to an ID
 

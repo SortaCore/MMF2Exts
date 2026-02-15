@@ -1,7 +1,7 @@
 root = true
 # Don't forget to update the gitattributes if you're changing line ending treatment
 
-[*.{c,cc,cpp,cxx,h,hh,hpp,hxx,txt,props,js,mm,plist}]
+[*.{c,cc,cpp,cxx,h,hh,hpp,hxx,txt,props,js,mm,plist,java,ini}]
 end_of_line = lf
 insert_final_newline = true
 charset = utf-8
@@ -30,5 +30,22 @@ end_of_line = crlf
 insert_final_newline = true
 charset = latin1
 indent_style = tab
+indent_size = 4
+trim_trailing_whitespace = true
+
+# these are based on what VS will generate by default
+[*.{vcxproj,vcxproj.filters,vcxitems,vcxitems.filters,sln}]
+end_of_line = crlf
+insert_final_newline = true
+charset = utf-8
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+
+[*.{hexpat}]
+end_of_line = lf
+insert_final_newline = true
+charset = utf-8
+indent_style = space
 indent_size = 4
 trim_trailing_whitespace = true

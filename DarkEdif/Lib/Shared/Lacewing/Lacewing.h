@@ -1,11 +1,11 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=cpp:
  *
  * Copyright (C) 2011, 2012, 2013 James McLaughlin.
- * Copyright (C) 2012-2022 Darkwire Software.
+ * Copyright (C) 2012-2026 Darkwire Software.
  * All rights reserved.
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
 
 #ifndef _lacewing_h
@@ -102,6 +102,7 @@
 #include <thread>
 #include <cctype>
 #include <cstring>
+#include <stdexcept>
 
 // std::string_view requires C++17
 #if (__cplusplus < 201703L && _MSVC_LANG < 201703L) || (defined(__clang__) && !__has_include(<string_view>))
@@ -110,9 +111,10 @@
 #include <string_view>
 using namespace std::string_view_literals;
 
+extern "C"
 #endif // __cplusplus
+void LacewingFatalErrorMsgBox2(const char* const func, const char* const file, const int line);
 #define LacewingFatalErrorMsgBox() LacewingFatalErrorMsgBox2(__FUNCTION__, __FILE__, __LINE__)
-void LacewingFatalErrorMsgBox2(const char * const func, const char * const file, const int line);
 
 typedef lw_i8 lw_bool;
 
@@ -124,6 +126,34 @@ typedef lw_i8 lw_bool;
 #else
 	typedef int lw_fd;
 #endif
+
+// Used for network changes, e.g. IP expiration.
+typedef enum _lw_network_change_type
+{
+	// The handler for listening to network changes doesn't work.
+	// App restart is necessary to set up monitoring again.
+	lw_network_change_type_handlergone = -1,
+	// An IP/network was added
+	lw_network_change_type_added = 1,
+	// An IP/network was lost
+	// Check ipv6 public interface == -1 to see if existing public IPv6 was dead
+	lw_network_change_type_lost = 2,
+	// An IP/network was either added or lost (treat as either)
+	lw_network_change_type_unspecified = 3,
+} lw_network_change_type;
+
+typedef enum _lw_addr_tostring_flags
+{
+	// Adds a [] around IPv6 addresses, resulting in [ip6]:remote_port:local_port
+	// IPv4 addresses will be ip4:remote_port
+	lw_addr_tostring_flag_box_ipv6 = 1,
+	// Removes the remote port, resulting in [ip6]:local_port, ip4:local_port
+	lw_addr_tostring_flag_remove_port = 2,
+	// Converts IPv6-mapped-IPv4 to IPv4 representation (if it is mapped)
+	lw_addr_tostring_flag_unmap_ipv6 = 4,
+	// Default flags: box IPv6, unmap IPv4 mapped into IPv6, and remove port
+	lw_addr_tostring_flags_default = 7,
+} lw_addr_tostring_flags;
 
 #if (!defined(_lacewing_internal))
 
@@ -177,13 +207,18 @@ typedef lw_i8 lw_bool;
 	lw_import			void  lw_md5_hex			(char * output, const char * input, size_t length);
 	lw_import			void  lw_sha1				(char * output, const char * input, size_t length);
 	lw_import			void  lw_sha1_hex			(char * output, const char * input, size_t length);
+#ifdef _lacewing_debug
 #if defined(_MSC_VER) || (defined(__unix__) && !defined(__ANDROID__))
 	#define __printflike(a,b) /* no op */
 #endif
 	lw_import			void  lw_trace				(const char * format, ...) __printflike(1, 2);
+#endif // _lacewing_debug
 	lw_import			void  lw_dump				(const char * buffer, size_t size);
 	lw_import		 lw_bool  lw_random				(char * buffer, size_t size);
 	lw_import		  size_t  lw_min_size_t			(size_t a, size_t b);
+	// Adds or removes a network change handler (e.g. IPs change). Returns false if fails.
+	// Editing handlers must not be done inside the handler func - it will deadlock.
+	lw_import		 lw_bool  lw_network_change_sub (lw_bool add, void (*handler)(lw_network_change_type, void*), void * tag);
 
 /* Thread */
 
@@ -211,7 +246,7 @@ typedef lw_i8 lw_bool;
 	lw_import		   lw_error  lw_addr_resolve		(lw_addr);
 	lw_import			lw_bool  lw_addr_ipv6			(lw_addr);
 	lw_import			lw_bool  lw_addr_equal			(lw_addr, lw_addr);
-	lw_import	   const char *  lw_addr_tostring		(lw_addr);
+	lw_import	   const char *  lw_addr_tostring		(lw_addr, lw_addr_tostring_flags flags);
 	lw_import   struct in6_addr  lw_addr_toin6_addr		(lw_addr);
 	lw_import			 void *  lw_addr_tag			(lw_addr);
 	lw_import			   void  lw_addr_set_tag		(lw_addr, void *);
@@ -237,6 +272,9 @@ typedef lw_i8 lw_bool;
 	lw_import		 void  lw_filter_set_reuse		 (lw_filter, lw_bool);
 	lw_import	  lw_bool  lw_filter_ipv6			 (lw_filter);
 	lw_import		 void  lw_filter_set_ipv6		 (lw_filter, lw_bool);
+	lw_import	  lw_bool  lw_filter_remote_mask	 (lw_filter);
+	lw_import		 void  lw_filter_set_remote_mask (lw_filter, lw_bool);
+	lw_import	  lw_bool  lw_filter_check_remote_addr (lw_filter, lw_addr);
 	lw_import	   void *  lw_filter_tag			 (lw_filter);
 	lw_import		 void  lw_filter_set_tag		 (lw_filter, void *);
 
@@ -246,8 +284,8 @@ typedef lw_i8 lw_bool;
 	lw_import		void  lw_pump_add_user		(lw_pump);
 	lw_import		void  lw_pump_remove_user	(lw_pump);
 	lw_import	 lw_bool  lw_pump_in_use		(lw_pump);
-	lw_import		void  lw_pump_remove		(lw_pump, lw_pump_watch);
-	lw_import		void  lw_pump_post_remove	(lw_pump, lw_pump_watch);
+	lw_import		void  lw_pump_remove		(lw_pump, lw_pump_watch, const char* deleteReason);
+	lw_import		void  lw_pump_post_remove	(lw_pump, lw_pump_watch, const char* deleteReason);
 	lw_import		void  lw_pump_post			(lw_pump, void * fn, void * param);
 	lw_import	  void *  lw_pump_tag			(lw_pump);
 	lw_import		void  lw_pump_set_tag		(lw_pump, void *);
@@ -257,21 +295,21 @@ typedef lw_i8 lw_bool;
 	typedef void (lw_callback * lw_pump_callback)
 		(void * tag, OVERLAPPED *, unsigned long bytes, int error);
 
-	lw_import lw_pump_watch lw_pump_add (lw_pump, HANDLE, void * tag,
+	lw_import lw_pump_watch lw_pump_add (lw_pump, HANDLE, const char * desc, void * tag,
 										 lw_pump_callback);
 
-	lw_import void lw_pump_update_callbacks (lw_pump, lw_pump_watch,
+	lw_import void lw_pump_update_callbacks (lw_pump, lw_pump_watch, const char * updateReason,
 											 void * tag, lw_pump_callback);
 	#else
 
 	typedef void (lw_callback * lw_pump_callback) (void * tag);
 
-	lw_import lw_pump_watch lw_pump_add (lw_pump, int fd, void * tag,
+	lw_import lw_pump_watch lw_pump_add (lw_pump, int fd, const char* desc, void * tag,
 										 lw_pump_callback on_read_ready,
 										 lw_pump_callback on_write_ready,
 										 lw_bool edge_triggered);
 
-	lw_import void lw_pump_update_callbacks (lw_pump, lw_pump_watch, void * tag,
+	lw_import void lw_pump_update_callbacks (lw_pump, lw_pump_watch, const char* updateReason, void * tag,
 											 lw_pump_callback on_read_ready,
 											 lw_pump_callback on_write_ready,
 											 lw_bool edge_triggered);
@@ -283,23 +321,23 @@ typedef lw_i8 lw_bool;
 	{
 		#ifdef _WIN32
 
-		lw_pump_watch (* add)	  (lw_pump, HANDLE, void * tag, lw_pump_callback);
-		void (* update_callbacks) (lw_pump, lw_pump_watch,
+		lw_pump_watch (* add)	  (lw_pump, HANDLE, const char * desc, void * tag, lw_pump_callback);
+		void (* update_callbacks) (lw_pump, lw_pump_watch, const char* updateReason,
 								   void * tag, lw_pump_callback);
 		#else // !_WIN32
 
-		lw_pump_watch (* add) (lw_pump, int FD, void * tag,
+		lw_pump_watch (* add) (lw_pump, int FD, const char* desc, void * tag,
 							   lw_pump_callback on_read_ready,
 							   lw_pump_callback on_write_ready,
 							   lw_bool edge_triggered);
-		void (* update_callbacks) (lw_pump, lw_pump_watch, void * tag,
+		void (* update_callbacks) (lw_pump, lw_pump_watch, const char* updateReason, void * tag,
 								   lw_pump_callback on_read_ready,
 								   lw_pump_callback on_write_ready,
 								   lw_bool edge_triggered);
 
 		#endif // _WIN32
 
-		void (* remove)	 (lw_pump, lw_pump_watch);
+		void (* remove)	 (lw_pump, lw_pump_watch, const char* deleteReason);
 		void (* post)	 (lw_pump, void * fn, void * param);
 		void (* cleanup) (lw_pump);
 
@@ -383,7 +421,7 @@ typedef lw_i8 lw_bool;
 	/* FDStream */
 
 	lw_import  lw_fdstream  lw_fdstream_new		(lw_pump);
-	lw_import		  void  lw_fdstream_set_fd	(lw_fdstream, lw_fd fd, lw_pump_watch watch, lw_bool auto_close, lw_bool is_socket);
+	lw_import		  void  lw_fdstream_set_fd	(lw_fdstream, lw_fd fd, lw_bool auto_close, lw_bool is_socket);
 	lw_import		  void  lw_fdstream_cork	(lw_fdstream);
 	lw_import		  void  lw_fdstream_uncork	(lw_fdstream);
 	lw_import		  void  lw_fdstream_nagle	(lw_fdstream, lw_bool nagle);
@@ -408,7 +446,7 @@ typedef lw_i8 lw_bool;
 
 	/* Timer */
 
-	lw_import		lw_timer  lw_timer_new			(lw_pump);
+	lw_import		lw_timer  lw_timer_new			(lw_pump, const char * timer_name);
 	lw_import			void  lw_timer_delete		(lw_timer);
 	lw_import			void  lw_timer_start		(lw_timer, long milliseconds);
 	lw_import		 lw_bool  lw_timer_started		(lw_timer);
@@ -462,10 +500,13 @@ typedef lw_i8 lw_bool;
 	lw_import			void  lw_client_connect_addr		(lw_client, lw_addr);
 	lw_import			void  lw_client_connect_secure		(lw_client, const char * host, lw_ui16 port);
 	lw_import			void  lw_client_connect_addr_secure	(lw_client, lw_addr);
+	lw_import			void  lw_client_set_local_port		(lw_client, lw_ui16 localport);
 	lw_import			void  lw_client_disconnect			(lw_client);
 	lw_import		 lw_bool  lw_client_connected			(lw_client);
 	lw_import		 lw_bool  lw_client_connecting			(lw_client);
 	lw_import		 lw_addr  lw_client_server_addr			(lw_client);
+	lw_import		 lw_addr  lw_client_local_addr			(lw_client);
+	lw_import		 lw_ui32  lw_client_ifidx				(lw_client);
 
 	typedef void (lw_callback * lw_client_hook_connect) (lw_client);
 	lw_import void lw_client_on_connect (lw_client, lw_client_hook_connect);
@@ -494,14 +535,21 @@ typedef lw_i8 lw_bool;
 	lw_import			  time_t  lw_server_cert_expiry_time(lw_server);
 	lw_import			 lw_bool  lw_server_can_npn			(lw_server);
 	lw_import				void  lw_server_add_npn			(lw_server, const char * protocol);
-	lw_import		const char *  lw_server_client_npn		(lw_server_client);
-	lw_import			 lw_bool  lw_server_client_is_websocket (lw_server_client);
-	lw_import			 lw_addr  lw_server_client_addr		(lw_server_client);
 	lw_import			  size_t  lw_server_num_clients		(lw_server);
 	lw_import	lw_server_client  lw_server_client_first	(lw_server);
 	lw_import	lw_server_client  lw_server_client_next		(lw_server_client);
 	lw_import			  void *  lw_server_tag				(lw_server);
 	lw_import				void  lw_server_set_tag			(lw_server, void *);
+	lw_import				void  lw_server_hole_punch		(lw_server, lw_addr remote, lw_ui16 local_port);
+
+	/* Server's client */
+
+	lw_import		const char *  lw_server_client_npn			  (lw_server_client);
+	lw_import			 lw_bool  lw_server_client_is_websocket	  (lw_server_client);
+	lw_import			 lw_bool  lw_server_client_is_hole_punch  (lw_server_client);
+	lw_import			 lw_addr  lw_server_client_remote_addr	  (lw_server_client);
+	lw_import			 lw_addr  lw_server_client_local_addr	  (lw_server_client);
+	lw_import			 lw_ui32  lw_server_client_ifidx	  (lw_server_client);
 
 	typedef void (lw_callback * lw_server_hook_connect) (lw_server, lw_server_client);
 	lw_import void lw_server_on_connect (lw_server, lw_server_hook_connect);
@@ -521,15 +569,25 @@ typedef lw_i8 lw_bool;
 	lw_import		void  lw_udp_delete		 (lw_udp);
 	lw_import		void  lw_udp_host		 (lw_udp, lw_ui16 port);
 	lw_import		void  lw_udp_host_filter (lw_udp, lw_filter);
-	lw_import		void  lw_udp_host_addr	 (lw_udp, lw_addr);
+	lw_import		void  lw_udp_host_addr	 (lw_udp, lw_addr, lw_ui16 local_port);
 	lw_import	 lw_bool  lw_udp_hosting	 (lw_udp);
 	lw_import		void  lw_udp_unhost		 (lw_udp);
 	lw_import	 lw_ui16  lw_udp_port		 (lw_udp);
-	lw_import		void  lw_udp_send		 (lw_udp, lw_addr, const char * buffer, size_t size);
+	/*	You can pass from address NULL, and ifidx 0, if you want no specific outgoing address,
+		or no specific network interface.
+		This is acceptable if the remote side does something other than IP matching to identify you;
+		for example, you send a private phrase with each UDP datagram.
+		If you are using IP matching, e.g. TCP + UDP together, or want a consistent IP,
+		you must specify your local address you're sending from, as local IPv6 addresses can be
+		temporary and expire due to RFC 4941, particularly on Windows. */
+	lw_import		void  lw_udp_send		 (lw_udp, lw_addr local_addr, lw_ui32 ifidx, lw_addr remote_addr,
+											  const char* buffer, size_t size);
+	lw_import	    void  lw_udp_send_unreachable (lw_udp, lw_addr local, lw_ui32 ifidx, lw_addr remote,
+												   const char* origMsg, lw_ui32 origMsgSize);
 	lw_import	  void *  lw_udp_tag		 (lw_udp);
 	lw_import		void  lw_udp_set_tag	 (lw_udp, void *);
 
-	typedef void (lw_callback * lw_udp_hook_data)(lw_udp, lw_addr, const char * buffer, size_t size);
+	typedef void (lw_callback * lw_udp_hook_data)(lw_udp, lw_addr, lw_ui32, lw_addr, const char * buffer, size_t size);
 	lw_import void lw_udp_on_data (lw_udp, lw_udp_hook_data);
 
 	typedef void (lw_callback * lw_udp_hook_error) (lw_udp, lw_error);
@@ -662,12 +720,16 @@ typedef lw_i8 lw_bool;
 	typedef void (lw_callback * lw_ws_hook_upload_post) (lw_ws, lw_ws_req, lw_ws_upload uploads [], size_t num_uploads);
 	lw_import void lw_ws_on_upload_post (lw_ws, lw_ws_hook_upload_post);
 
-	typedef void (lw_callback* lw_ws_hook_websocket_message) (lw_ws, lw_ws_req, const char * buffer, size_t size);
+	typedef void (lw_callback * lw_ws_hook_websocket_message) (lw_ws, lw_ws_req, const char * buffer, size_t size);
 	lw_import void lw_ws_on_websocket_message (lw_ws, lw_ws_hook_websocket_message);
 
+	void * lw_malloc_or_exit (const size_t size);
+	void * lw_calloc_or_exit (const size_t count, const size_t size);
+	void * lw_realloc_or_exit (void * origptr, size_t newsize);
+	// Returns 1+ if success, -1 if not found, -2 if error; use 0 for default
+	lw_ui32 lwp_get_ifidx (struct sockaddr_storage* s);
 
 #ifdef __cplusplus
-
 } /* extern "C" */
 
 #ifdef _lacewing_wrap_cxx
@@ -678,54 +740,54 @@ typedef lw_i8 lw_bool;
 #ifdef _MSC_VER
 	#define lw_sprintf_s sprintf_s
 #else
-	#define lw_sprintf_s sprintf
+	#define lw_sprintf_s(a,b,...) sprintf(a, __VA_ARGS__)
 #endif // _MSC_VER
-
-#pragma region Phi stuff
 
 // Every Unicode library decomposes into 4-byte chars, probably for the x86 nativeness, and
 // for one code unit per code point.
 // For platform compatibility, we use a third-party library; this one is actually used in Julia.
 #include "deps/utf8proc.h"
 
-/// <summary> Converts a IPv4-mapped-IPv6 address to IPv4, stripping ports.
-/// 		  If the address is IPv4 or unmapped IPv6, copies it without port. </summary>
+// (Deprecated) Converts a IPv4-mapped-IPv6 address to IPv4, stripping ports.
+// If the address is IPv4 or unmapped IPv6, copies it without the port.
+// Deprecated: use lw_addr_to_string flags
+[[deprecated]]
 void lw_addr_prettystring(const char * input, char * const output, size_t outputSize);
 
-/// <summary> Compares if two strings match, returns true if so. Does a size check, then does flat buffer comparison;
-///			  make sure if you're passing UTF-8, both args are valid, normalized UTF-8 strings.
-///			  Does not validate or check strings' content. </summary>
+// Compares if two strings match, returns true if so. Does a size check, then does flat buffer comparison;
+// make sure if you're passing UTF-8, both args are valid, normalized UTF-8 strings.
+// Does not validate or check strings' content.
 bool lw_sv_cmp(const std::string_view first, const std::string_view second);
 
-/// <summary> Compares if two strings match, returns true if so. Case insensitive. Does a size check.
-///			  Expects both are valid UTF-8 strings, non-destructively simplified.
-///			  Also see lw_sv_cmp(). </summary>
+// Compares if two strings match, returns true if so. Case insensitive. Does a size check.
+// Expects both are valid UTF-8 strings, non-destructively simplified.
+// See lw_sv_cmp().
 bool lw_u8str_icmp(const std::string_view first, const std::string_view second);
 
-/// <summary> Validates a UTF-8 std::string as having valid UTF-8 codepoints.
-///			  Does not ensure strings are normalized; empty strings return true. </summary>
+// Validates a UTF-8 std::string as having valid UTF-8 codepoints.
+// Does not ensure strings are normalized. Empty strings return true.
 bool lw_u8str_validate(const std::string_view toValidate);
 
-/// <summary> Normalizes the passed std::string to its least-bytes equivalent (using NFC), and returns true.
-///			  Empty = true. Handles invalid UTF-8 strings by returning false. </summary>
+// Normalizes the passed std::string to its least-bytes equivalent (using NFC), and returns true.
+// Empty = true. Handles invalid UTF-8 strings by returning false.
 bool lw_u8str_normalize(std::string & input);
 
-/// <summary> Returns a NFC/NKFC, case-folded, stripped-down version of
-///			  passed string. Used for easier searching, and to prevent similar names as an exploit.
-///			  Handles invalid UTF-8 string by returning blank. </summary>
-/// <param name="destructive"> If true, converts to lowercase, and lumps some things together with UTF8PROC lumping.
-///							   Use false to check if two strings (after the simplifying) differ by case alone. </param>
-/// <param name="extralumping"> Replaces lookalike characters (e.g. 0 and O to o). </param>
+/** Returns a NFC/NKFC, case-folded, stripped-down version of the passed string.
+	Used for easier searching, and to prevent similar names as an exploit.
+	Handles invalid UTF-8 string by returning blank.
+	@param destructive If true, converts to lowercase, and lumps some things together with UTF8PROC lumping.
+					   Use false to check if two strings (after the simplifying) differ by case alone.
+	@param extralumping Replaces lookalike characters (e.g. 0 and O to o). */
 std::string lw_u8str_simplify(const std::string_view first, bool destructive = true, bool extralumping = true);
 
-/// <summary> Removes whitespace, control, and strange code points from both beginning and end of string,
-///			  and returns the result. Stricter on the beginning. Ignores the middle of the string.
-///			  Handles invalid UTF-8 strings by returning blank. </summary>
-/// <param name="abortIfTrimNeeded"> If abort is specified, at the first code point needed to be trimmed,
-///									 the function aborts and returns an empty string_view instead. </param>
-/// <remarks> The front of the string must be letters, numbers, punctuation in Unicode category.
-///			  The end of the string is like the start, but also allows marks and symbols.
-///			  Both control and whitespace category will always be removed. </remarks>
+/** Removes whitespace, control, and strange code points from both beginning and end of string,
+	and returns the result. Stricter on the beginning. Ignores the middle of the string.
+	Handles invalid UTF-8 strings by returning blank.
+	@param abortIfTrimNeeded If abort is specified, at the first code point needed to be trimmed,
+							 the function aborts and returns an empty string_view instead.
+	@remarks The front of the string must be letters, numbers, punctuation in Unicode category.
+			 The end of the string is like the start, but also allows marks and symbols.
+			 Both control and whitespace category will always be removed. */
 std::string_view lw_u8str_trim(std::string_view toTrim, bool abortOnTrimNeeded = false);
 
 #if defined(_WIN32)
@@ -733,9 +795,6 @@ std::string_view lw_u8str_trim(std::string_view toTrim, bool abortOnTrimNeeded =
 // Returns null or a wide-converted version of the U8 string passed. Free it with free(). Pass size -1 for null-terminated strings.
 extern "C" lw_import wchar_t * lw_char_to_wchar(const char * u8str, int size);
 #endif
-
-// to preserve namespace
-#pragma endregion
 
 namespace lacewing
 {
@@ -764,7 +823,7 @@ struct _error
 };
 
 lw_import error error_new ();
-void error_delete (error);
+void error_delete (error&);
 
 /** event **/
 
@@ -786,7 +845,7 @@ struct _event
 };
 
 lw_import event event_new ();
-void event_delete (event);
+void event_delete (event&);
 
 
 /** pump **/
@@ -804,25 +863,25 @@ struct _pump
 
 	#ifdef _WIN32
 
-		lw_import lw_pump_watch add (HANDLE, void * tag, lw_pump_callback);
-		lw_import void update_callbacks (lw_pump_watch, void * tag, lw_pump_callback);
+		lw_import lw_pump_watch add (HANDLE, const char * desc, void * tag, lw_pump_callback);
+		lw_import void update_callbacks (lw_pump_watch, const char* updateReason, void * tag, lw_pump_callback);
 
 	#else
 
-		lw_import lw_pump_watch add (int fd, void * tag,
+		lw_import lw_pump_watch add (int fd, const char* desc, void * tag,
 									 lw_pump_callback on_read_ready,
 									 lw_pump_callback on_write_ready = 0,
 									 bool edge_triggered = true);
 
-		lw_import void update_callbacks (lw_pump_watch, void * tag,
+		lw_import void update_callbacks (lw_pump_watch, const char* updateReason, void * tag,
 										 lw_pump_callback on_read_ready,
 										 lw_pump_callback on_write_ready = 0,
 										 bool edge_triggered = true);
 
 	#endif
 
-	void remove (lw_pump_watch);
-	void post_remove (lw_pump_watch);
+	void remove (lw_pump_watch, const char* deleteReason);
+	void post_remove (lw_pump_watch, const char* deleteReason);
 
 	void post (void * proc, void * parameter = 0);
 
@@ -831,7 +890,7 @@ struct _pump
 };
 
 lw_import pump pump_new ();
-lw_import void pump_delete (pump);
+lw_import void pump_delete (pump&);
 
 
 /** eventpump **/
@@ -852,6 +911,7 @@ struct _eventpump : public _pump
 };
 
 lw_import eventpump eventpump_new ();
+lw_import void eventpump_delete(eventpump&);
 
 
 /** thread **/
@@ -872,7 +932,7 @@ struct _thread
 };
 
 lw_import thread thread_new (const char * name, void * proc);
-lw_import void thread_delete (thread);
+lw_import void thread_delete (thread&);
 
 
 /** timer **/
@@ -896,8 +956,8 @@ struct _timer
 	lw_import void * tag ();
 };
 
-lw_import timer timer_new (pump);
-lw_import void timer_delete (timer);
+lw_import timer timer_new (pump, const char *);
+lw_import void timer_delete (timer&);
 
 
 /** sync **/
@@ -921,7 +981,7 @@ protected:
 };
 
 lw_import sync sync_new ();
-lw_import void sync_delete (sync);
+lw_import void sync_delete (sync&);
 
 
 /** stream **/
@@ -983,7 +1043,7 @@ struct _stream
 };
 
 lw_import stream stream_new (const lw_streamdef *, pump);
-lw_import void stream_delete (stream);
+lw_import void stream_delete (stream&);
 
 
 /** pipe **/
@@ -1008,7 +1068,7 @@ struct _fdstream : public _stream
 	lw_class_wraps (fdstream);
 
 	lw_import void set_fd
-		(lw_fd, lw_pump_watch watch = 0, bool auto_close = false, bool is_socket = false);
+		(lw_fd, bool auto_close = false, bool is_socket = false);
 
 	lw_import bool valid ();
 
@@ -1060,7 +1120,7 @@ struct _address
 	lw_import error resolve ();
 
 	lw_import in6_addr toin6_addr ();
-	lw_import const char * tostring ();
+	lw_import const char * tostring (lw_addr_tostring_flags flags = lw_addr_tostring_flags_default);
 	lw_import operator const char *  ();
 
 	lw_import bool operator == (address);
@@ -1076,7 +1136,7 @@ lw_import address address_new (const char * hostname, lw_ui16 port);
 lw_import address address_new (const char * hostname, const char * service, int hints);
 lw_import address address_new (const char * hostname, lw_ui16 port, int hints);
 
-lw_import void address_delete (address);
+lw_import void address_delete (address&);
 
 
 /** filter **/
@@ -1105,12 +1165,15 @@ struct _filter
 	lw_import void ipv6 (bool enabled);
 	lw_import bool ipv6 ();
 
+	lw_import void remote_mask (bool enabled);
+	lw_import bool remote_mask ();
+
 	lw_import void tag (void *);
 	lw_import void * tag ();
 };
 
 lw_import filter filter_new ();
-lw_import void filter_delete (filter);
+lw_import void filter_delete (filter&);
 
 
 /** client **/
@@ -1121,13 +1184,16 @@ struct _client : public _fdstream
 {
 	lw_class_wraps (client);
 
-	lw_import void connect (const char * host, lw_ui16 port);
+	lw_import void connect (const char * host, lw_ui16 remote_port);
 	lw_import void connect (address);
+	lw_import void setlocalport (lw_ui16 port);
 
 	lw_import bool connected ();
 	lw_import bool connecting ();
 
 	lw_import address server_address ();
+	lw_import address local_address ();
+	lw_import lw_ui32 ifidx ();
 
 	typedef void (lw_callback * hook_connect) (client);
 	typedef void (lw_callback * hook_disconnect) (client);
@@ -1144,6 +1210,7 @@ struct _client : public _fdstream
 };
 
 lw_import client client_new (pump);
+lw_import void client_delete (client&);
 
 
 /** server **/
@@ -1177,6 +1244,8 @@ struct _server
 	lw_import size_t num_clients ();
 	lw_import server_client client_first ();
 
+	lw_import void hole_punch (address remote_addr, lw_ui16 local_port);
+
 	typedef void (lw_callback * hook_connect) (server, server_client);
 	typedef void (lw_callback * hook_disconnect) (server, server_client);
 
@@ -1195,19 +1264,22 @@ struct _server
 };
 
 lw_import server server_new (pump);
-lw_import void server_delete (server);
+lw_import void server_delete (server&);
 
 struct _server_client : public _fdstream
 {
 	lw_class_wraps (server_client);
 
-	lw_import lacewing::address address ();
+	lw_import lacewing::address remote_address ();
+	lw_import lacewing::address local_address ();
+	lw_import lw_ui32 ifidx();
 
 	lw_import server_client next ();
 
 	lw_import const char * npn ();
 
 	lw_import lw_bool is_websocket ();
+	lw_import lw_bool is_hole_punch ();
 };
 
 
@@ -1221,17 +1293,25 @@ struct _udp
 
 	lw_import void host (lw_ui16 port);
 	lw_import void host (filter);
-	lw_import void host (address);
+	lw_import void host (address, lw_ui16 local_port = 0);
 
 	lw_import bool hosting ();
 	lw_import void unhost ();
 
 	lw_import lw_ui16 port ();
 
-	lw_import void send (address, const char * data, size_t size = -1);
+	/*	You can pass from address NULL, and ifidx 0, if you want no specific outgoing address,
+		or no specific network interface.
+		This is acceptable if the remote side does something other than IP matching to identify you;
+		for example, you send a private phrase with each UDP datagram.
+		If you are using IP matching, e.g. TCP + UDP together, or want a consistent IP,
+		you must specify your local address you're sending from, as local IPv6 addresses can be
+		temporary and expire due to RFC 4941, particularly on Windows. */
+	lw_import void send (address from, lw_ui32 ifidx, address to, const char * data, size_t size = -1);
+	lw_import void send_unreachable (address from, lw_ui32 ifidx, address to, const char* data, size_t size);
 
 	typedef void (lw_callback * hook_data)
-		(udp, address, char * buffer, size_t size);
+		(udp, address, lw_ui32, address, char * buffer, size_t size);
 
 	typedef void (lw_callback * hook_error) (udp, error);
 
@@ -1243,7 +1323,7 @@ struct _udp
 };
 
 lw_import udp udp_new (pump);
-lw_import void udp_delete (udp);
+lw_import void udp_delete (udp&);
 
 
 /** webserver **/
@@ -1330,7 +1410,7 @@ struct _webserver
 };
 
 lw_import webserver webserver_new (pump);
-lw_import void webserver_delete (webserver);
+lw_import void webserver_delete (webserver&);
 
 struct _webserver_request : public _stream
 {
@@ -1503,7 +1583,7 @@ struct _flashpolicy
 };
 
 lw_import flashpolicy flashpolicy_new (pump);
-lw_import void flashpolicy_delete (flashpolicy);
+lw_import void flashpolicy_delete (flashpolicy&);
 
 //#pragma region Phi stuff
 // NOTE: if you edit this due to new liblacewing release, note:
@@ -1536,6 +1616,13 @@ lw_import void flashpolicy_delete (flashpolicy);
 
 // Make sure you also add UDP keep-alive. Routers close connection otherwise.
 // Make sure you also fix the timer issue in unix.
+
+
+// Maximum size of a UDP datagram is 65535, minus IP(v4/v6) header, minus Lacewing Relay UDP header,
+// with some extra margin, due to WebSocket psuedo.
+// It's probably fragmented beyond 1400 bytes anyway, due to Ethernet MTU.
+// UDP exceeding this size will be silently dropped.
+const static lw_ui16 relay_max_udp_payload = UINT16_MAX - 40 - 20;
 
 struct readlock;
 struct writelock;
@@ -1694,13 +1781,11 @@ protected:
 #endif
 
 
-
-
 struct relayclientinternal;
 struct relayclient
 {
 public:
-	const static int buildnum = 103;
+	const static int buildnum = 105;
 
 	void * internaltag = nullptr, *tag = nullptr;
 
@@ -1709,6 +1794,9 @@ public:
 
 	void connect(const char * host, lw_ui16 port = 6121);
 	void connect(lacewing::address);
+	// For pinholing connections, set before connect()
+	void setlocalport(lw_ui16 port);
+	void scanforservers(lw_ui16 port, lw_ui16 numMsgs);
 
 	bool connecting();
 	bool connected();
@@ -1743,6 +1831,33 @@ public:
 		std::string name() const;
 		std::string namesimplified() const;
 	};
+	struct netscanreply
+	{
+		// Local address response was received to (generally broadcast address)
+		lacewing::address localAddr = nullptr;
+		// Network interface index (1+)
+		lw_ui32 ifidx;
+		// Remote address response was received from
+		lacewing::address remoteAddr = nullptr;
+		// Time between multicast request and response
+		std::chrono::steady_clock::duration responseTime;
+		// Build number of server
+		lw_ui8 serverBuildNum;
+		// Minimum build of client expected by server
+		lw_ui8 minClientBuild;
+		// Build number of client at time server was built - not a hard limit
+		lw_ui8 clientBuildNum;
+		// Server liblacewing version and platform info
+		std::string serverVersion;
+		// Server welcome message, UTF-8, may be blank
+		std::string welcomeMessage;
+
+		~netscanreply()
+		{
+			lacewing::address_delete(localAddr);
+			lacewing::address_delete(remoteAddr);
+		}
+	};
 
 	size_t channellistingcount() const;
 	const std::vector<std::shared_ptr<channellisting>> & getchannellisting() const;
@@ -1774,18 +1889,14 @@ public:
 		std::atomic<bool> _readonly = false;
 		std::vector<std::shared_ptr<relayclient::channel::peer>> peers;
 
-
-		/// <summary> searches for the first peer by id number. </summary>
-		/// <param name="id"> id to look up. </param>
-		/// <returns> null if it fails, else the matching peer. </returns>
+		// Searches for the first peer by id number, returns null if not found
 		std::shared_ptr<relayclient::channel::peer> findpeerbyid(lw_ui16 id);
 
-		/// <summary> Adds a new peer. </summary>
-		/// <param name="peerid"> ID number for the peer. </param>
-		/// <param name="flags"> The flags of the peer connect/channel join message.
-		/// 					 0x1 = master. other flags are not accepted. </param>
-		/// <param name="name"> The name. Cannot be null or blank. </param>
-		/// <returns> null if it fails, else a relayclientinternal::peer *. </returns>
+		/** Adds a new peer.
+		 * @param peerid ID number for the peer.
+		 * @param flags  The flags of the peer connect/channel join message.
+		 *				 0x1 = master. Other flags are not accepted.
+		 * @param name   The peer name. Must not be null or blank. */
 		std::shared_ptr<relayclient::channel::peer> addnewpeer(lw_ui16 peerid, lw_ui8 flags, std::string_view name);
 
 	public:
@@ -1879,10 +1990,14 @@ public:
 	typedef void(*handler_peer_disconnect)		(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> channel, std::shared_ptr<lacewing::relayclient::channel::peer> peer);
 	typedef void(*handler_peer_changename)		(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> channel, std::shared_ptr<lacewing::relayclient::channel::peer> peer, std::string oldname);
 	typedef void(*handler_channellistreceived)	(lacewing::relayclient &client);
+	typedef void(*handler_networkscanreply)		(lacewing::relayclient &client, lacewing::relayclient::netscanreply & rply);
+	typedef void(*handler_networkscancomplete)	(lacewing::relayclient &client);
 
 	void onconnect(handler_connect);
 	void onconnectiondenied(handler_connectiondenied);
 	void ondisconnect(handler_disconnect);
+	void onnetworkscanreply(handler_networkscanreply);
+	void onnetworkscancomplete(handler_networkscancomplete);
 	void onmessage_server(handler_message_server);
 	void onmessage_channel(handler_message_channel);
 	void onmessage_peer(handler_message_peer);
@@ -1924,7 +2039,7 @@ struct codepointsallowlist {
 struct relayserverinternal;
 struct relayserver
 {
-	static const int buildnum = 37;
+	static const int buildnum = 39;
 
 	void * internaltag, * tag = nullptr;
 
@@ -1932,6 +2047,8 @@ struct relayserver
 	lacewing::webserver websocket;
 	lacewing::udp udp;
 	lacewing::flashpolicy flash;
+	// Pump, used to create new UDP hole punches if required
+	lacewing::pump pmp;
 
 	relayserver(pump) noexcept;
 	~relayserver() noexcept;
@@ -1943,6 +2060,7 @@ struct relayserver
 	void unhost();
 	// This works with clients of regular server, so you should use this instead of websocket->unhost/unhost_secure
 	void unhost_websocket(bool insecure, bool secure);
+	void hole_punch(const char* ip, lw_ui16 local_port);
 
 	bool hosting();
 	lw_ui16 port();
@@ -1965,18 +2083,18 @@ struct relayserver
 
 		std::shared_ptr<client> channelmaster() const;
 
-		/// <summary> Reads a copy of the channel name. Automatically read-locks the channel. </summary>
+		// Reads a copy of the channel name. Automatically read-locks the channel.
 		std::string name() const;
-		/// <summary> Reads a simplified copy of the channel name. Automatically read-locks the channel. </summary>
+		// Reads a simplified copy of the channel name. Automatically read-locks the channel.
 		std::string nameSimplified() const;
-		/// <summary> Sets the channel name. </summary>
+		// Sets the channel name.
 		void name(std::string_view str);
 
 		bool hidden() const;
 		bool autocloseenabled() const;
 		bool readonly() const;
 
-		/// <summary> Throw all clients off this channel, sending Leave Request Success. </summary>
+		// Throw all clients off this channel, sending Leave Request Success.
 		void close();
 
 		void send(lw_ui8 subchannel, std::string_view message, lw_ui8 variant = 0);
@@ -2029,7 +2147,6 @@ struct relayserver
 	void channel_addclient(std::shared_ptr<relayserver::channel> channel, std::shared_ptr<relayserver::client> client);
 	void channel_removeclient(std::shared_ptr<relayserver::channel> channel, std::shared_ptr<relayserver::client> client);
 
-
 	struct client
 	{
 		friend relayserverinternal;
@@ -2059,13 +2176,13 @@ struct relayserver
 
 		lw_ui16 id();
 
-		std::string_view getaddress() const;
+		std::string getaddress() const;
 		in6_addr getaddressasint() const;
 		const char * getimplementation() const;
 		clientimpl getimplementationvalue() const;
 		std::vector<std::shared_ptr<lacewing::relayserver::channel>> & getchannels();
 
-		void disconnect(int websocket_exit_code = 0);
+		void disconnect(std::shared_ptr<relayserver::client> cli = nullptr, int websocket_exit_code = 0);
 
 		void send(lw_ui8 subchannel, std::string_view data, lw_ui8 variant = 0);
 		void blast(lw_ui8 subchannel, std::string_view data, lw_ui8 variant = 0);
@@ -2091,8 +2208,9 @@ struct relayserver
 		// Since there's a logical use for looking up address during closing, we'll keep a copy.
 		std::string address;
 		in6_addr addressInt = {};
+
 		// Time the Relay connection was approved - zero timepoint if not yet approved
-		::std::chrono::high_resolution_clock::time_point connectRequestApprovedTime;
+		::std::chrono::steady_clock::time_point connectRequestApprovedTime;
 		::std::chrono::steady_clock::time_point lasttcpmessagetime;
 		::std::chrono::steady_clock::time_point lastudpmessagetime; // UDP problem where unused connections are dropped by router, so must keep these separate
 		::std::chrono::steady_clock::time_point lastchannelorpeermessagetime; // For clients that go idle
@@ -2106,8 +2224,8 @@ struct relayserver
 
 		std::string clientImplStr;
 
-		bool pseudoUDP = true; // Is UDP not supported (e.g. HTML5, UWP JS) so "faked" by receiver
-
+		// Is UDP not supported (e.g. HTML5, UWP JS) so "faked" by receiver
+		bool pseudoUDP = false;
 		// Got opening null byte, indicating not a HTTP client.
 		bool gotfirstbyte = false;
 		// After TCP connect approval, Lacewing connect message request was received, and server has said OK to it
@@ -2119,7 +2237,18 @@ struct relayserver
 		// If false, next ping timer tick will consider a failed ping and kick the client, so it is true by default.
 		bool pongedOnTCP = true;
 
-		lacewing::address udpaddress;
+		// Has a UDP message received, confirming its UDP address. Implies psuedoUDP is false.
+		bool lockedUDPAddress = false;
+		// If lockedUDPAddress is false, this is a dup of TCP remote address. UDP may arrive
+		// from a different IP to TCP if client is behind CG-NAT
+		lacewing::address udpremoteaddress = nullptr;
+		// Local UDP address for replying from - prevents IPv6 swapping out to an unexpected address,
+		// on client machines. These are not set until UDPHello is received.
+		lacewing::address udplocaladdress = nullptr;
+		// Local network interface index. 0 is any (OS picks), neg is invalid, 1+ is index.
+		lw_ui32 ifidx = -1;
+		// Specific socket if it is a direct hole punch connection
+		lacewing::udp udppunch = nullptr;
 
 		lw_ui16 _id = 0xFFFF;
 

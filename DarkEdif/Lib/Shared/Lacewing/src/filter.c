@@ -1,11 +1,11 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
  * Copyright (C) 2011-2013 James McLaughlin.
- * Copyright (C) 2012-2022 Darkwire Software.
+ * Copyright (C) 2012-2026 Darkwire Software.
  * All rights reserved.
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
 
 #include "common.h"
@@ -13,7 +13,12 @@
 
 struct _lw_filter
 {
-	lw_bool reuse, ipv6;
+	// Turns on socket opt for reuse
+	lw_bool reuse;
+	// IPv6 (possibly dual-stack), or IPv4 only
+	lw_bool ipv6;
+	// Remote address is a mask, not a single address
+	lw_bool remote_mask;
 
 	lw_addr local, remote;
 	long local_port, remote_port;
@@ -24,6 +29,8 @@ struct _lw_filter
 lw_filter lw_filter_new ()
 {
 	lw_filter ctx = (lw_filter) malloc (sizeof (*ctx));
+	if (!ctx)
+		return NULL;
 
 	ctx->local_port = 0;
 	ctx->remote_port = 0;
@@ -33,6 +40,7 @@ lw_filter lw_filter_new ()
 
 	ctx->reuse = lw_true;
 	ctx->ipv6 = lw_true;
+	ctx->remote_mask = lw_false;
 
 	return ctx;
 }
@@ -43,6 +51,7 @@ lw_filter lw_filter_clone (lw_filter filter)
 
 	lw_filter_set_ipv6 (ctx, lw_filter_ipv6 (filter));
 	lw_filter_set_reuse (ctx, lw_filter_reuse (filter));
+	lw_filter_set_remote_mask (ctx, lw_filter_remote_mask (filter));
 
 	lw_filter_set_local_port (ctx, lw_filter_local_port (filter));
 	lw_filter_set_remote_port (ctx, lw_filter_remote_port (filter));
@@ -130,6 +139,42 @@ lw_bool lw_filter_reuse (lw_filter ctx)
 	return ctx->reuse;
 }
 
+void lw_filter_set_remote_mask(lw_filter ctx, lw_bool enabled)
+{
+	ctx->remote_mask = enabled;
+}
+
+lw_bool lw_filter_remote_mask(lw_filter ctx)
+{
+	return ctx->reuse;
+}
+lw_bool lw_filter_check_remote_addr(lw_filter ctx, lw_addr addr)
+{
+	if (!ctx || (!ctx->remote && !ctx->remote_port))
+		return lw_true;
+	if (ctx->remote_port && ctx->remote_port != lw_addr_port(addr))
+		return lw_false;
+	if (!ctx->ipv6)
+	{
+		// How did we get IPv6 on a IPv4 only socket?
+		if (lw_addr_ipv6(addr))
+			return lw_false;
+
+		// IPv4: check either address match or mask suitable
+		if (!ctx->remote_mask)
+			return lw_addr_equal(ctx->remote, addr);
+		const lw_ui32 * const ip4Mask = (lw_ui32 *)&((struct sockaddr_in*)ctx->remote->info->ai_addr)->sin_addr;
+		const lw_ui32 * const ip4 = (lw_ui32 *)&((struct sockaddr_in*)addr->info->ai_addr)->sin_addr;
+		return ((*ip4) & (*ip4Mask)) == *ip4;
+	}
+	if (!ctx->remote_mask)
+		return lw_addr_equal(ctx->remote, addr);
+
+	const lw_ui64* const ip6Mask = (lw_ui64*)&((struct sockaddr_in6*)ctx->remote->info->ai_addr)->sin6_addr;
+	const lw_ui64* const ip6 = (lw_ui64 *)&((struct sockaddr_in6*)addr->info->ai_addr)->sin6_addr;
+	return ((ip6[0] & ip6Mask[0]) == ip6[0]) && ((ip6[1] & ip6Mask[1]) == ip6[1]);
+}
+
 void lw_filter_set_ipv6 (lw_filter ctx, lw_bool enabled)
 {
 	ctx->ipv6 = enabled;
@@ -167,13 +212,15 @@ void lw_filter_set_remote_port (lw_filter ctx, long port)
 }
 
 lwp_socket lwp_create_server_socket (lw_filter filter, int type,
-									 int protocol, lw_error error)
+									 int protocol, lw_bool* madeipv6, lw_error error)
 {
 	lwp_socket s;
 	socklen_t addr_len;
 	struct sockaddr_storage addr;
 	lw_bool ipv6;
-	int reuse;
+	int reuse, yes = 1;
+	if (madeipv6)
+		*madeipv6 = lw_false;
 
 	ipv6 = lw_filter_ipv6 (filter);
 
@@ -258,9 +305,27 @@ lwp_socket lwp_create_server_socket (lw_filter filter, int type,
 
 	#endif
 
-	ipv6success:
+ipv6success:
+
 	if (ipv6)
-	  lwp_disable_ipv6_only (s);
+	{
+		lwp_disable_ipv6_only (s);
+		// Turn on PKTINFO options to get local IP address/interface receiving incoming datagrams,
+		// useful for consistent routing/outgoing IP
+		// https://stackoverflow.com/a/12398774
+#ifndef IPV6_RECVPKTINFO
+#define IPV6_RECVPKTINFO IPV6_PKTINFO
+#endif
+		if (protocol == IPPROTO_UDP)
+			lwp_setsockopt(s, IPPROTO_IPV6, IPV6_RECVPKTINFO, (char*)&yes, sizeof(yes));
+		if (madeipv6)
+			*madeipv6 = lw_true;
+	}
+
+	// Windows docs recommend turning on both for dual-stack
+	// Note that Windows only provides an IPv4 local address if remote address is IPv6-mapped
+	if (protocol == IPPROTO_UDP)
+		lwp_setsockopt(s, IPPROTO_IP, IP_PKTINFO, (char*)&yes, sizeof(yes));
 
 	reuse = lw_filter_reuse (filter) ? 1 : 0;
 	lwp_setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&reuse, sizeof(reuse));
@@ -306,6 +371,12 @@ lwp_socket lwp_create_server_socket (lw_filter filter, int type,
 	  }
 	}
 
+
+	#ifdef _WIN32
+		#pragma warning (suppress: 6385) // No, it's not over-reading
+	#endif
+
+	// always bind local address; either to wildcard, or to specific
 	if (bind (s, (struct sockaddr *) &addr, (socklen_t) addr_len) == -1)
 	{
 	  lw_error_add (error, lwp_last_socket_error);
@@ -328,6 +399,15 @@ lwp_socket lwp_create_server_socket (lw_filter filter, int type,
 	  lwp_close_socket (s);
 
 	  return -1;
+	}
+
+	if (filter->remote &&
+		((!lw_addr_ipv6(filter->remote) &&
+			((struct sockaddr_in*)filter->remote->info->ai_addr)->sin_addr.s_addr == INADDR_BROADCAST) ||
+			IN6_IS_ADDR_MULTICAST(&((struct sockaddr_in6*)filter->remote->info->ai_addr)->sin6_addr)))
+	{
+		reuse = 1;
+		lwp_setsockopt(s, SOL_SOCKET, SO_BROADCAST, (char*)&reuse, sizeof(reuse));
 	}
 
 	return s;

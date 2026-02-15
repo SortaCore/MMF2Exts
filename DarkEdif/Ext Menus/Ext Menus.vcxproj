@@ -62,9 +62,40 @@
   <PropertyGroup>
     <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
   </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>FUSION_INTERNAL_ACCESS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug Unicode|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>FUSION_INTERNAL_ACCESS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>FUSION_INTERNAL_ACCESS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Edittime Unicode|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>FUSION_INTERNAL_ACCESS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>FUSION_INTERNAL_ACCESS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Runtime Unicode|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>FUSION_INTERNAL_ACCESS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Lib\Shared\DarkEdif.cpp" />
     <ClCompile Include="..\Lib\Shared\Edif.cpp" />
+    <ClCompile Include="..\Lib\Shared\SurfaceMultiPlat.cpp" />
     <ClCompile Include="..\Lib\Windows\Edif.Edittime.cpp" />
     <ClCompile Include="..\Lib\Shared\Edif.General.cpp" />
     <ClCompile Include="..\Lib\Shared\Edif.Runtime.cpp" />
@@ -82,14 +113,15 @@
   <ItemGroup>
     <ClInclude Include="..\Inc\Shared\AllPlatformDefines.hpp" />
     <ClInclude Include="..\Inc\Shared\json.hpp" />
-    <ClInclude Include="..\Inc\Shared\DarkEdif.h" />
-    <ClInclude Include="..\Inc\Shared\Edif.h" />
+    <ClInclude Include="..\Inc\Shared\DarkEdif.hpp" />
+    <ClInclude Include="..\Inc\Shared\Edif.hpp" />
     <ClInclude Include="..\Inc\Shared\NonWindowsDefines.hpp" />
     <ClInclude Include="..\Inc\Shared\Strings.hpp" />
-    <ClInclude Include="..\Inc\Windows\MMFMasterHeader.h" />
-    <ClInclude Include="..\Inc\Shared\ObjectSelection.h" />
-    <ClInclude Include="Common.h" />
-    <ClInclude Include="Extension.h" />
+    <ClInclude Include="..\Inc\Shared\SurfaceMultiPlat.hpp" />
+    <ClInclude Include="..\Inc\Windows\MMFWindowsMasterHeader.hpp" />
+    <ClInclude Include="..\Inc\Shared\ObjectSelection.hpp" />
+    <ClInclude Include="Common.hpp" />
+    <ClInclude Include="Extension.hpp" />
     <ClInclude Include="Resource.h" />
   </ItemGroup>
   <ItemGroup>

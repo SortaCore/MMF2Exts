@@ -1,11 +1,11 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
  * Copyright (C) 2012 James McLaughlin.
- * Copyright (C) 2012-2022 Darkwire Software.
+ * Copyright (C) 2012-2026 Darkwire Software.
  * All rights reserved.
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
 
 #include "common.h"
@@ -36,6 +36,9 @@ lw_bool lwp_heapbuffer_add (lwp_heapbuffer * ctx, const char * buffer, size_t le
 	  if (! (*ctx = (lwp_heapbuffer) malloc (sizeof (**ctx) + init_alloc)))
 		 return lw_false;
 
+	#ifdef _MSC_VER
+		#pragma warning (suppress: 6386) // No, it's not overrunning
+	#endif
 	  memset (*ctx, 0, sizeof (**ctx));
 
 	  (*ctx)->allocated = init_alloc;
@@ -49,7 +52,7 @@ lw_bool lwp_heapbuffer_add (lwp_heapbuffer * ctx, const char * buffer, size_t le
 		 while (new_length > (*ctx)->allocated)
 			(*ctx)->allocated *= 3;
 
-		 if (! (*ctx = (lwp_heapbuffer) realloc
+		 if (! (*ctx = (lwp_heapbuffer) lw_realloc_or_exit
 					(*ctx, sizeof (**ctx) + (*ctx)->allocated)))
 		 {
 			return lw_false;

@@ -8,6 +8,9 @@ Temp/
 # HelpNDoc intermediate files, when you're editing HND files in "MFAs and documentation" folders
 *.lck
 *.hnd-journal
+# FreeFileSync database used for file syncing
+*.ffs_db
+*.ffs_lock
 
 #################
 ## Eclipse
@@ -69,6 +72,9 @@ local.properties
 [Vv]italize*/
 MFX/
 MOX/
+
+# Mid-edit VS files
+enc_temp_folder/
 
 *_i.c
 *_p.c
@@ -197,3 +203,4 @@ pip-log.txt
 DarkEdif*.sln
 *.sdf
 *.db
+*.001

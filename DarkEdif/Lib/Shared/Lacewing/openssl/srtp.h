@@ -26,8 +26,8 @@ extern "C" {
 # define SRTP_AES128_CM_SHA1_32 0x0002
 # define SRTP_AES128_F8_SHA1_80 0x0003
 # define SRTP_AES128_F8_SHA1_32 0x0004
-# define SRTP_NULL_SHA1_80      0x0005
-# define SRTP_NULL_SHA1_32      0x0006
+# define SRTP_NULL_SHA1_80	  0x0005
+# define SRTP_NULL_SHA1_32	  0x0006
 
 /* AEAD SRTP protection profiles from RFC 7714 */
 # define SRTP_AEAD_AES_128_GCM  0x0007

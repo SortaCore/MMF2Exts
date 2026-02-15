@@ -19,17 +19,17 @@
 	CFile* file;
 	NSUInteger pointer;
 	NSData* musicData;
-	
+
 	CMusicPlayer* musicPlayer;
 	//QTMovie* player;
     //AVAudioPlayer* player;
-	
+
     short handle;
     BOOL bPlaying;
 	BOOL bPaused;
 	NSString* name;
     int duration;
-    
+
 	NSTimeInterval pauseTime;
 }
 -(id)initWithMusicPlayer:(CMusicPlayer*)p;

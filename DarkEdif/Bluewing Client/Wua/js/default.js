@@ -1,7 +1,7 @@
-﻿// Note: this file was changed by Bluewing Client, using UWP exporter build 286.6.0 file as template.
-// Data\Runtime\Wua\version.txt was 286.6.0, but the UWP runtime also has
+﻿// Note: this file was changed by Bluewing Client, using UWP exporter build 295.10.0 file as template.
+// Data\Runtime\Wua\version.ini claims 286.6.0, but the UWP runtime also claims
 //    window["FusionVersion"] == "Clickteam Fusion HTML5 Exporter Build 291.2"
-// in runtime\application\CRunApp.js
+// in runtime\application\CRunApp.js, and both don't match Fusion's actual build.
 // Anyway, if the UWP exporter is updated, then copy lines 32-35 to a newer version
 
 // For an introduction to the Blank template, see the following documentation:
@@ -33,7 +33,7 @@
     scripts.push("js/runtime/libs/encoding.min.js");
     scripts.push("js/runtime/libs/zlib.min.js");
     scripts.push("js/runtime/libs/grapheme-splitter.min.js");
-
+	
     //debug only libs
 
     //core stuff
@@ -77,21 +77,21 @@
     scripts.push("js/runtime/renderers/webgl/CWebGLRendererTextContainer.js");
     scripts.push("js/runtime/renderers/webgl/CWebGLRendererImageContainer.js");
 
-    //shaders
-    //+scripts.push("js/runtime/renderers/webgl/shaders/shaderBasic.frag");
-    //+scripts.push("js/runtime/renderers/webgl/shaders/shaderBasic.vert");
-    //+scripts.push("js/runtime/renderers/webgl/shaders/shaderFilled.frag");
-    //+scripts.push("js/runtime/renderers/webgl/shaders/shaderFilled.vert");
-    //+scripts.push("js/runtime/renderers/webgl/shaders/shaderGradient.frag");
-    //+scripts.push("js/runtime/renderers/webgl/shaders/shaderGradient.vert");
-    //+scripts.push("js/runtime/renderers/webgl/shaders/shaderGradientEllipse.frag");
-    //+scripts.push("js/runtime/renderers/webgl/shaders/shaderGradientEllipse.vert");
+    //shaders  
+    //+scripts.push("js/runtime/renderers/webgl/shaders/shaderBasic.frag");  
+    //+scripts.push("js/runtime/renderers/webgl/shaders/shaderBasic.vert");  
+    //+scripts.push("js/runtime/renderers/webgl/shaders/shaderFilled.frag");  
+    //+scripts.push("js/runtime/renderers/webgl/shaders/shaderFilled.vert");  
+    //+scripts.push("js/runtime/renderers/webgl/shaders/shaderGradient.frag");  
+    //+scripts.push("js/runtime/renderers/webgl/shaders/shaderGradient.vert");  
+    //+scripts.push("js/runtime/renderers/webgl/shaders/shaderGradientEllipse.frag");  
+    //+scripts.push("js/runtime/renderers/webgl/shaders/shaderGradientEllipse.vert");  
     //+scripts.push("js/runtime/renderers/webgl/shaders/shaderPattern.frag");
     //+scripts.push("js/runtime/renderers/webgl/shaders/shaderPattern.vert");
     //+scripts.push("js/runtime/renderers/webgl/shaders/shaderTextured.frag");
     //+scripts.push("js/runtime/renderers/webgl/shaders/shaderTextured.vert");
-    //+scripts.push("js/runtime/renderers/webgl/shaders/shaderTexturedEllipse.frag");
-    //+scripts.push("js/runtime/renderers/webgl/shaders/shaderTexturedEllipse.vert");
+    //+scripts.push("js/runtime/renderers/webgl/shaders/shaderTexturedEllipse.frag");  
+    //+scripts.push("js/runtime/renderers/webgl/shaders/shaderTexturedEllipse.vert");  
 
     //application
     scripts.push("js/runtime/application/CRunApp.js");
@@ -117,7 +117,6 @@
     scripts.push("js/runtime/events/CQualToOiList.js");
     scripts.push("js/runtime/events/CForEach.js");
     scripts.push("js/runtime/events/CTimerEvents.js");
-    scripts.push("js/runtime/events/SaveSelection.js");
 
     //animations
     scripts.push("js/runtime/animations/CAnim.js");
@@ -719,6 +718,7 @@
     scripts.push("js/runtime/expressions/EXP_PLAYYBOTTOM.js");
     scripts.push("js/runtime/expressions/EXP_PLAYYTOP.js");
     scripts.push("js/runtime/expressions/EXP_CRENUMBERALL.js");
+    scripts.push("js/runtime/expressions/EXP_LASTFIXEDVALUE.js");
     scripts.push("js/runtime/expressions/EXP_CGETCOLOR1.js");
     scripts.push("js/runtime/expressions/EXP_CGETCOLOR2.js");
     scripts.push("js/runtime/expressions/EXP_CGETMAX.js");
@@ -798,6 +798,7 @@
     scripts.push("js/runtime/expressions/EXP_EXTGETNAME.js");
     scripts.push("js/runtime/expressions/EXP_EXTINSTANCEDATA.js");
     scripts.push("js/runtime/expressions/EXP_NUMBEROFSELECTED.js");
+    scripts.push("js/runtime/expressions/EXP_STRINGREPLACE.js");
 
     //extensions_begin
     scripts.push("js/runtime/extensions/source/Accelerometer.js");

@@ -1,11 +1,11 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
  * Copyright (C) 2011, 2012 James McLaughlin et al.
- * Copyright (C) 2012-2022 Darkwire Software.
+ * Copyright (C) 2012-2026 Darkwire Software.
  * All rights reserved.
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
 
 #include "../common.h"
@@ -40,6 +40,16 @@ static void * KERNEL32 (const char * fn)
 	return DLL ? (void *) GetProcAddress (DLL, fn) : 0;
 }
 
+static void * IPHlp32 (const char * fn)
+{
+	static HINSTANCE DLL = 0;
+
+	if (!DLL)
+		DLL = LoadLibraryA ("iphlpapi.dll");
+
+	return DLL ? (void *) GetProcAddress (DLL, fn) : 0;
+}
+
 fn_getaddrinfo compat_getaddrinfo ()
 {
 	static fn_getaddrinfo fn = 0;
@@ -54,6 +64,31 @@ fn_freeaddrinfo compat_freeaddrinfo ()
 	return fn ? fn : (fn = (fn_freeaddrinfo) WS2_32 ("freeaddrinfo"));
 }
 
+fn_WSASendMsg compat_WSASendMsg()
+{
+	static fn_WSASendMsg fn = 0;
+
+	/* Note that SIO_GET_EXTENSION_FUNCTION_POINTER for WSASendMsg is not necessary in Vista+:
+	   https://learn.microsoft.com/en-us/windows/win32/winsock/provider-specific-extension-mechanism-2
+	   WSASendMsg is only available in Vista+ anyway, so we will look up directly. */
+	return fn ? fn : (fn = (fn_WSASendMsg) WS2_32 ("WSASendMsg"));
+}
+
+fn_WSARecvMsg compat_WSARecvMsg(SOCKET s)
+{
+	fn_WSARecvMsg fn = 0;
+
+	GUID ID = WSAID_WSARECVMSG;
+	DWORD bytes = 0;
+
+	WSAIoctl(s, SIO_GET_EXTENSION_FUNCTION_POINTER,
+		&ID, sizeof(ID), &fn, sizeof(fn),
+		&bytes, 0, 0);
+
+	assert(fn);
+	return fn;
+}
+
 fn_mkgmtime64 compat_mkgmtime64 ()
 {
 	static fn_mkgmtime64 fn = 0;
@@ -66,6 +101,33 @@ fn_GetFileSizeEx compat_GetFileSizeEx ()
 	static fn_GetFileSizeEx fn = 0;
 
 	return fn ? fn : (fn = (fn_GetFileSizeEx) KERNEL32 ("GetFileSizeEx"));
+}
+
+fn_CancelIoEx compat_CancelIoEx ()
+{
+	static fn_CancelIoEx fn = 0;
+
+	return fn ? fn : (fn = (fn_CancelIoEx) KERNEL32 ("CancelIoEx"));
+}
+
+fn_SetThreadDescription compat_SetThreadDescription ()
+{
+	static fn_SetThreadDescription fn = 0;
+
+	return fn ? fn : (fn = (fn_SetThreadDescription) KERNEL32 ("SetThreadDescription"));
+}
+
+fn_NotifyIpInterfaceChange compat_NotifyIpInterfaceChange ()
+{
+	static fn_NotifyIpInterfaceChange fn = 0;
+
+	return fn ? fn : (fn = (fn_NotifyIpInterfaceChange)IPHlp32("NotifyIpInterfaceChange"));
+}
+fn_CancelMibChangeNotify2 compat_CancelMibChangeNotify2 ()
+{
+	static fn_CancelMibChangeNotify2 fn = 0;
+
+	return fn ? fn : (fn = (fn_CancelMibChangeNotify2)IPHlp32("CancelMibChangeNotify2"));
 }
 
 #if defined(_WIN32)
@@ -84,6 +146,7 @@ lw_import wchar_t * lw_char_to_wchar(const char * u8str, int size)
 			if (length > 0)
 			{
 				// If size does not include the null byte, the converted result won't either.
+				#pragma warning (suppress: 6386)
 				u8Wide[length] = L'\0';
 				return u8Wide;
 			}

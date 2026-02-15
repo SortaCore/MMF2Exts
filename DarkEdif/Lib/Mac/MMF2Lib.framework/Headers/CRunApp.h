@@ -2,11 +2,11 @@
 *
 * This source code is part of the iOS exporter for Clickteam Multimedia Fusion 2
 * and Clickteam Fusion 2.5.
-* 
-* Permission is hereby granted to any person obtaining a legal copy 
-* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source 
-* code for debugging, optimizing, or customizing applications created with 
-* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5. 
+*
+* Permission is hereby granted to any person obtaining a legal copy
+* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source
+* code for debugging, optimizing, or customizing applications created with
+* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5.
 * Any other use of this source code is prohibited.
 *
 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -70,7 +70,10 @@
 #define GAOF_JAVAAPPLET 0x2000
 #define AH2OPT_DESTROYIFNOINACTIVATE 0x4000000
 #define AH2OPT_MACAUTOFILEREDIRECT 0x20000000
-#define AH2OPT_RESAMPLESTRETCH     0x0004
+#define AH2OPT_RESAMPLESTRETCH     0x00000004
+#define AH2OPT2_WINDOWSLIKECOLLISIONS    0x0002
+#define AH2OPT2_SELECTDELETEDOBJECTSINCHILDEVENTS 0x0004
+#define AH2OPT2_PREMULTIPLIEDIMAGES 0x0008
 #define SL_RESTART 0
 #define SL_STARTFRAME 1
 #define SL_FRAMEFADEINLOOP 2
@@ -150,7 +153,7 @@ enum {
 
 @interface CRunApp : NSObject
 {
-@public 
+@public
 	CRunView* runView;
 	CRunViewController* runViewController;
 	CJoystick* joystick;
@@ -199,7 +202,7 @@ enum {
     short gaFlags;				// Flags
     short gaNewFlags;				// New flags
     short gaMode;				// graphic mode
-    short gaOtherFlags;				// Other Flags	
+    short gaOtherFlags;				// Other Flags
     int gaCxWin;				// Window x-size
     int gaCyWin;				// Window y-size
     int gaScoreInit;				// Initial score
@@ -240,6 +243,7 @@ enum {
 	int frameRate;
     CWindowManager* winMan;
 	int hdr2Options;
+    unsigned short hdr2Options2;
 	CRenderToTexture* oldFrameImage;
 	CMask* firstMask;
 	CMask* secondMask;
@@ -273,6 +277,8 @@ enum {
     BOOL isFullScreen;
 	BOOL toggleFullScreen;
 	int setFullScreenMode;
+
+    BOOL bPremultiply;
 }
 -(void)cleanMemory;
 -(void)setView:(CRunView*)pView;
@@ -350,5 +356,7 @@ enum {
 
 -(NSSize)windowSize;
 -(void)changeWindowDimensions:(int)width withHeight:(int)height;
+-(void)updateWindowPos;
 
+-(void)loadFonts;
 @end

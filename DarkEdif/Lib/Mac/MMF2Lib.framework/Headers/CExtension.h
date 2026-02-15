@@ -2,11 +2,11 @@
 *
 * This source code is part of the iOS exporter for Clickteam Multimedia Fusion 2
 * and Clickteam Fusion 2.5.
-* 
-* Permission is hereby granted to any person obtaining a legal copy 
-* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source 
-* code for debugging, optimizing, or customizing applications created with 
-* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5. 
+*
+* Permission is hereby granted to any person obtaining a legal copy
+* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source
+* code for debugging, optimizing, or customizing applications created with
+* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5.
 * Any other use of this source code is prohibited.
 *
 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -63,9 +63,9 @@ class CRenderer;
 -(void)action:(int)num withActExtension:(CActExtension*)act;
 -(CValue*)expression:(int)num;
 -(CRunApp*)getApplication;
--(void)loadImageList:(short*)list withLength:(int)length;
--(void)loadImageByHandle:(short)handle;
--(CImage*)getImage:(short)handle;
+-(void)loadImageList:(unsigned short*)list withLength:(int)length;
+-(void)loadImageByHandle:(unsigned short)handle;
+-(CImage*)getImage:(unsigned short)handle;
 -(void)reHandle;
 -(int)getExtUserData;
 -(void)setExtUserData:(int)data;

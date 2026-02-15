@@ -1,11 +1,11 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
  * Copyright (C) 2012 James McLaughlin et al.
- * Copyright (C) 2012-2022 Darkwire Software.
+ * Copyright (C) 2012-2026 Darkwire Software.
  * All rights reserved.
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
 
 #ifndef _lw_fdstream_h
@@ -56,11 +56,11 @@ struct _lw_fdstream
 	lw_fdstream transmitfile_from, transmitfile_to;
 };
 
-#define lwp_fdstream_flag_read_pending	 1
+#define lwp_fdstream_flag_read_pending	1
 #define lwp_fdstream_flag_nagle			2
 #define lwp_fdstream_flag_is_socket		4
-#define lwp_fdstream_flag_close_asap		8  /* FD close pending on write? */
-#define lwp_fdstream_flag_auto_close		16
+#define lwp_fdstream_flag_close_asap	8  /* FD close when all writes are done */
+#define lwp_fdstream_flag_auto_close	16
 
 void lwp_fdstream_init (lw_fdstream, lw_pump);
 

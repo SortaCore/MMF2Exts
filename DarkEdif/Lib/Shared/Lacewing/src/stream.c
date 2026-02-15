@@ -1,15 +1,21 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
  * Copyright (C) 2012, 2013 James McLaughlin et al.
- * Copyright (C) 2012-2022 Darkwire Software.
+ * Copyright (C) 2012-2026 Darkwire Software.
  * All rights reserved.
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
 
 #include "common.h"
 #include "stream.h"
+
+#ifdef _MSC_VER
+	// Disable warning about use of alloca over _malloca
+	#pragma warning (push)
+	#pragma warning (disable: 6255)
+#endif
 
 void lwp_stream_init (lw_stream ctx, const lw_streamdef * def, lw_pump pump)
 {
@@ -162,9 +168,11 @@ void lw_stream_delete (lw_stream ctx)
 
 	if (ctx->watch)
 	{
-		lw_pump_post_remove(ctx->pump, ctx->watch);
+		lw_pump_remove(ctx->pump, ctx->watch, "lw_stream_delete");
 		ctx->watch = NULL;
 	}
+	else
+		assert(lw_false);
 
 	/*	This matches the lwp_retain in lw_stream_new, allowing the refcount to
 		become 0 and the stream to be destroyed. */
@@ -474,7 +482,7 @@ void lwp_stream_write_stream (lw_stream ctx, lw_stream source,
 
 	assert (ctx->graph == source->graph);
 
-	lwp_streamgraph_link link = (lwp_streamgraph_link) calloc (sizeof (*link), 1);
+	lwp_streamgraph_link link = (lwp_streamgraph_link) lw_calloc_or_exit (sizeof (*link), 1);
 
 	link->from = source;
 	link->to = ctx;
@@ -511,7 +519,7 @@ void lw_stream_add_filter_upstream (lw_stream ctx, lw_stream filter,
 									lw_bool delete_with_stream,
 									lw_bool close_together)
 {
-	lwp_stream_filterspec spec = (lwp_stream_filterspec) malloc (sizeof (*spec));
+	lwp_stream_filterspec spec = (lwp_stream_filterspec) lw_malloc_or_exit (sizeof (*spec));
 
 	spec->stream = ctx;
 	spec->filter = filter;
@@ -538,7 +546,7 @@ void lw_stream_add_filter_downstream (lw_stream ctx, lw_stream filter,
 										lw_bool delete_with_stream,
 										lw_bool close_together)
 {
-	lwp_stream_filterspec spec = (lwp_stream_filterspec) malloc (sizeof (*spec));
+	lwp_stream_filterspec spec = (lwp_stream_filterspec) lw_malloc_or_exit (sizeof (*spec));
 
 	spec->stream = ctx;
 	spec->filter = filter;
@@ -1262,3 +1270,7 @@ lw_pump lw_stream_pump (lw_stream ctx)
 {
 	return ctx->pump;
 }
+
+#ifdef _MSC_VER
+	#pragma warning (pop)
+#endif
