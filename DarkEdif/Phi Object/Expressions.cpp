@@ -690,7 +690,7 @@ int Extension::GetLoopedACLEntry_AccessMask()
 float Extension::TestParamsFunc(int a, float b, const TCHAR* c, float d, int e, float f, const TCHAR* g, int h, float i,
 	const TCHAR* j, int k, float l, const TCHAR* m, float n, int o, const TCHAR* p)
 {
-	raise(SIGINT);
+	raise(SIGTRAP);
 	return a + b;
 }
 
