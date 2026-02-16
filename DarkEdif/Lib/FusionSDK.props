@@ -686,7 +686,7 @@
 			 API depends on NDK that VS is using; see later code for API support check. -->
 		<AndroidAPILevel Condition="'$(AndroidAPILevel)'=='' AND ('$(Platform)'=='ARM64' OR '$(Platform)'=='x64')">android-21</AndroidAPILevel>
 		<AndroidAPILevel Condition="'$(AndroidAPILevel)'==''">android-19</AndroidAPILevel>
-		
+
 		<!-- This one sets the __ANDROID_API__ define to same as above.
 			 Note if you get errors for missing stdout/stderr define, this is due to
 			 mismatch of API in library vs C define; those were changed between NDK versions,
@@ -1008,44 +1008,48 @@ https://forums.developer.apple.com/forums/thread/113746?answerId=349757022#34975
 			TaskFactory="RoslynCodeTaskFactory"
 			AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
 		<ParameterGroup>
-			<NDKPath ParameterType="System.String" Required="true" />
+			<APILevelPath ParameterType="System.String" Required="true" />
+			<NDKMajorVersion ParameterType="System.Int32" Required="true" />
 			<MaxNDKAPI ParameterType="System.Int32" Output="true" />
 			<MinNDKAPI ParameterType="System.Int32" Output="true" />
 		</ParameterGroup>
 		<Task>
 			<Reference Include="Microsoft.Build.Framework" />
 			<Code Type="Method" Language="cs"><![CDATA[
+			private char[] slashes = new char[] { '\\', '/'};
+			private int GetEndingInt(DirectoryInfo di) {
+				int r;
+				if (!int.TryParse(di.Name.Substring(di.Name.Length - 2).Trim(slashes), out r))
+					Log.LogError($"Couldn't parse number from end of dir name \"{di.Name}\" (full path: \"{di.FullName}\").");
+				return r;
+			}
 			public override bool Execute()
 			{
 				MinNDKAPI = 0;
 				MaxNDKAPI = 0;
-				
-				for (int i = 50; i > 1; --i)
+
+				// The folder must exist or we got a big issue
+				// Note: windows is not converted to windows-x86_64 in paths in newer NDK for some VS macros,
+				// due to misdetection of HostTag in Android.Tools.props
+				if (string.IsNullOrWhiteSpace(APILevelPath) || !System.IO.Directory.Exists(APILevelPath))
 				{
-					if (System.IO.Directory.Exists($"{NDKPath}/platforms/android-{i}"))	
-					{
-						MaxNDKAPI = i;
-						break;
-					}
-				}
-				if (MaxNDKAPI == 0)
-				{
-					Log.LogError($"Couldn't find platform folders of format \"{NDKPath}/platforms/android-X\".");
+					Log.LogError($"APILevelPath doesn't exist: {APILevelPath}.");
 					return false;
 				}
-				for (int i = 1; i < MaxNDKAPI; ++i)
-				{
-					if (System.IO.Directory.Exists($"{NDKPath}/platforms/android-{i}"))	
-					{
-						MinNDKAPI = i;
-						break;
-					}
-				}
-				if (MinNDKAPI == 0)
-				{
-					Log.LogError($"Couldn't find platform folders of format \"{NDKPath}/platforms/android-X\".");
-					return false;
-				}
+
+				DirectoryInfo[] platDirs = null;
+				// r16b includes platforms, r23 doesn't
+				if (NDKMajorVersion <= 18)
+					platDirs = new DirectoryInfo(APILevelPath).GetDirectories("android-*");
+				else // Newer. I checked r27d and r23, both only have number dirs in lib\arch dir
+					platDirs = new DirectoryInfo(APILevelPath).GetDirectories();
+
+				// Don't use LINQ; not compatible with older VS
+				Array.Sort(platDirs, (a, b) => GetEndingInt(a).CompareTo(GetEndingInt(b)));
+
+				// First and last
+				MinNDKAPI = GetEndingInt(platDirs[0]);
+				MaxNDKAPI = GetEndingInt(platDirs[platDirs.Length - 1]);
 				return true;
 			}
 			]]></Code>
@@ -1055,16 +1059,21 @@ https://forums.developer.apple.com/forums/thread/113746?answerId=349757022#34975
 		<PropertyGroup>
 			<MinNDKAPI>0</MinNDKAPI>
 			<MaxNDKAPI>50</MaxNDKAPI>
-			<!-- Sysroot ends with format of "...-r16b\sysroot", take r16b. But r29 doesn't have a letter, so trim the slashes. -->
-			<NDKVerWithLetter>$(Sysroot.Substring($([MSBuild]::Add($(Sysroot.LastIndexOf('-')), 1)),4).Trim('\\/-'))</NDKVerWithLetter>
+			<!-- VS_NDKRoot ends with format of "...-r16b", take r16b. Note r24, r29 etc don't have letter suffix. -->
+			<NDKVerWithLetter>$(VS_NDKRoot.Substring($([MSBuild]::Add($(VS_NDKRoot.LastIndexOf('-')), 1))).Trim('\\/-'))</NDKVerWithLetter>
 		</PropertyGroup>
-		<AndroidAPIRangeFinder NDKPath="$(Sysroot)/../">
+		<AndroidAPIRangeFinder APILevelPath="$(AndroidAPILevelPath)" NDKMajorVersion="$(NDKMajorVersion)">
 			<Output TaskParameter="MaxNDKAPI" PropertyName="MaxNDKAPI" />
 			<Output TaskParameter="MinNDKAPI" PropertyName="MinNDKAPI" />
 		</AndroidAPIRangeFinder>
-		
+
 		<Message Importance="High" Text="DarkEdif Android build check: Android NDK &quot;$(NDKVerWithLetter)&quot; has support for Android API range $(MinNDKAPI) to $(MaxNDKAPI)." />
 		<Error Condition="($(AndroidAPILevelNumber) &gt; $(MaxNDKAPI)) OR ($(AndroidAPILevelNumber) &lt; $(MinNDKAPI))"
 			Text="Android NDK-API mismatch! You are using Android NDK $(NDKVerWithLetter) which supports API range $(MinNDKAPI) to $(MaxNDKAPI), but you are targeting Android API $(AndroidAPILevelNumber)." />
+		<!-- VS native debugging uses gdbserver, removed from NDK r24+.
+			 Android Game Development VS extension may extend the debugging and VS NDK support.
+			 AGDE is detected here by the Google props file. --> 
+		<Warning Condition="$(NDKVersion) &gt; 23 AND !Exists('$(VCTargetsPath)Google\Google.Android.Cpp.DiscoverNdk.props')"
+			Text="Android NDK r24 and later doesn't support native Android C++ debugging in VS." />
 	</Target>
 </Project>
