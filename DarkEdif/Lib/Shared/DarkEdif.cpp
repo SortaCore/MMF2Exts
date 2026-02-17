@@ -7743,6 +7743,7 @@ DWORD WINAPI DarkEdifUpdateThread(void * pIsUniVer)
 			<< "&build="sv << Extension::Version << "&sdkBuild="sv << DarkEdif::SDKVersion
 			<< "&projConfig="sv << projConfig
 			<< "&tagRes="sv << url_encode(WideToUTF8(resKey)) << "&tagReg="sv << url_encode(WideToUTF8(regKey))
+			<< "&sdkCommitSHA="sv << MMF2EXTS_COMMIT_SHA ""sv
 			<< " HTTP/1.1\r\nHost: "sv << domain << "\r\nConnection: close\r\n\r\n"sv;
 		std::string request = requestStream.str();
 

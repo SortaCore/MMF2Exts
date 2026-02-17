@@ -279,6 +279,30 @@
 		<_DarkEdif_UCTaggingRegex><![CDATA[(?im)^DarkEdifUpdateCheckerTagging\s*=\s*(.*?)\s*?$]]></_DarkEdif_UCTaggingRegex>
 		<DarkEdif_UCTaggingINI Condition="$(SDKType)=='DarkEdif' AND $([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_DarkEdif_UCTaggingRegex)).Success)">$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_DarkEdif_UCTaggingRegex)).Result('$1'))</DarkEdif_UCTaggingINI>
 		<DarkEdif_UCTagging Condition="$(DarkEdif_UCTaggingINI.Contains('$(ExtName)'))">1</DarkEdif_UCTagging>
+
+		<!-- This is a lookup of the current MMF2Exts commit SHA. -->
+		<_MMF2Exts_SHA_DetectRegex>([a-f0-9]{40})\s+branch 'master' of https://github.com/SortaCore/MMF2Exts</_MMF2Exts_SHA_DetectRegex>
+
+		<MMF2Exts_SHA Condition="$(SDKType)=='DarkEdif'">(unset)</MMF2Exts_SHA>
+		<!-- Use fallback text file if available; allows standalone zips or other repos to work -->
+		<MMF2Exts_SHA Condition="$(SDKType)=='DarkEdif' AND
+		Exists('$(MSBuildThisFileDirectory)../MMF2ExtsCommit.txt')">$([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory)../MMF2ExtsCommit.txt'))</MMF2Exts_SHA>
+		<MMF2Exts_SHA Condition="$(SDKType)=='DarkEdif' AND '$(MMF2Exts_SHA)'=='(unset)' AND
+		Exists('$(MSBuildThisFileDirectory)../../MMF2ExtsCommit.txt')">$([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory)../../MMF2ExtsCommit.txt'))</MMF2Exts_SHA>
+		<MMF2Exts_SHA Condition="$(SDKType)=='DarkEdif' AND '$(MMF2Exts_SHA)'=='(unset)' AND
+		Exists('$(SolutionDir)MMF2ExtsCommit.txt')">$([System.IO.File]::ReadAllText('$(SolutionDir)MMF2ExtsCommit.txt'))</MMF2Exts_SHA>
+
+		<!-- We're in Lib, go back to DarkEdif then back to MMF2Exts.
+			 HEAD stores the local branch; check it's master, so we're not in a wip etc -->
+		<MMF2Exts_SHA Condition="'$(MMF2Exts_SHA)'=='(unset)' AND Exists('$(MSBuildThisFileDirectory)../../.git/HEAD')">1</MMF2Exts_SHA>
+		<MMF2Exts_SHA Condition="'$(MMF2Exts_SHA)'=='1' AND $([System.IO.File]::ReadAllText($(MSBuildThisFileDirectory)../../.git/HEAD).StartsWith('ref: refs/heads/master'))">2</MMF2Exts_SHA>
+
+		<!-- This fails if it's the wrong git -->
+		<MMF2Exts_SHA Condition="'$(MMF2Exts_SHA)'=='2' AND Exists('$(MSBuildThisFileDirectory)../../.git/FETCH_HEAD')">3</MMF2Exts_SHA>
+		<MMF2Exts_SHA Condition="'$(MMF2Exts_SHA)'=='3' AND		$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText($(MSBuildThisFileDirectory)../../.git/FETCH_HEAD)), $(_MMF2Exts_SHA_DetectRegex)).Success)">4</MMF2Exts_SHA>
+		<MMF2Exts_SHA Condition="'$(MMF2Exts_SHA)'=='4'">$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText($(MSBuildThisFileDirectory)../../.git/FETCH_HEAD)), $(_MMF2Exts_SHA_DetectRegex)).Result('$1'))</MMF2Exts_SHA>
+		<!-- Any check failed: revert to unset -->
+		<MMF2Exts_SHA Condition="$(SDKType)!='DarkEdif' OR '$(MMF2Exts_SHA.Length)' != '40'">(unset)</MMF2Exts_SHA>
 	</PropertyGroup>
 	<PropertyGroup Condition="$(SDKType.Contains('MMF2SDK'))" Label="UserMacros">
 		<ExtVersion>1</ExtVersion>
@@ -418,6 +442,7 @@
 			/D "DARKEDIF_DISPLAY_TYPE=$(DarkEdif_DisplayType)"
 			/D "EditorBuild=$(EditorBuild)" /D "RuntimeBuild=$(RuntimeBuild)" /D "UniBuild=$(UniBuild)"
 			/D "USE_DARKEDIF_UC_TAGGING=$(DarkEdif_UCTagging)" /D "MacBuild=$(MacBuild)"
+			/D "MMF2EXTS_COMMIT_SHA=DE_STRIFY($(MMF2Exts_SHA))"
 			</_FusionSDKAdds>
 		<!-- ResourceCompiler doesn't like newlines. -->
 		<_FusionSDKAdds>$(_FusionSDKAdds.Replace('\n',' ').Replace('\t',' '))</_FusionSDKAdds>
@@ -1072,7 +1097,7 @@ https://forums.developer.apple.com/forums/thread/113746?answerId=349757022#34975
 			Text="Android NDK-API mismatch! You are using Android NDK $(NDKVerWithLetter) which supports API range $(MinNDKAPI) to $(MaxNDKAPI), but you are targeting Android API $(AndroidAPILevelNumber)." />
 		<!-- VS native debugging uses gdbserver, removed from NDK r24+.
 			 Android Game Development VS extension may extend the debugging and VS NDK support.
-			 AGDE is detected here by the Google props file. --> 
+			 AGDE is detected here by the Google props file. -->
 		<Warning Condition="$(NDKVersion) &gt; 23 AND !Exists('$(VCTargetsPath)Google\Google.Android.Cpp.DiscoverNdk.props')"
 			Text="Android NDK r24 and later doesn't support native Android C++ debugging in VS." />
 	</Target>
