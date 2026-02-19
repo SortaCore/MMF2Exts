@@ -123,17 +123,24 @@ namespace DarkEdif {
 				return userSuppliedName &&
 					(userSuppliedName == testAgainst || !strcmp(userSuppliedName, testAgainst));
 			}
+			// Used for both int and text based types; prefix is inserted in display before the value
 			const bool isInt;
-			int cachedInt = -1;
 			const std::tstring prefix;
+			// Backing data
+			int cachedInt = -1;
 			std::tstring cachedText;
+
+			// If false, when Fusion requests an edit, Runtime.EditText/Int is called,
+			// then if OK is pressed, writer function is passed new variable to inspect.
+			// If true, the dialog is skipped and writer function is called directly.
+			bool writerFuncHasOwnDialog = false;
 
 			std::uint64_t refreshMS;
 			std::uint64_t nextRefreshTime;
 			const char * const userSuppliedName;
 
 			int (*intReadFromExt)(Extension *const ext) = nullptr;
-			bool (*intStoreDataToExt)(Extension *const ext, int newValue) = nullptr;
+			bool (*intStoreDataToExt)(Extension *const ext, int &newValue) = nullptr;
 			void (*textReadFromExt)(Extension *const ext, std::tstring &writeTo) = nullptr;
 			bool (*textStoreDataToExt)(Extension *const ext, std::tstring &newValue) = nullptr;
 
@@ -225,7 +232,7 @@ namespace DarkEdif {
 			const std::tstring_view prefix,
 			const int initialInt,
 			int (*getLatestFromExt)(Extension *const ext),
-			bool (*saveUserInputToExt)(Extension *const ext, int newValue),
+			bool (*saveUserInputToExt)(Extension *const ext, int &newValue),
 			std::size_t refreshMS,
 			const char *userSuppliedName = nullptr
 		);
@@ -236,6 +243,13 @@ namespace DarkEdif {
 		// Updates the debug item with the given name from the Fusion debugger.
 		// If name is not found, no error is made.
 		void UpdateItemInDebugger(const char *userSuppliedName, int newValue);
+
+		// Disables the automatic dialog popup for editing for the given Fusion debugger item.
+		// This means the extension is responsible for creating any edit dialog when the debug
+		// item writer function is called, instead of receiving a new written value.
+		// If item name is not found, no error is made.
+		// If writer function is not set for item, hard fails.
+		void DisableAutoDialogForItem(const char* userSuppliedName);
 
 		// Appends the given text to the CF2.5+ debugger's second pane.
 		// In other Fusion 2.x variants, this func does nothing.

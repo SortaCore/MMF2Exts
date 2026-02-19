@@ -6472,12 +6472,13 @@ namespace DarkEdif
 	void FusionDebugger::AddItemToDebugger(
 		const std::tstring_view, int,
 		int (*)(Extension *const),
-		bool (*)(Extension *const, int),
+		bool (*)(Extension *const, int&),
 		std::size_t, const char *) { /* no op in runtime */ }
 	void FusionDebugger::UpdateItemInDebugger(
 		const char *, const std::tstring_view &) { /* no op in runtime */ }
 	void FusionDebugger::UpdateItemInDebugger(
 		const char *, const int) { /* no op in runtime */ }
+	void FusionDebugger::DisableAutoDialogForItem(const char*) { /* no op in runtime */ }
 	void FusionDebugger::CF25PlusLog(PrintFHintInside const TCHAR * const, ...) { /* no op in runtime */ }
 	FusionDebugger::FusionDebugger(Extension *const) { /* runtime debugger not used */ }
 
@@ -6529,7 +6530,7 @@ namespace DarkEdif
 				throw std::runtime_error("Item not editable.");
 
 			edi.value = di.cachedInt;
-			if (ext->Runtime.EditInteger(&edi) == IDOK)
+			if (di.writerFuncHasOwnDialog || ext->Runtime.EditInteger(&edi) == IDOK)
 			{
 				// If edit accepted
 				if (di.intStoreDataToExt(ext, edi.value))
@@ -6552,11 +6553,11 @@ namespace DarkEdif
 		buff.resize(DB_BUFFERSIZE);
 		edi.text = buff.data();
 		edi.lText = DB_BUFFERSIZE - 1;
-		if (ext->Runtime.EditText(&edi) == IDOK)
+		if (di.writerFuncHasOwnDialog || ext->Runtime.EditText(&edi) == IDOK)
 		{
 			// If user input is too long, we pass as-is, and trim it after ext sees full length
 			// But if user input was short enough, but ext made it too long, we get mad at ext dev
-			const bool userInputWasTooLong = buff.size() + di.prefix.size() >= DB_EDITABLE;
+			const bool userInputWasTooLong = !di.writerFuncHasOwnDialog && buff.size() + di.prefix.size() >= DB_EDITABLE;
 			// Edit accepted
 			if (di.textStoreDataToExt(ext, buff))
 				ClipText(di, buff, userInputWasTooLong);
@@ -6624,7 +6625,7 @@ namespace DarkEdif
 		if (debugItems.size() == 127)
 			throw std::runtime_error("Too many items added to Fusion debugger.");
 		if (userSuppliedName && std::any_of(debugItems.cbegin(), debugItems.cend(), [=](const DebugItem& d) { return d.DoesUserSuppliedNameMatch(userSuppliedName); }))
-			throw std::runtime_error("name already in use. Must be unique");
+			throw std::runtime_error("Name already in use. Must be unique");
 		if (prefix.size() > 40) // Prefix isn't the value, shouldn't be long
 			throw std::runtime_error("Text prefix too long");
 
@@ -6654,7 +6655,7 @@ namespace DarkEdif
 		int (*getLatestFromExt)(Extension *const ext),
 		// Supply NULL if not editable. In function, return true if cache should be updated, false if edit attempt was not
 		// The text parameter passed must be edited to new int description
-		bool (*saveUserInputToExt)(Extension *const ext, int newValue),
+		bool (*saveUserInputToExt)(Extension *const ext, int& newValue),
 		// Supply 0 if no caching should be used, otherwise will re-call reader() every time Fusion requests.
 		std::size_t refreshMS,
 		// Supply NULL if not removable. Case-sensitive name, used for removing from Fusion debugger if needed.
@@ -6666,9 +6667,9 @@ namespace DarkEdif
 		if (prefix.size() > DB_BUFFERSIZE - 12) // 11 is length of min int32, 1 is for null
 			throw std::runtime_error("Int prefix too long");
 		if (debugItems.size() == 127)
-			throw std::runtime_error("too many items added to Fusion debugger");
+			throw std::runtime_error("Too many items added to Fusion debugger");
 		if (userSuppliedName && std::any_of(debugItems.cbegin(), debugItems.cend(), [=](const DebugItem &d) { return d.DoesUserSuppliedNameMatch(userSuppliedName); }))
-			throw std::runtime_error("name already in use. Must be unique");
+			throw std::runtime_error("Name already in use. Must be unique");
 
 		debugItems.push_back(DebugItem(prefix, initialInt, getLatestFromExt, saveUserInputToExt, refreshMS, userSuppliedName));
 		// End it with DB_END, and second-to-last item is the new debug item ID
@@ -6704,6 +6705,21 @@ namespace DarkEdif
 			if (it->isInt)
 				throw std::runtime_error("Fusion debugger item is int, not text type");
 			ClipText(*it, std::tstring(newText), false);
+		}
+	}
+
+	void FusionDebugger::DisableAutoDialogForItem(const char* userSuppliedName) {
+		DieIfCallerIsNotMainThread("FusionDebugger");
+		if (!userSuppliedName)
+			throw std::runtime_error("Name cannot be null");
+		const auto it = std::find_if(debugItems.begin(), debugItems.end(),
+			[userSuppliedName](const auto& di) { return di.DoesUserSuppliedNameMatch(userSuppliedName); });
+		if (it != debugItems.end())
+		{
+			assert(it->writerFuncHasOwnDialog); // Don't set twice
+			if (it->isInt ? it->intStoreDataToExt == NULL : it->textStoreDataToExt == NULL)
+				LOGF(_T("FusionDebugger error: DisableAutoDialog can only be used with item that has a writer function.\n"));
+			it->writerFuncHasOwnDialog = false;
 		}
 	}
 
