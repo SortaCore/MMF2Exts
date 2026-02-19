@@ -265,15 +265,72 @@ namespace DarkEdif {
 #ifdef _WIN32
 	extern bool IsFusion25;
 	extern bool IsHWAFloatAngles;
-	extern bool IsRunningUnderWine;
 #else
 	// True if Fusion 2.5 or 2.5+. False if Fusion 2.0. Always true for non-Windows builds.
 	constexpr bool IsFusion25 = true;
 	// True if angle variables are degrees as floats. Always true for non-Windows builds.
 	constexpr bool IsHWAFloatAngles = true;
-	// True if running under Wine. Always false for non-Windows builds, as Wine will be using Windows app + exts.
-	constexpr bool IsRunningUnderWine = false;
 #endif
+	namespace Windows {
+		// True if running under Wine, false otherwise.
+		extern bool IsRunningUnderWine;
+
+		// You can also use NTDDI_XX enum for finer tuned comparison.
+		enum WinOSVersion : std::uint32_t {
+			// Windows version system was changed from Windows Me; copying it 1:1 will leave 95 "later" than WinNT.
+			// So the ones from Windows ME and earlier are faux.
+
+			// Windows 95, actual version 4.0.950
+			Win95 = 95,
+			// Windows 98 (first edition), actual version 4.10.1998
+			Win98 = 98,
+			// Windows 98 (second edition), actual version 4.10.2222
+			Win98SE = 982,
+			// Windows Millenium Edition, actual version 4.90.3000
+			// @remarks Released around the same time as Win2000, but NT is a different kernel design
+			WinME = 1000,
+
+			// After this, defines were moved to WinNT line: see _WIN32_WINNT_XX and NTDDI_XX enums
+			WinNT4 = 0x04000000,
+			Win2000 = 0x05000000,
+			WinXP = 0x05010000,
+			WinServer3 = 0x05020000,
+			WinVista = 0x06000000,
+			Win7 = 0x06010000,
+			Win8 = 0x06020000,
+			Win8_1 = 0x06030000,
+			Win10 = 0x0A000000,
+			// Win 11 is major ver 10, like Win10, but starts at build number 22000+
+			Win11 = 0x0A0055F0
+		};
+		
+		// OS version; compare with WinOSVersion enum, use NTDDI_XX defines
+		// or use OSVER(OSVersion), SPVER() for service pack, SUBVER() for sub-version like 22H2.
+		// https://learn.microsoft.com/en-gb/windows/win32/winprog/using-the-windows-headers?#:~:text=describe%20other%20macros
+		extern WinOSVersion OSVersion;
+
+		// DarkEdif probably won't work on earlier Windows than 2K, due to pulling in C Runtime Library
+		// that internally uses OS features that early OSes lack.
+		// At any rate, MSDN Compatibility mostly seems to show 2000 and later functions.
+		// DarkEdif itself is only intended to target XP SP3 and later.
+
+		// Supports WinAPI functions added in Windows 2000
+		inline bool Has2KPlus() { return OSVersion > Win2000; }
+		// Supports WinAPI functions added in Windows XP
+		inline bool HasXPPlus() { return OSVersion > WinXP; }
+		// Supports WinAPI functions added in Windows Vista
+		inline bool HasVistaPlus() { return OSVersion > WinVista; }
+		// Supports WinAPI functions added in Windows 7
+		inline bool Has7Plus() { return OSVersion > Win7; }
+		// Supports WinAPI functions added in Windows 8
+		inline bool Has8Plus() { return OSVersion > Win8; }
+		// Supports WinAPI functions added in Windows 8.1
+		inline bool Has8_1Plus() { return OSVersion > Win8; }
+		// Supports WinAPI functions added in Windows 10
+		inline bool Has10Plus() { return OSVersion > Win10; }
+		// Supports WinAPI functions added in Windows 11
+		inline bool Has11Plus() { return OSVersion > Win11; }
+	}
 
 	// CPU type: relates to the true processor CPU arch, not the current project config.
 	enum class CPUArchType

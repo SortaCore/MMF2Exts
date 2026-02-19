@@ -340,7 +340,7 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 
 		const char* (__cdecl * pwine_get_version)(void) =
 			(decltype(pwine_get_version))GetProcAddress(ntDll, "wine_get_version");
-		DarkEdif::IsRunningUnderWine = pwine_get_version != NULL;
+		DarkEdif::Windows::IsRunningUnderWine = pwine_get_version != NULL;
 
 		// Detect true CPU arch
 		HMODULE kernDll = GetModuleHandle(_T("kernel32.dll"));
@@ -551,6 +551,26 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 			_set_invalid_parameter_handler(DarkEdif_Invalid_Parameter);
 		}
 #endif // not Debug
+
+		// GetVersion() is affected by app manifest; RtlGetVersion is not.
+		// They're both affected by "run with compatibility" settings, but no need to bypass that.
+		HMODULE hMod = GetModuleHandle(_T("ntdll.dll"));
+		if (!hMod)
+			return DarkEdif::MsgBox::Error(_T("DarkEdif OS detection error"), _T("Couldn't detect OS version: don't have ntdll.")), -1;
+
+		// Don't know how you'd tell version below Win 2000
+#if defined(WINVER) && WINVER < _WIN32_WINNT_NT4
+#error RtlGetVersion not available
+#endif
+		OSVERSIONINFOA info = { sizeof(info) };
+		LONG (WINAPI * RtlGetVersionPtr)(OSVERSIONINFOA *) = (decltype(RtlGetVersionPtr))GetProcAddress(hMod, "RtlGetVersion");
+		if (!RtlGetVersionPtr)
+			return DarkEdif::MsgBox::Error(_T("DarkEdif OS detection error"), _T("Couldn't detect OS version: Couldn't load version function.")), -1;
+
+		if (RtlGetVersionPtr(&info) != 0)
+			return DarkEdif::MsgBox::Error(_T("DarkEdif OS detection error"), _T("Couldn't detect OS version: Version function returned failure (%u)."), GetLastError()), -1;
+
+		DarkEdif::Windows::OSVersion = (DarkEdif::Windows::WinOSVersion)((info.dwMajorVersion << 24) | (info.dwMinorVersion << 16) | (info.dwBuildNumber & 0xFFFF));
 	}
 #elif defined (__ANDROID__)
 	// Init several useful runtime classes
