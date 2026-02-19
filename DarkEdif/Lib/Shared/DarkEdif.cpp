@@ -5598,8 +5598,8 @@ bool DarkEdif::IsFusion25;
 // True if angle variables are degrees as floats, false if they are ints.
 // Ints are used in MMF2 non-Direct3D display modes.
 bool DarkEdif::IsHWAFloatAngles;
-// True if running under Wine, false otherwise.
-bool DarkEdif::IsRunningUnderWine;
+bool DarkEdif::Windows::IsRunningUnderWine;
+DarkEdif::Windows::WinOSVersion DarkEdif::Windows::OSVersion;
 #endif
 // Set during SDK startup, relates to current CPU emulation.
 // For what CPU is running as (e.g. Windows x64 running x86), then use preprocessor defines,
@@ -8254,7 +8254,7 @@ void DarkEdif::LogV(int logLevel, PrintFHintInside const TCHAR* msgFormat, va_li
 
 	// Wine debugstr only logs OutputDebugStringA, not OutputDebugStringW
 	#ifdef _UNICODE
-		if (DarkEdif::IsRunningUnderWine)
+		if (DarkEdif::Windows::IsRunningUnderWine)
 			OutputDebugStringA(TStringToUTF8(outputBuff).c_str());
 		else
 	#endif // Unicode
