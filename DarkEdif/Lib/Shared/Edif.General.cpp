@@ -687,8 +687,9 @@ ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, [[maybe_unused]] void * reserve
 	const char * const classNameCRun = "Extensions/CRun" PROJECT_TARGET_NAME_UNDERSCORES;
 	LOGV("Looking for Java class \"%s\"... [1/2]\n", classNameCRun);
 
-	// DE_JNIEnv * does extra FindClass checks, like formatting
-	jclass clazz = threadEnv->FindClass(classNameCRun);
+	// DE_JNIEnv * does extra FindClass checks, like formatting, but that relies on DarkEdif::MainThreadID already set
+	DarkEdif::MainThreadID = std::this_thread::get_id();
+	jclass clazz = ((JNIEnv *)threadEnv)->FindClass(classNameCRun);
 	if (!clazz)
 	{
 		// If not found, there is always an exception, e.g. ClassNotFoundException,

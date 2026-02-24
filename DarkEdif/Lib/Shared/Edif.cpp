@@ -296,7 +296,10 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 	// We want DarkEdif::MsgBox::XX as soon as possible.
 	// Main thread ID is used to prevent crashes from message boxes not being task-modal.
 	// Since we're initializing this, might as well set all the DarkEdif mV variables.
+	// This is set earlier in Android in JNI_OnLoad
+#ifndef __ANDROID__
 	DarkEdif::MainThreadID = std::this_thread::get_id();
+#endif
 
 #ifdef _WIN32
 	if (mV->GetVersion == NULL)
