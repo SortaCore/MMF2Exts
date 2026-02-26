@@ -6476,6 +6476,9 @@ namespace DarkEdif
 		int (*)(Extension *const),
 		bool (*)(Extension *const, int&),
 		std::size_t, const char *) { /* no op in runtime */ }
+	FusionDebugger::ScopedDebuggerFolder FusionDebugger::StartFolder(const std::tstring_view, bool, const char *) {
+		return ScopedDebuggerFolder();
+	}
 	void FusionDebugger::UpdateItemInDebugger(
 		const char *, const std::tstring_view &) { /* no op in runtime */ }
 	void FusionDebugger::UpdateItemInDebugger(
@@ -6488,17 +6491,23 @@ namespace DarkEdif
 	// Prevent the ext dev from messing with internal DarkEdif functions
 	struct FusionDebuggerAdmin
 	{
+		static int NormalizeDebugID(int debugItemID) {
+			// Fusion debugger callbacks encode command in low byte, and may include DB_EDITABLE.
+			// See Fusion25SDK GETDBPARAMCOMMAND(a) macro.
+			const int cmd = debugItemID & 0xFF;
+			return cmd & ~DB_EDITABLE;
+		}
 		inline std::uint16_t * GetDebugTree(Extension *const ext) {
 			DieIfCallerIsNotMainThread("FusionDebugger");
 			return ext->FusionDebugger.GetDebugTree();
 		}
 		inline void StartEditForItemID(Extension *const ext, int debugItemID) {
 			DieIfCallerIsNotMainThread("FusionDebugger");
-			ext->FusionDebugger.StartEditForItemID(debugItemID);
+			ext->FusionDebugger.StartEditForItemID(NormalizeDebugID(debugItemID));
 		}
 		inline void GetDebugItem(Extension *const ext, TCHAR *writeTo, int debugItemID) {
 			DieIfCallerIsNotMainThread("FusionDebugger");
-			ext->FusionDebugger.GetDebugItemFromCacheOrExt(writeTo, debugItemID);
+			ext->FusionDebugger.GetDebugItemFromCacheOrExt(writeTo, NormalizeDebugID(debugItemID));
 		}
 	};
 
@@ -6607,6 +6616,51 @@ namespace DarkEdif
 		_tcscpy_s(writeTo, DB_BUFFERSIZE, di.cachedText.c_str());
 	}
 
+	void FusionDebugger::AppendDebugTreeRootLeaf(std::uint16_t itemID, bool isEditable)
+	{
+		if (!debugItemIDs.empty() && debugItemIDs.back() == DB_END)
+			debugItemIDs.pop_back();
+		debugItemIDs.push_back(itemID | (isEditable ? DB_EDITABLE : 0));
+		debugItemIDs.push_back(DB_END);
+	}
+
+	void FusionDebugger::AppendDebugTreeChildLeaf(std::uint16_t parentID, std::uint16_t childID, bool isEditable)
+	{
+		if (!debugItemIDs.empty() && debugItemIDs.back() == DB_END)
+			debugItemIDs.pop_back();
+		debugItemIDs.push_back(parentID | DB_PARENT);
+		debugItemIDs.push_back(childID | (isEditable ? DB_EDITABLE : 0));
+		debugItemIDs.push_back(DB_END);
+	}
+
+	void FusionDebugger::AddTreeLeafWithCurrentFolder(std::uint16_t itemID, bool isEditable)
+	{
+		// No open folder: add at root. Open folder: add as that folder's child.
+		if (openFolders.empty())
+			AppendDebugTreeRootLeaf(itemID, isEditable);
+		else
+			AppendDebugTreeChildLeaf(openFolders.front().itemID, itemID, isEditable);
+	}
+
+	bool FusionDebugger::CloseFolderByToken(std::uint64_t token)
+	{
+		for (auto it = openFolders.rbegin(); it != openFolders.rend(); ++it)
+		{
+			if (it->token == token)
+			{
+				openFolders.erase(it.base() - 1, openFolders.end());
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool FusionDebugger::IsFolderTokenOpen(std::uint64_t token) const
+	{
+		return std::any_of(openFolders.begin(), openFolders.end(),
+			[token](const auto &f) { return f.token == token; });
+	}
+
 	void FusionDebugger::AddItemToDebugger(
 		// Text prefix for text - will not change, can be blank
 		const std::tstring_view prefix,
@@ -6642,10 +6696,8 @@ namespace DarkEdif
 			ClipText(newItem, buff, false);
 		}
 
-		// End it with DB_END, and second-to-last item is the new debug item ID
-		debugItemIDs.push_back(DB_END);
-		// If the item is editable, set the DB_EDITABLE flag
-		debugItemIDs[debugItemIDs.size() - 2] = (((std::uint16_t)debugItems.size()) - 1) | (saveUserInputToExt != NULL ? DB_EDITABLE : 0);
+		AddTreeLeafWithCurrentFolder((std::uint16_t)(debugItems.size() - 1),
+			(saveUserInputToExt != NULL));
 	}
 
 	void FusionDebugger::AddItemToDebugger(
@@ -6674,10 +6726,43 @@ namespace DarkEdif
 			throw std::runtime_error("Name already in use. Must be unique");
 
 		debugItems.push_back(DebugItem(prefix, initialInt, getLatestFromExt, saveUserInputToExt, refreshMS, userSuppliedName));
-		// End it with DB_END, and second-to-last item is the new debug item ID
-		debugItemIDs.push_back(DB_END);
-		// If the item is editable, set the DB_EDITABLE flag
-		debugItemIDs[debugItemIDs.size() - 2] = (((std::uint16_t)debugItems.size()) - 1) | (saveUserInputToExt != NULL ? DB_EDITABLE : 0);
+		AddTreeLeafWithCurrentFolder((std::uint16_t)(debugItems.size() - 1),
+			(saveUserInputToExt != NULL));
+	}
+
+	FusionDebugger::ScopedDebuggerFolder FusionDebugger::StartFolder(
+		const std::tstring_view desc,
+		bool autoEnd,
+		const char *userSuppliedName
+	) {
+		// Folder itself is a debug item node; subsequent AddItemToDebugger() entries
+		// are linked under this node until the returned scope is ended.
+		DieIfCallerIsNotMainThread("FusionDebugger");
+		if (debugItems.size() == 127)
+			throw std::runtime_error("Too many items added to Fusion debugger.");
+		if (desc.empty())
+			throw std::runtime_error("Folder description cannot be blank");
+		if (userSuppliedName && std::any_of(debugItems.cbegin(), debugItems.cend(),
+			[=](const DebugItem &d) { return d.DoesUserSuppliedNameMatch(userSuppliedName); }))
+			throw std::runtime_error("Name already in use. Must be unique");
+		if (desc.size() > 40)
+			throw std::runtime_error("Folder description too long");
+
+		// Fusion debugger folder linking is only stable at one level.
+		if (!openFolders.empty())
+		{
+			const std::tstring requestingFolder(desc);
+			const std::tstring existingFolder = debugItems[openFolders.back().itemID].prefix;
+			LOGF(_T("FusionDebugger error: Can't start folder \"%s\", folder \"%s\" is still open.\n"),
+				requestingFolder.c_str(), existingFolder.c_str(), requestingFolder.c_str());
+		}
+
+		debugItems.push_back(DebugItem(desc, _T(""),
+			nullptr, nullptr, SIZE_MAX, userSuppliedName));
+		const std::uint16_t folderID = (std::uint16_t)(debugItems.size() - 1);
+		const std::uint64_t token = nextFolderToken++;
+		openFolders.push_back({ folderID, token });
+		return ScopedDebuggerFolder(this, token, autoEnd);
 	}
 
 	void FusionDebugger::UpdateItemInDebugger(const char *userSuppliedName, int newValue)

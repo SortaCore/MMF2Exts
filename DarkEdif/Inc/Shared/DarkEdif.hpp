@@ -115,6 +115,7 @@ namespace DarkEdif {
 	struct FusionDebugger
 	{
 		friend FusionDebuggerAdmin;
+		class ScopedDebuggerFolder;
 #if EditorBuild
 		class DebugItem {
 			friend FusionDebugger;
@@ -182,10 +183,22 @@ namespace DarkEdif {
 		Extension *const ext;
 		std::vector<DebugItem> debugItems;
 		std::vector<std::uint16_t> debugItemIDs;
+		struct OpenFolder {
+			std::uint16_t itemID;
+			std::uint64_t token;
+		};
+		std::vector<OpenFolder> openFolders;
+		std::uint64_t nextFolderToken = 1;
 
 		// CF2.5+ text box used by debugger
 		static HWND CF25PlusEditBoxHandle;
 		static bool CF25PlusEditBoxHandleSearched;
+
+		void AppendDebugTreeRootLeaf(std::uint16_t itemID, bool isEditable);
+		void AppendDebugTreeChildLeaf(std::uint16_t parentID, std::uint16_t childID, bool isEditable);
+		void AddTreeLeafWithCurrentFolder(std::uint16_t itemID, bool isEditable);
+		bool CloseFolderByToken(std::uint64_t token);
+		bool IsFolderTokenOpen(std::uint64_t token) const;
 
 		// For internal use, not ext devs
 		void StartEditForItemID(int debugItemID);
@@ -198,6 +211,67 @@ namespace DarkEdif {
 #endif // EditorBuild
 
 	public:
+		class ScopedDebuggerFolder {
+			friend FusionDebugger;
+			FusionDebugger* owner = nullptr;
+			std::uint64_t token = 0;
+			bool autoEnd = true;
+			bool ended = false;
+			ScopedDebuggerFolder(FusionDebugger* owner, std::uint64_t token, bool autoEnd) :
+				owner(owner), token(token), autoEnd(autoEnd) { }
+		public:
+			ScopedDebuggerFolder() = default;
+			ScopedDebuggerFolder(const ScopedDebuggerFolder&) = delete;
+			ScopedDebuggerFolder& operator=(const ScopedDebuggerFolder&) = delete;
+			ScopedDebuggerFolder(ScopedDebuggerFolder&& other) noexcept :
+				owner(other.owner), token(other.token), autoEnd(other.autoEnd), ended(other.ended)
+			{
+				other.owner = nullptr;
+				other.token = 0;
+				other.ended = true;
+			}
+			ScopedDebuggerFolder& operator=(ScopedDebuggerFolder&& other) noexcept
+			{
+				if (this == &other)
+					return *this;
+				End();
+				owner = other.owner;
+				token = other.token;
+				autoEnd = other.autoEnd;
+				ended = other.ended;
+				other.owner = nullptr;
+				other.token = 0;
+				other.ended = true;
+				return *this;
+			}
+			~ScopedDebuggerFolder()
+			{
+				if (autoEnd)
+					End();
+			}
+			void End()
+			{
+				if (ended)
+					return;
+#if EditorBuild
+				if (owner)
+					owner->CloseFolderByToken(token);
+				else
+					(void)0;
+				ended = true;
+#else
+				ended = true;
+#endif
+			}
+			bool IsOpen() const
+			{
+#if EditorBuild
+				return owner && !ended && owner->IsFolderTokenOpen(token);
+#else
+				return false;
+#endif
+			}
+		};
 
 		/** Adds textual property to Fusion debugger display.
 		 * @param prefix			 The text to prefix the int value with; for example, _T("Value: "sv)
@@ -234,6 +308,14 @@ namespace DarkEdif {
 			int (*getLatestFromExt)(Extension *const ext),
 			bool (*saveUserInputToExt)(Extension *const ext, int &newValue),
 			std::size_t refreshMS,
+			const char *userSuppliedName = nullptr
+		);
+
+		[[nodiscard]] ScopedDebuggerFolder StartFolder(
+			// Starts a Debugger Folder scope. Items added after this call are placed
+			// under this Folder until End() (or destructor if autoEnd=true).
+			const std::tstring_view desc,
+			bool autoEnd = true,
 			const char *userSuppliedName = nullptr
 		);
 

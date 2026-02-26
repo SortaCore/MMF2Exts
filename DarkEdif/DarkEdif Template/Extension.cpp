@@ -43,6 +43,7 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const 
 	// There can be nothing in the [] section of the lambda.
 	// If you're not sure about lambdas, you can remove this debugger stuff without any side effects;
 	// it's just an example of how to use the debugger. You can view it in Fusion itself to see.
+	// Example debugger folder scope: items added before End() appear inside it.
 	FusionDebugger.AddItemToDebugger(
 		// Prefix before debugger value, and initial text; if we pass null for initial text, it uses reader func
 		_T("My text is: "sv), exampleDebuggerTextItem.c_str(),
@@ -56,6 +57,18 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const 
 			return true; // accept the changes
 		}, 500, NULL
 	);
+
+	// This is an example of Debugger folder, you can have as many items you want inside.
+	// The only restriction is that the Debugger Folder is single-level.
+	auto exampleFolder = FusionDebugger.StartFolder(_T("Example folder"sv), true, "example_folder");
+	FusionDebugger.AddItemToDebugger(
+		// Static read-only item for folder example.
+		_T("Inside folder: "sv), _T("Example item"),
+		nullptr, // no reader
+		nullptr, // no writer: not editable
+		500, "example_folder_static_item"
+	);
+	exampleFolder.End();
 
 	// Read object DarkEdif properties; you can pass property name, or property index
 	// This will work on all platforms the same way.
