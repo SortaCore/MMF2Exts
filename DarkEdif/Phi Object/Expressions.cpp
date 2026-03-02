@@ -686,11 +686,15 @@ int Extension::GetLoopedACLEntry_AccessMask()
 	return -1;
 }
 
-#include <signal.h>
 float Extension::TestParamsFunc(int a, float b, const TCHAR* c, float d, int e, float f, const TCHAR* g, int h, float i,
 	const TCHAR* j, int k, float l, const TCHAR* m, float n, int o, const TCHAR* p)
 {
-	raise(SIGTRAP);
+	// This function is used for testing DarkEdif A/C/E parameters are being passed correctly
+#ifdef _WIN32
+	__debugbreak(); // DebugBreak() requires system symbols
+#else
+	raise(SIGTRAP); // SIGTRAP will terminate process if no handler
+#endif
 	return a + b;
 }
 
