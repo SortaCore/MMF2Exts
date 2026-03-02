@@ -37,7 +37,8 @@
 		"ConditionMenu": [
 			[ 0, "On error" ],
 			[ "Fusion",
-				[ 1, "Is this frame running in a subapp?"]
+				[ 1, "Is this frame running in a subapp?"],
+				[ 5, "Is this app running in Fusion?" ]
 			],
 			[ "System info",
 				[ 2, "OS perm: Does user have access?"],
@@ -206,6 +207,9 @@
 			},
 			{
 				"Title": "%o: Discard object selection"
+			},
+			{
+				"Title": "%o: Is this app running in Fusion?"
 			}
 		],
 		"Expressions": [

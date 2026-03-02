@@ -14,6 +14,12 @@ const bool Extension::IsThisFrameASubApp() {
 	return rhPtr->get_App()->get_ParentApp() != nullptr;
 }
 
+bool Extension::IsAppRunningInFusion() const {
+	// True if Run Application or Run Frame. False if built EXE.
+	// Note that in non-Editor build, the only run mode defined is BuiltEXE.
+	return DarkEdif::RunMode != DarkEdif::MFXRunMode::BuiltEXE;
+}
+
 const bool Extension::DoesAccHaveEffectivePerm(const TCHAR * accOrSIDPtr, const TCHAR * argPermListPtr) {
 	std::tstring accOrSID(accOrSIDPtr);
 	std::string argPermList(DarkEdif::TStringToANSI(argPermListPtr));

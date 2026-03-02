@@ -160,6 +160,7 @@ public:
 	const bool AlwaysTrue() const;
 	bool IsEqual(int a, int b);
 	const bool IsThisFrameASubApp();
+	bool IsAppRunningInFusion() const;
 	const bool DoesAccHaveEffectivePerm(const TCHAR * accOrSID, const TCHAR * perm);
 	const bool OnNamedLoop(const TCHAR * loopName);
 	bool InvalidateExplicitSelection();

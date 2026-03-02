@@ -40,6 +40,7 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const 
 	LinkCondition(2, DoesAccHaveEffectivePerm);
 	LinkCondition(3, OnNamedLoop /* On DACL entry loop */);
 	LinkCondition(4, InvalidateExplicitSelection);
+	LinkCondition(5, IsAppRunningInFusion);
 	//LinkCondition(1, IsEqual);
 
 	LinkExpression(0, Error);
