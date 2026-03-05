@@ -574,6 +574,14 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 			return DarkEdif::MsgBox::Error(_T("DarkEdif OS detection error"), _T("Couldn't detect OS version: Version function returned failure (%u)."), GetLastError()), -1;
 
 		DarkEdif::Windows::OSVersion = (DarkEdif::Windows::WinOSVersion)((info.dwMajorVersion << 24) | (info.dwMinorVersion << 16) | (info.dwBuildNumber & 0xFFFF));
+
+		// ReactOS appends extra text after the null terminator, like "Service Pack 6", NULL, "ReactOS 0.2.5-RC1 (Build 20041227)"
+		// Due to zero-init of info var, it's safe to read past the null if not React, should just be blank string
+		if (DarkEdif::Windows::OSVersion >= DarkEdif::Windows::WinOSVersion::WinXP &&
+			SVIComparePrefix(info.szCSDVersion + strlen(info.szCSDVersion), "ReactOS"sv))
+		{
+			DarkEdif::Windows::IsRunningInReactOS = true;
+		}
 	}
 #elif defined (__ANDROID__)
 	// Init several useful runtime classes

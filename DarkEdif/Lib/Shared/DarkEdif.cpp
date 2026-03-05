@@ -5599,6 +5599,7 @@ bool DarkEdif::IsFusion25;
 // Ints are used in MMF2 non-Direct3D display modes.
 bool DarkEdif::IsHWAFloatAngles;
 bool DarkEdif::Windows::IsRunningUnderWine;
+bool DarkEdif::Windows::IsRunningInReactOS;
 DarkEdif::Windows::WinOSVersion DarkEdif::Windows::OSVersion;
 #endif
 // Set during SDK startup, relates to current CPU emulation.

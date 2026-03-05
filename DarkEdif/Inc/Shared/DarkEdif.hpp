@@ -275,6 +275,9 @@ namespace DarkEdif {
 		// True if running under Wine, false otherwise.
 		extern bool IsRunningUnderWine;
 
+		// True if running in ReactOS, false otherwise.
+		extern bool IsRunningInReactOS;
+
 		// You can also use NTDDI_XX enum for finer tuned comparison.
 		enum WinOSVersion : std::uint32_t {
 			// Windows version system was changed from Windows Me; copying it 1:1 will leave 95 "later" than WinNT.
