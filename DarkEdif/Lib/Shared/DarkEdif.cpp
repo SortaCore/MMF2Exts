@@ -7793,7 +7793,17 @@ DWORD WINAPI DarkEdifUpdateThread(void * pIsUniVer)
 		struct hostent * host = gethostbyname(domain);
 #pragma warning (pop)
 
-		if (host == NULL)
+		// Port 80, default of Darkwire hardcode IP: 80.229.219.2, network byte order
+		// We'll look it up on DNS in case Darkwire migrates, although we'll make every effort not to!
+		SOCKADDR_IN SockAddr = { AF_INET, htons(80), { (UCHAR)80, (UCHAR)229, (UCHAR)219, (UCHAR)2 } };
+		assert(SockAddr.sin_family == AF_INET && SockAddr.sin_port == htons(80) && SockAddr.sin_addr.s_addr == inet_addr("80.229.219.2"));
+
+		// DNS found, switch over; guaranteed IPv4 as we specified AF_INET
+		if (host != NULL)
+			SockAddr.sin_addr.s_addr = *((unsigned long*)host->h_addr);
+		// If host not found, then use the preset hardcoded IPv4 address from above init.
+		// Darkwire IP is always the same, so DNS should only fail to find if offline and it wasn't already in local DNS cache
+		else if (WSAGetLastError() != WSAHOST_NOT_FOUND)
 		{
 			if (handleWSAError(WSAGetLastError()))
 			{
@@ -7805,10 +7815,7 @@ DWORD WINAPI DarkEdifUpdateThread(void * pIsUniVer)
 			WSACleanup();
 			return 1;
 		}
-		SOCKADDR_IN SockAddr = {};
-		SockAddr.sin_port = htons(80);
-		SockAddr.sin_family = AF_INET;
-		SockAddr.sin_addr.s_addr = *((unsigned long *)host->h_addr);
+
 		GetLockAnd(
 			updateLog << "Connecting...\n"sv);
 		if (connect(Socket, (SOCKADDR *)(&SockAddr), sizeof(SockAddr)) != 0) {
