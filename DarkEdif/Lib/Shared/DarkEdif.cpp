@@ -7720,7 +7720,8 @@ DWORD WINAPI DarkEdifUpdateThread(void * pIsUniVer)
 			return 1;
 		}
 
-		// If this returns true, updateLock is still held.
+		// If this returns true, updateLock is still held; the error should be reported.
+		// If it returns false, updateLock is released and error should be ignored.
 		const auto handleWSAError = [&](int lastWSAError) {
 			// Get lock; caller will release it at end of update check
 			while (updateLock.exchange(true))
@@ -7797,7 +7798,6 @@ DWORD WINAPI DarkEdifUpdateThread(void * pIsUniVer)
 			if (handleWSAError(WSAGetLastError()))
 			{
 				updateLog << "DNS lookup of \""sv << domain << "\" failed, error "sv << WSAGetLastError() << '.';
-				pendingUpdateType = DarkEdif::SDKUpdater::ExtUpdateType::ConnectionError;
 				updateLock = false;
 			}
 
