@@ -1191,9 +1191,8 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 	}
 
 	// else Foreach or Delayed func
-	// ForEach
-	if (Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Foreach_Num) ||
-		Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Foreach_String))
+	// ForEach.
+	if (Sub_IsActIDForeach(actID))
 	{
 		if (foreachFuncToRun)
 			LOGE(_T("Possible crash! Foreach function is already set, but is being set again. Original foreach: \"%s\", current foreach: \"%s\"."), foreachFuncToRun->funcTemplate->name.c_str(), newFunc->funcTemplate->name.c_str());
@@ -1208,13 +1207,9 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 		newFunc->isVoidRun = true;
 		newFunc->runLocation = Sub_GetLocation(actID);
 		// actParameters[1] is being calculated right now by this call of VariableFunc.
-
 	}
-	// Delayed func
-	else if (Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_Num_MS) ||
-		Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_String_MS) ||
-		Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_Num_Ticks) ||
-		Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_String_Ticks))
+	// Delayed func.
+	else if (Sub_IsActIDDelayed(actID))
 	{
 		int firstRunDelayedFor = *(int*)&actParameters[0];
 		int numRepeats = *(int*)&actParameters[1];
@@ -1226,9 +1221,10 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 		delayFunc->keepAcrossFrames = keepIfFusionFrameChanged != 0;
 		delayFunc->numRepeats = numRepeats;
 		delayFunc->numUnitsUntilRun = delayBetweenRuns;
-		delayFunc->useTicks =
-			Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_Num_Ticks) ||
-			Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_String_Ticks);
+		delayFunc->useTicks = actID == 25  || actID == 26; // Delayed_XX_Tick action variants
+		assert(Edif::SDK->ActionFunctions[25] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_Num_Ticks) &&
+			Edif::SDK->ActionFunctions[26] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_String_Ticks));
+
 		if (delayFunc->useTicks)
 			delayFunc->runAtTick = curFrame + firstRunDelayedFor;
 		else
@@ -1333,8 +1329,7 @@ std::tstring Extension::Sub_GetLocation(int actID)
 		return _T("Unknown event"s);
 	}
 
-	if (Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_ActionDummy_Num) ||
-		Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_ActionDummy_String))
+	if (Sub_IsActIDDummy(actID))
 	{
 		// currently this overrides when a delayed funcA calls a non-delayed funcB which calls a non-delayed funcC.
 		//callerOrNull->funcToRun->level
@@ -1342,23 +1337,19 @@ std::tstring Extension::Sub_GetLocation(int actID)
 			<< GetActionIndex(this);
 		return str.str();
 	}
-	if (Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Foreach_Num) ||
-		Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Foreach_String))
+	if (Sub_IsActIDForeach(actID))
 	{
 		str << _T("DarkScript foreach action in Fusion event #"sv) << curFusionEvent << _T(", in "sv)
 			<< GetActionIndex(this);
 		return str.str();
 	}
-	if (Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Script))
+	if (Sub_IsActIDScript(actID))
 	{
 		str << _T("DarkScript scripting action in Fusion event #"sv) << curFusionEvent << _T(", in "sv)
 			<< GetActionIndex(this);
 		return str.str();
 	}
-	if (Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_Num_MS) ||
-		Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_Num_Ticks) ||
-		Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_String_MS) ||
-		Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_String_Ticks))
+	if (Sub_IsActIDDelayed(actID))
 	{
 		str << _T("DarkScript delayed function call, queued by "sv)
 			<< curDelayedFunc->fusionStartEvent.substr("DarkScript expression in "sv.size());

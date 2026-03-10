@@ -19,7 +19,7 @@ public:
 	Edif::Runtime Runtime;
 
 	static const int MinimumBuild = 254;
-	static const int Version = 4;
+	static const int Version = 5;
 
 	static constexpr OEFLAGS OEFLAGS = OEFLAGS::VALUES;
 	static constexpr OEPREFS OEPREFS = OEPREFS::NONE;
@@ -428,6 +428,13 @@ public:
 	long ExecuteFunction(RunObjectMultiPlatPtr obj, const std::shared_ptr<RunningFunction> &rf);
 	void Sub_RunPendingForeachFunc(const short oil, const std::shared_ptr<RunningFunction> &rf);
 	bool Sub_ParseParamValue(const TCHAR* cppFuncName, std::tstring valueTextToParse, const Param& paramExpected, const size_t paramIndex, Value& writeTo);
+
+	// Using hardcoded numbers like this is technically bad, but ext ctor assert (plus backwards compatibility) should avoid issues.
+	// Comparing Edif::MemberFunctionPointer prevents hardcoded IDs, but is problematic due to compiler optimizations merging funcs together.
+	inline static bool Sub_IsActIDDummy(const int actID) { return actID == 19 || actID == 20; }
+	inline static bool Sub_IsActIDForeach(const int actID) { return actID == 21 || actID == 22; }
+	inline static bool Sub_IsActIDDelayed(const int actID) { return actID >= 23 && actID <= 26; }
+	inline static bool Sub_IsActIDScript(const int actID) { return actID == 27; }
 
 
 	void CreateError(PrintFHintInside const TCHAR* format, ...) PrintFHintAfter(2, 3);

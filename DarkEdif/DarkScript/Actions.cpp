@@ -775,8 +775,8 @@ void Extension::RunFunction_Script(const TCHAR* script)
 
 	std::vector<FusionSelectedObjectListCache> selObjList;
 	evt_SaveSelectedObjects(selObjList);
-	runningFunc->runLocation = Sub_GetLocation(27);
-	assert(Edif::SDK->ActionFunctions[27] == Edif::MemberFunctionPointer(&Extension::RunFunction_Script));
+	runningFunc->runLocation = Sub_GetLocation(27); // Action ID of Script
+	assert(Edif::SDK->ActionFunctions[27] == Edif::MemberFunctionPointer(&Extension::RunFunction_Script) && Sub_IsActIDScript(27));
 	ExecuteFunction(nullptr, runningFunc);
 	evt_RestoreSelectedObjects(selObjList, true);
 }

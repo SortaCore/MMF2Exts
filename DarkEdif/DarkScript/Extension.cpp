@@ -66,7 +66,6 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const 
 	LinkAction(39, Logging_SetLevel);
 	LinkAction(40, Template_ImportFromAnotherFrame);
 
-
 	// Conditions
 
 	LinkCondition(0, OnDarkScriptError); // Made this mandatory; I've had too many people not reading the errors
@@ -219,6 +218,21 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const 
 	// This will allow caching a list of all On Function events -> function names, saving time on comparing line by line.
 	// Of course, it won't detect group events inside deactivated groups, so maybe it's best we manually loop events instead of triggering.
 	selfAwareness = true;
+
+	// I had code for Edif::SDK->ActionFunctions[ID] == Edif::MemberFunctionPointer(&Extension::RunFunction_XX) at parts,
+	// to prevent magic number action IDs, but it turned out optimized builds would merge the duplicate functions e.g. Num_MS and Num_Ticks,
+	// so it was unreliable as function addresses weren't unique.
+	// This tests Sub_IsActIDDummy and related macros are still usable.
+	assert(Edif::SDK->ActionFunctions[19] == Edif::MemberFunctionPointer(&Extension::RunFunction_ActionDummy_Num) &&
+		Edif::SDK->ActionFunctions[20] == Edif::MemberFunctionPointer(&Extension::RunFunction_ActionDummy_String) &&
+		Edif::SDK->ActionFunctions[21] == Edif::MemberFunctionPointer(&Extension::RunFunction_Foreach_Num) &&
+		Edif::SDK->ActionFunctions[22] == Edif::MemberFunctionPointer(&Extension::RunFunction_Foreach_String) &&
+		Edif::SDK->ActionFunctions[23] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_Num_MS) &&
+		Edif::SDK->ActionFunctions[24] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_String_MS) &&
+		Edif::SDK->ActionFunctions[25] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_Num_Ticks) &&
+		Edif::SDK->ActionFunctions[26] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_String_Ticks) &&
+		Edif::SDK->ActionFunctions[27] == Edif::MemberFunctionPointer(&Extension::RunFunction_Script));
+
 }
 
 Extension::~Extension()
@@ -299,11 +313,42 @@ Extension::~Extension()
 REFLAG Extension::Handle()
 {
 	++curFrame;
-	const auto now = std::chrono::system_clock::now();
+
+	// In a 60FPS app, one tick is every 16.7ms. A function with delay of 100ms is very unlikely to have
+	// a matching FPS tick that happens at that exact MS delay.
+	// So Fusion's ticks will likely be earlier than its 100ms time and later; when should a time-based function run?
+	// Of course, it's more likely to run at exact ms if Fusion frame rate is high, no frame drops, etc.
+	// Note that Windows prefers later than scheduled, e.g. see Sleep() documentation.
+	// It is not possible to "correct" the ticks by sleeping the thread, as that basically lowers the effective frame rate,
+	// as CPU time is now spent idling, waiting for magical times - and Sleep() is non-exact anyway.
+	// Fusion handles that "correction" and you'll notice it doesn't do it very well; no app really does,
+	// their FPS is rarely a clean 60.0 FPS under load.
+	// 
+	// If you want consistent handling, don't use clock delay, use tick delay; DS will never miss a tick when delayed functions are queued,
+	// although that does mean if you queue it in 60 frames, and Fusion runs at 10FPS due to high load, it will run after 6 seconds,
+	// whereas if you queued by time of 1 second, it would run at about 10 frames later.
+	// So it's a trade-off, but generally you want consistent event mechanics, not something that allows you to do more or less repeats,
+	// when the app is running slower or faster.
+	// Currently ticks use DS's curFrame for ticks, so it's app frame rate; Fusion does have its own frame ticker,
+	// but I doubt there's any benefit to it, although possibly machine-independent speed being on may mean exts tick more than display,
+	// and maybe the dev is trying to code for backend ticks over display ticks.
+	// 
+	// Three ways of deciding a time-elapsed function is due to be run:
+	// 1. Assume FPS is high enough; check time to run has already passed (current practice).
+	//    This means functions are likely to run later than their delay, not earlier, running on the tick after elapsed.
+	// 2. Assume FPS is not high enough, check time that would have elapsed by next FPS is passed
+	//    This can be done by adding an extra (1000/rhPtr->rhApp.hdr.FrameRate) ms to now.
+	//    This will tend to run functions earlier than expected, not later, running on the tick earlier than elapsed.
+	// 3. Assume frames are dropped, run functions by time that would have elapsed based on lower frame rate (dropping 5 frames)
+	//    As above, but subtract some from app frame rate, e.g. add (1000/max(1,framerate-10)) ms to now.
+	//    This will tend to run functions even earlier than expected; possibly running two ticks early,
+	//    but protected from being too late due to frame drops.
+	//
+	const auto now = decltype(DelayedFunction::runAtTime)::clock::now();
 
 	for (std::size_t i = 0; i < globals->pendingFuncs.size(); ++i)
 	{
-		if (globals->pendingFuncs[i]->useTicks ? globals->pendingFuncs[i]->runAtTick <= curFrame : globals->pendingFuncs[i]->runAtTime < now)
+		if (globals->pendingFuncs[i]->useTicks ? globals->pendingFuncs[i]->runAtTick <= curFrame : globals->pendingFuncs[i]->runAtTime <= now)
 		{
 			std::shared_ptr<DelayedFunction> pf = globals->pendingFuncs[i];
 
