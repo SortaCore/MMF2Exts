@@ -3789,7 +3789,7 @@ enum class SHAPE {
 // Fusion Windows cSurface fill type enum - used to be named FILLTYPE_XX, but that is used by Windows
 // @remarks Windows SDK uses FILLTYPE enum in vssym32.h, and FillType in UIAutomationCore.h
 //			This is separately defined to cross-platform DarkEdif::Surface::SurfaceFill::FillType
-enum WinSurf_FillType : uint16_t {
+enum class WinSurf_FillType : uint16_t {
 	None,
 	Solid,
 	Gradient,
