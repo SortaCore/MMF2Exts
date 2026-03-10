@@ -359,75 +359,75 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const 
 	// The server could be hosting already if this Extension() is being run after a Fusion frame switch.
 	const auto hostingDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
 		if (ext->Srv.hosting())
-			writeTo = _T("Hosting: Port ") + std::to_tstring(ext->Srv.port());
+			writeTo = _T("Port ") + std::to_tstring(ext->Srv.port());
 		else
-			writeTo = _T("Hosting: Not hosting."sv);
+			writeTo = _T("Not hosting."sv);
 	};
-	FusionDebugger.AddItemToDebugger(NULL, hostingDebugItemReader, NULL, 500, NULL);
+	FusionDebugger.AddItemToDebugger(_T("Hosting: "sv), NULL, hostingDebugItemReader, NULL, 500, NULL);
 
 	const auto hostingWebSocketDebugItemReader = [](Extension* ext, std::tstring& writeTo) {
 		if (ext->Srv.websocket->hosting() && ext->Srv.websocket->hosting_secure())
 		{
-			writeTo = _T("WebSocket: Hosting insecure port ") + std::to_tstring(ext->Srv.websocket->port());
+			writeTo = _T("Hosting insecure port ") + std::to_tstring(ext->Srv.websocket->port());
 			writeTo += _T(", secure "sv);
 			writeTo += std::to_tstring(ext->Srv.websocket->port_secure());
 		}
 		else if (ext->Srv.websocket->hosting())
-			writeTo = _T("WebSocket: Hosting insecure port "s) + std::to_tstring(ext->Srv.websocket->port());
+			writeTo = _T("Hosting insecure port "s) + std::to_tstring(ext->Srv.websocket->port());
 		else if (ext->Srv.websocket->hosting_secure())
-			writeTo = _T("WebSocket: Hosting secure port "s) + std::to_tstring(ext->Srv.websocket->port_secure());
+			writeTo = _T("Hosting secure port "s) + std::to_tstring(ext->Srv.websocket->port_secure());
 		else
-			writeTo = _T("WebSocket: Not hosting "sv);
+			writeTo = _T("Not hosting "sv);
 	};
-	FusionDebugger.AddItemToDebugger(NULL, hostingWebSocketDebugItemReader, NULL, 500, NULL);
+	FusionDebugger.AddItemToDebugger(_T("WebSocket: "sv), NULL, hostingWebSocketDebugItemReader, NULL, 500, NULL);
 
 	const auto clientCountDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
 		if (ext->Srv.hosting() || ext->Srv.websocket->hosting() || ext->Srv.websocket->hosting_secure())
-			writeTo = _T("All client count: ") + std::to_tstring(ext->Srv.clientcount());
+			writeTo = std::to_tstring(ext->Srv.clientcount());
 		else
-			writeTo = _T("All client count: N/A"sv);
+			writeTo = _T("N/A"sv);
 	};
-	FusionDebugger.AddItemToDebugger(NULL, clientCountDebugItemReader, NULL, 500, NULL);
+	FusionDebugger.AddItemToDebugger(_T("All client count: "sv), NULL, clientCountDebugItemReader, NULL, 500, NULL);
 
 	const auto channelCountDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
 		if (ext->Srv.hosting() || ext->Srv.websocket->hosting() || ext->Srv.websocket->hosting_secure())
-			writeTo = _T("All channel count: ") + std::to_tstring(ext->Srv.channelcount());
+			writeTo = std::to_tstring(ext->Srv.channelcount());
 		else
-			writeTo = _T("All channel count: N/A"sv);
+			writeTo = _T("N/A"sv);
 	};
-	FusionDebugger.AddItemToDebugger(NULL, channelCountDebugItemReader, NULL, 500, NULL);
+	FusionDebugger.AddItemToDebugger(_T("All channel count: "sv), NULL, channelCountDebugItemReader, NULL, 500, NULL);
 
 	const auto selChannelDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
 		if (ext->selChannel)
-			writeTo = _T("Selected channel: ") + DarkEdif::UTF8ToTString(ext->selChannel->name());
+			writeTo =DarkEdif::UTF8ToTString(ext->selChannel->name());
 		else
-			writeTo = _T("Selected channel: (none)"sv);
+			writeTo = _T("(none)"sv);
 	};
-	FusionDebugger.AddItemToDebugger(NULL, selChannelDebugItemReader, NULL, 100, NULL);
+	FusionDebugger.AddItemToDebugger(_T("Selected channel: "sv), NULL, selChannelDebugItemReader, NULL, 100, NULL);
 
 	const auto selChannelNumClientsDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
 		if (ext->selChannel)
-			writeTo = _T("> Client count: ") + std::to_tstring(ext->selChannel->clientcount());
+			writeTo = std::to_tstring(ext->selChannel->clientcount());
 		else
-			writeTo = _T("> Client count: (no selected channel)"sv);
+			writeTo = _T("(no selected channel)"sv);
 	};
-	FusionDebugger.AddItemToDebugger(NULL, selChannelNumClientsDebugItemReader, NULL, 100, NULL);
+	FusionDebugger.AddItemToDebugger(_T("> Client count: "sv), NULL, selChannelNumClientsDebugItemReader, NULL, 100, NULL);
 
 	const auto selClientDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
 		if (ext->selClient)
-			writeTo = _T("Selected client: ") + DarkEdif::UTF8ToTString(ext->selChannel->name());
+			writeTo = DarkEdif::UTF8ToTString(ext->selChannel->name());
 		else
-			writeTo = _T("Selected client: (none)"sv);
+			writeTo = _T("(none)"sv);
 	};
-	FusionDebugger.AddItemToDebugger(NULL, selClientDebugItemReader, NULL, 100, NULL);
+	FusionDebugger.AddItemToDebugger(_T("Selected client: "sv), NULL, selClientDebugItemReader, NULL, 100, NULL);
 
 	const auto selClientNumChannelsDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
 		if (ext->selClient)
-			writeTo = _T("> Channel count: ") + std::to_tstring(ext->selClient->channelcount());
+			writeTo = std::to_tstring(ext->selClient->channelcount());
 		else
-			writeTo = _T("> Channel count: (no selected client)"sv);
+			writeTo = _T("(no selected client)"sv);
 	};
-	FusionDebugger.AddItemToDebugger(NULL, selClientNumChannelsDebugItemReader, NULL, 100, NULL);
+	FusionDebugger.AddItemToDebugger(_T("> Channel count: "sv), NULL, selClientNumChannelsDebugItemReader, NULL, 100, NULL);
 }
 
 void Extension::LacewingLoopThread(Extension * ext)

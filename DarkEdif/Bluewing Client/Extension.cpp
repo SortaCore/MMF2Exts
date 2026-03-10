@@ -375,50 +375,50 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const 
 	// The client could be connected if this Extension() is being run after a Fusion frame switch.
 	const auto connectedDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
 		if (ext->Cli.connecting())
-			writeTo = _T("Connected: Connecting..."sv);
+			writeTo = _T("Connecting..."sv);
 		else if (ext->Cli.connected())
-			writeTo = _T("Connected: ") + DarkEdif::ANSIToTString(ext->HostIP);
+			writeTo = DarkEdif::ANSIToTString(ext->HostIP);
 		else
-			writeTo = _T("Connected: No connection"sv);
+			writeTo = _T("No connection"sv);
 	};
-	FusionDebugger.AddItemToDebugger(NULL, connectedDebugItemReader, NULL, 500, NULL);
+	FusionDebugger.AddItemToDebugger(_T("Connected: "sv), NULL, connectedDebugItemReader, NULL, 500, NULL);
 
 	const auto clientNameDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
 		auto cliName = DarkEdif::UTF8ToTString(ext->Cli.name());
 		if (cliName.empty())
 			cliName = _T("(unset)"sv);
-		writeTo = _T("Name: ") + cliName;
+		writeTo = cliName;
 	};
-	FusionDebugger.AddItemToDebugger(NULL, clientNameDebugItemReader, NULL, 500, NULL);
+	FusionDebugger.AddItemToDebugger(_T("Name: "sv), NULL, clientNameDebugItemReader, NULL, 500, NULL);
 
 	const auto channelCountDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
-		writeTo = _T("Channel count: ") + std::to_tstring(ext->Cli.channelcount());
+		writeTo = std::to_tstring(ext->Cli.channelcount());
 	};
-	FusionDebugger.AddItemToDebugger(NULL, channelCountDebugItemReader, NULL, 500, NULL);
+	FusionDebugger.AddItemToDebugger(_T("Channel count: "sv), NULL, channelCountDebugItemReader, NULL, 500, NULL);
 
 	const auto selectedChannelDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
 		if (ext->selChannel)
-			writeTo = _T("Selected channel: ") + DarkEdif::UTF8ToTString(ext->selChannel->name());
+			writeTo = DarkEdif::UTF8ToTString(ext->selChannel->name());
 		else
-			writeTo = _T("Selected channel: (none)"sv);
+			writeTo = _T("(none)"sv);
 	};
-	FusionDebugger.AddItemToDebugger(NULL, selectedChannelDebugItemReader, NULL, 100, NULL);
+	FusionDebugger.AddItemToDebugger(_T("Selected channel: "sv), NULL, selectedChannelDebugItemReader, NULL, 100, NULL);
 
 	const auto numPeersDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
 		if (ext->selChannel)
-			writeTo = _T("Peer count: ") + std::to_tstring(ext->selChannel->peercount());
+			writeTo = std::to_tstring(ext->selChannel->peercount());
 		else
-			writeTo = _T("Peer count: (no channel)"sv);
+			writeTo = _T("(no channel)"sv);
 	};
-	FusionDebugger.AddItemToDebugger(NULL, numPeersDebugItemReader, NULL, 100, NULL);
+	FusionDebugger.AddItemToDebugger(_T("Peer count: "sv), NULL, numPeersDebugItemReader, NULL, 100, NULL);
 
 	const auto selectedPeerDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
 		if (ext->selPeer && ext->selChannel)
-			writeTo = _T("Selected peer: ") + DarkEdif::UTF8ToTString(ext->selPeer->name());
+			writeTo = DarkEdif::UTF8ToTString(ext->selPeer->name());
 		else
-			writeTo = _T("Selected peer: (none)"sv);
+			writeTo = _T("(none)"sv);
 	};
-	FusionDebugger.AddItemToDebugger(NULL, selectedPeerDebugItemReader, NULL, 100, NULL);
+	FusionDebugger.AddItemToDebugger(_T("Selected peer: "sv), NULL, selectedPeerDebugItemReader, NULL, 100, NULL);
 }
 
 void Extension::LacewingLoopThread(void * thisExt)
