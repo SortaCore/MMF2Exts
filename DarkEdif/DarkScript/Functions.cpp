@@ -773,60 +773,66 @@ void Extension::AutoGenerateExpressions()
 	}
 }
 
-#ifdef _WIN32
+#if EditorBuild
 void FusionAPI GetExpressionParam(mv* mV, short code, short param, TCHAR* strBuf, short maxLen)
 {
 #pragma DllExportHint
-	if (Edif::IS_COMPATIBLE(mV))
+
+	// Regular DarkEdif JSON expression handling
+	if (!Edif::IS_COMPATIBLE(mV))
+		return;
+
+	if ((size_t)code < lastNonDummyFunc)
+		return (void)Edif::ConvertAndCopyString(strBuf, CurLang["Expressions"sv][code]["Parameters"sv][param][1], maxLen);
+
+	// Dummy functions are inserted between the real JSON expressions, and the FuncXX expressions,
+	// allowing DarkScript to be extended without breaking backwards compatibility.
+	// As these aren't referenced in the expression menu, this func shouldn't be called; Fusion doesn't read param titles
+	// until the user inserts the expression via the expression menu.
+	if ((size_t)code <= lastNonFuncID)
 	{
-		if ((size_t)code < lastNonDummyFunc)
-			Edif::ConvertAndCopyString(strBuf, CurLang["Expressions"sv][code]["Parameters"sv][param][1], maxLen);
-		else if ((size_t)code <= lastNonFuncID)
+		DarkEdif::MsgBox::Error(_T("Shouldn't happen"), _T("Should never happen. Param requested for dummy function."));
+		return (void)Edif::ConvertAndCopyString(strBuf, "COUGH"sv, maxLen);
+	}
+
+	// Generated expression handling: we read from ExpressionInfos
+	// Currently Fusion doesn't actually have menus for all the expression possibilities, as that's 13k items or so,
+	// way beyond reasonable. But I may add some later.
+	const int funcID = code - lastNonFuncID - 1;
+	LOGV(_T("Outputting param %i for dynamic function, expression ID %i, funcID %i.\n"), param, code, funcID);
+
+	const ACEInfo& exp = *Edif::SDK->ExpressionInfos[code];
+	if (exp.NumOfParams < param + 1)
+	{
+		DarkEdif::MsgBox::Error(_T("Shouldn't happen"), _T("Param %i missing for function ID %i (expr ID %i)."), param, funcID, code);
+		Edif::ConvertAndCopyString(strBuf, "Wowie", maxLen);
+		return;
+	}
+
+	char ret[64];
+	switch (exp.Parameter[param].ep)
+	{
+	case ExpParams::Float: // also integer
+		if ((exp.FloatFlags & (1 << param)) != 0)
+			sprintf_s(ret, "Float%i", param + 1);
+		else // integer
 		{
-			DarkEdif::MsgBox::Error(_T("Shouldn't happen"), _T("Should never happen. Param requested for dummy function."));
-			Edif::ConvertAndCopyString(strBuf, "COUGH"sv, maxLen);
+			// Repeat is always 2nd param if just Repeat
+			if (param == 1 && (funcID & Flags::Repeat) == Flags::Repeat)
+				sprintf_s(ret, "Number of runs (1+)");
+			else
+				sprintf_s(ret, "Integer%i", param + 1);
 		}
-		else
-		{
-			int funcID = code - lastNonFuncID - 1;
-
-			LOGV(_T("Outputting param %i for dynamic function, expression ID %i, funcID %i.\n"), param, code, funcID);
-
-			ACEInfo& exp = *Edif::SDK->ExpressionInfos[code];
-			if (exp.NumOfParams < param + 1)
-			{
-				DarkEdif::MsgBox::Error(_T("Shouldn't happen"), _T("Param %i missing for function ID %i (expr ID %i)."), param, funcID, code);
-				Edif::ConvertAndCopyString(strBuf, "Wowie", maxLen);
-				return;
-			}
-
-			char ret[64];
-			switch (exp.Parameter[param].ep)
-			{
-			case ExpParams::Float: // also integer
-				if ((exp.FloatFlags & (1 << param)) != 0)
-					sprintf_s(ret, "Float%i", param + 1);
-				else // integer
-				{
-					// Repeat is always 2nd param if just Repeat
-					if (param == 1 && (funcID & Flags::Repeat) == Flags::Repeat)
-						sprintf_s(ret, "Number of runs (1+)");
-					else
-						sprintf_s(ret, "Integer%i", param + 1);
-				}
-				Edif::ConvertAndCopyString(strBuf, ret, maxLen);
-				return;
-			case ExpParams::String:
-				// Either function (param 0) or string
-				Edif::ConvertAndCopyString(strBuf, param == 0 ? "Function" : "String", maxLen);
-				return;
-			default:
-				DarkEdif::MsgBox::Error(_T("Shouldn't happen"), _T("Param %i unrecognised for function ID %i (expr ID %i)."), param, funcID, code);
-				Edif::ConvertAndCopyString(strBuf, "Unrecog", maxLen);
-				return;
-			}
-
-		}
+		Edif::ConvertAndCopyString(strBuf, ret, maxLen);
+		return;
+	case ExpParams::String:
+		// Param 0 (first param) is always function name; otherwise it's a string param
+		Edif::ConvertAndCopyString(strBuf, param == 0 ? "Function" : "String", maxLen);
+		return;
+	default:
+		// Unrecognised param type; as expression is either int, float, string, that's impossible
+		DarkEdif::MsgBox::Error(_T("Shouldn't happen"), _T("Param %i unrecognised for function ID %i (expr ID %i)."), param, funcID, code);
+		Edif::ConvertAndCopyString(strBuf, "Unrecog", maxLen);
 	}
 }
 
@@ -836,59 +842,65 @@ void FusionAPI GetExpressionTitle(mv* mV, short code, TCHAR* strBuf, short maxLe
 	if (!Edif::IS_COMPATIBLE(mV))
 		return;
 
+	// Regular DarkEdif JSON expression handling
 	if ((size_t)code < lastNonDummyFunc)
 	{
 		std::string Return(CurLang["Expressions"sv][code]["Title"sv]);
 		if (Return.back() != '(')
 			Return.push_back('(');
-		Edif::ConvertAndCopyString(strBuf, Return.c_str(), maxLen);
+		return (void)Edif::ConvertAndCopyString(strBuf, Return.c_str(), maxLen);
 	}
-	else if ((size_t)code <= lastNonFuncID)
+
+	// Dummy functions are inserted between the real JSON expressions, and the FuncXX expressions,
+	// allowing DarkScript to be extended without breaking backwards compatibility.
+	// As these aren't referenced in the expression menu, this func shouldn't be called, but in case
+	// Fusion is pre-caching or something, we'll handle it.
+	if ((size_t)code <= lastNonFuncID)
+		return (void)Edif::ConvertAndCopyString(strBuf, "DummyFunc("sv, maxLen);
+
+	// Generated expression handling: these will actually be read by Fusion so when user types FuncXXX,
+	// we need a match.
+	// We read the details from ExpressionInfos, and a bit of math on the func ID to figure out DS func flags.
+	// For logic of ID -> flags/ret type/param types/param count, see the exp generation. It's basically modulus math.
+	const int origFuncID = code - lastNonFuncID - 1;
+
+	const ACEInfo& exp = *Edif::SDK->ExpressionInfos[code];
+	std::stringstream str;
+	if (origFuncID & Flags::KeepObjSelection)
+		str << 'K';
+	if (origFuncID & Flags::Repeat)
+		str << 'R';
+	if (exp.Flags.ef == ExpReturnType::Float)
+		str << 'F';
+	str << "Func"sv;
+
+	size_t i = 1; // func name is first paramater
+	if (origFuncID & Flags::Repeat)
+		++i; // skip repeat count parameter if present
+
+	for (; i < (size_t)exp.NumOfParams; ++i)
 	{
-		Edif::ConvertAndCopyString(strBuf, "DummyFunc("sv, maxLen);
-	}
-	else
-	{
-		const int origFuncID = code - lastNonFuncID - 1;
-
-		ACEInfo& exp = *Edif::SDK->ExpressionInfos[code];
-		std::stringstream str;
-		if (origFuncID & Flags::KeepObjSelection)
-			str << 'K';
-		if (origFuncID & Flags::Repeat)
-			str << 'R';
-		if (exp.Flags.ef == ExpReturnType::Float)
-			str << 'F';
-		str << "Func"sv;
-
-		size_t i = 1; // func name is first paramater
-		if (origFuncID & Flags::Repeat)
-			++i; // skip repeat count parameter if present
-
-		for (; i < (size_t)exp.NumOfParams; ++i)
+		if (exp.Parameter[i].ep == ExpParams::String)
+			str << 'S';
+		else if (exp.Parameter[i].ep == ExpParams::Float)
 		{
-			if (exp.Parameter[i].ep == ExpParams::String)
-				str << 'S';
-			else if (exp.Parameter[i].ep == ExpParams::Float)
-			{
-				if ((exp.FloatFlags & (1 << i)) != 0)
-					str << 'F';
-				else // integer
-					str << 'I';
-			}
-			else
-			{
-				DarkEdif::MsgBox::Error(_T("GetExpressionTitle"), _T("Param %i unrecognised for function ID %i (expr ID %i)."), i, origFuncID, code);
-				str.str("UnrecognizedError"s);
-				str << code;
-				break;
-			}
+			if ((exp.FloatFlags & (1 << i)) != 0)
+				str << 'F';
+			else // integer
+				str << 'I';
 		}
-		if (exp.Flags.ef == ExpReturnType::String)
-			str << '$';
-		str << '(';
-		Edif::ConvertAndCopyString(strBuf, str.str().c_str(), maxLen);
+		else
+		{
+			DarkEdif::MsgBox::Error(_T("GetExpressionTitle"), _T("Param %i unrecognised for function ID %i (expr ID %i)."), i, origFuncID, code);
+			str.str("UnrecognizedError"s);
+			str << code;
+			break;
+		}
 	}
+	if (exp.Flags.ef == ExpReturnType::String)
+		str << '$';
+	str << '(';
+	Edif::ConvertAndCopyString(strBuf, str.str().c_str(), maxLen);
 }
 void FusionAPI GetExpressionString(mv* mV, short code, TCHAR* strPtr, short maxLen)
 {
@@ -898,7 +910,7 @@ void FusionAPI GetExpressionString(mv* mV, short code, TCHAR* strPtr, short maxL
 	GetExpressionTitle(mV, code, strPtr, maxLen);
 }
 
-#endif
+#endif // EditorBuild
 
 // Set in Edif.cpp for DARKSCRIPT_EXTENSION; needed to read the Action parameters.
 // Last action parameter is a FuncX expression, which when evaluated, will call VariableFunction()
