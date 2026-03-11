@@ -31,15 +31,13 @@ JavaVM * global_vm;
 namespace DarkEdif::Android { void Init_Internals(); }
 #endif
 
-// Checks Fusion runtime is compatible with your extension.
-// In Runtime, this expression should not be called and always returns false.
+#if EditorBuild
+// Checks Fusion runtime is compatible with your extension. Editor-only.
 bool Edif::IS_COMPATIBLE(mv * v)
 {
-#if RuntimeBuild
 	// mV is not valid at runtime; so someone's trying to use a Runtime MFX as Editor,
 	// which won't work anyway because Runtime MFX lacks A/C/E menus and such.
-	return false;
-#else
+	
 	// No GetVersion function provided, abort
 	if (!v->GetVersion)
 		return false;
@@ -70,8 +68,8 @@ bool Edif::IS_COMPATIBLE(mv * v)
 	#else // TGFEXT
 		return true;
 	#endif
-#endif
 }
+#endif // EditorBuild
 
 std::string Edif::CurrentFolder()
 {
