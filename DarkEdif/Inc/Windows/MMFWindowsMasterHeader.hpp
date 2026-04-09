@@ -4298,7 +4298,7 @@ struct mv {
 	HPALETTE			HPal256;			// 256 color palette
 	unsigned short		AppMode,			// Screen mode with flags
 						ScrMode;			// Screen mode (SM_8=256, SM_15=32768, SM_16=65536, SM_32=16 million colors)
-	unsigned int		EditDXDocToClient,	// Edit time only: top-left coordinates
+	DWORD		EditDXDocToClient,			// Edit time only: top-left coordinates
 						EditDYDocToClient;
 	CImageFilterMgr *	ImgFilterMgr;		// Image filter manager
 	CSoundFilterMgr *	SndFilterMgr;		// Sound filter manager
@@ -4315,7 +4315,7 @@ struct mv {
 
 	// Runtime
 	RunHeader *			RunHdr;				// Current RunHeader
-	unsigned int		PextsHoldingGlobals;				// Preferences (sound on/off)
+	DWORD		PextsHoldingGlobals;		// Preferences (sound on/off)
 	TCHAR *				subType;
 	BOOL				FullScreen;			// Full screen mode
 	TCHAR *				MainAppFileName;	// App filename
@@ -4327,7 +4327,7 @@ struct mv {
 	TCHAR **			ExtList;
 	int					NbDllTrans;
 	dllTrans*			DllTransList;
-	unsigned int		JoyCaps[32];
+	DWORD				JoyCaps[32];
 	HHOOK				HMsgHook;
 	int					ModalLoop;
 	int					ModalSubAppCount;
@@ -4337,7 +4337,7 @@ struct mv {
 	////////////
 
 	// Editor: Open Help file
-	void (CALLBACK * HelpA) (const char * pHelpFile, unsigned int nID, LPARAM lParam);
+	void (CALLBACK * HelpA) (const char * pHelpFile, DWORD nID, LPARAM lParam);
 
 	// Editor: Get default font for object creation
 	// pStyle can be NULL to ignore; cbSize is size of pStyle's buffer.
@@ -4358,29 +4358,29 @@ struct mv {
 	void (CALLBACK * UnregisterDialogBox) (HWND hDlg);
 
 	// Runtime: Add surface as backdrop object
-	void (CALLBACK * AddBackdrop) (cSurface * pSf, int x, int y, unsigned int dwInkEffect, unsigned int dwInkEffectParam, int nObstacleType, int nLayer);
+	void (CALLBACK * AddBackdrop) (cSurface * pSf, int x, int y, DWORD dwInkEffect, DWORD dwInkEffectParam, int nObstacleType, int nLayer);
 
 	// Runtime: Binary files
-	BOOL (CALLBACK * GetFileA)(const char * pPath, char * pFilePath, unsigned int dwFlags);
+	BOOL (CALLBACK * GetFileA)(const char * pPath, char * pFilePath, DWORD dwFlags);
 	void (CALLBACK * ReleaseFileA)(const char * pPath);
-	HANDLE (CALLBACK * OpenHFileA)(const char * pPath, unsigned int * pDwSize, unsigned int dwFlags);
+	HANDLE (CALLBACK * OpenHFileA)(const char * pPath, DWORD * pDwSize, DWORD dwFlags);
 	void (CALLBACK * CloseHFile)(HANDLE hf);
 
 	// Plugin: download file
 	int (CALLBACK * LoadNetFileA) (char * pFilename);
 
 	// Plugin: send command to Vitalize
-	int (CALLBACK * NetCommandA) (int, void *, unsigned int, void *, unsigned int);
+	int (CALLBACK * NetCommandA) (int, void *, DWORD, void *, DWORD);
 
 	// Editor & Runtime: Returns the version of MMF or of the runtime
 	// Return is a bitmask of three different flag sets; MMFVERSION_MASK, MMFBUILD_MASK, MMFVERFLAG_MASK
-	unsigned int (CALLBACK * GetVersion) ();
+	DWORD (CALLBACK * GetVersion) ();
 
 	// Editor & Runtime: callback function for properties or other functions
 	LRESULT	(CALLBACK * CallFunction) (EDITDATA * edPtr, CallFunctionIDs nFnc, LPARAM lParam1, LPARAM lParam2, LPARAM lParam3);
 
 	// Editor: Open Help file (UNICODE)
-	void (CALLBACK * HelpW) (const wchar_t * pHelpFile, unsigned int nID, LPARAM lParam);
+	void (CALLBACK * HelpW) (const wchar_t * pHelpFile, DWORD nID, LPARAM lParam);
 
 	// Editor: Get default font for object creation (UNICODE)
 	// pStyle can be NULL to ignore; cbSize is size of pStyle's buffer in WCHARs.
@@ -4392,15 +4392,15 @@ struct mv {
 	BOOL (CALLBACK * EditAnimationW) (EDITDATA * edPtr, EditAnimationParamsW * Params, HWND Parent);
 
 	// Runtime: Binary files (UNICODE)
-	BOOL (CALLBACK * GetFileW)(const wchar_t * pPath, wchar_t * pFilePath, unsigned int dwFlags);
+	BOOL (CALLBACK * GetFileW)(const wchar_t * pPath, wchar_t * pFilePath, DWORD dwFlags);
 	void (CALLBACK * ReleaseFileW)(const wchar_t * pPath);
-	HANDLE (CALLBACK * OpenHFileW)(const wchar_t * pPath, unsigned int * pDwSize, unsigned int dwFlags);
+	HANDLE (CALLBACK * OpenHFileW)(const wchar_t * pPath, DWORD * pDwSize, DWORD dwFlags);
 
 	// Plugin: download file
 	int	(CALLBACK * LoadNetFileW) (wchar_t * pFilename);
 
 	// Plugin: send command to Vitalize
-	int	(CALLBACK * NetCommandW) (int, void *, unsigned int, void *, unsigned int);
+	int	(CALLBACK * NetCommandW) (int, void *, DWORD, void *, DWORD);
 
 	// Place-holder for next versions
 	void * AdditionalFncs[6];
