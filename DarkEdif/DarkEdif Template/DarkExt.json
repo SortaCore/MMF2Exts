@@ -2,7 +2,7 @@
 	// 4-character identifer that uniquely identifies your extension.
 	// Can be letters, numbers, or punctuation, but must be 4 ASCII characters.
 	"Identifier": "EXMP",
-	"Dependencies": "",
+	"Dependencies": [ "" ],
 	"UK English": {
 		"About": {
 			"Name": "DarkEdif Template",
