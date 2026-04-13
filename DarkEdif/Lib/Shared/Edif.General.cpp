@@ -107,7 +107,7 @@ const TCHAR ** FusionAPI GetDependencies()
 	// This is pointed to by Dependencies.
 	static TCHAR singleton[1024];
 
-	if (!Dependencies)
+	if (!Dependencies[0])
 	{
 		const json_value &DependenciesJSON = Edif::SDK->json["Dependencies"sv];
 		TCHAR* singletonPtr = singleton;
