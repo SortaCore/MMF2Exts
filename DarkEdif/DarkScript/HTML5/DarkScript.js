@@ -521,16 +521,42 @@ class EdifRuntime {
 		const rh4Tokens = this.rhPtr.rh4Tokens;
 
 		// Fix event group being incorrect after event finishes.
-		// This being incorrect doesn't have any major effects, as the event parsing part of
-		// runtime sets rhEventGroup based on a local variable evgPtr, which it relies on instead
+		// This being incorrect doesn't have any major effects on runtime itself,
+		// as the event parsing part of runtime sets rhEventGroup based on a
+		// local variable evgPtr, which it relies on instead.
+		// But it will mangle it for any exts that are reading the rhEventGroup after,
+		// e.g. to log event line number.
 		const evg = this.rhPtr.rhEvtProg.rhEventGroup;
 		
 		// Fix rh2ActionOn - affects whether object selection is modified by expressions, or used
 		const rh2ActionOn = this.rhPtr.rh2ActionOn;
 		if (rh2ActionOn)
 			this.rhPtr.rh2ActionOn = false;
-
-		this.hoPtr.generateEvent(id);
+		
+		// Something must be passed as second param here.
+		// rhExpTokens gets messed up from undefined when it's not passed.
+		// Some objects like AdvGameBoard always pass this.ho.getEventParam(),
+		// which resolves to existing rhCurParam0. Other objects pass 0.
+		//
+		// Specifically passing Str$(NumExp(obj)) to Add Line of list object,
+		// generated from a Handle event, will trigger the undefined break.
+		//
+		// Seems like most official ones pass 0, though.
+		// In iOS runtime, some exts even pass rhCurParam0 to *pushed* events.
+		// And it's worth noting system conditions often use it as a argument storage,
+		// notably ext collision condition stores hoOi there.
+		//
+		// Perhaps a KnP-ism? Something for storing an argument for later variable,
+		// much non-DS users would use global values for fastloop "parameters"?
+		// 
+		// TODO: Confirm with Yves?
+		
+		// Note rhCurParam0 is saved and restored inside generateEvent, even in MMF2 HTML5.
+		// It's the only event state variable that is, in MMF2's generateEvent.
+		// CF2.5 is much more hardened against running events inside expressions,
+		// something that requires a lot of state saving as we do here.
+		
+		this.hoPtr.generateEvent(id, 0);
 
 		this.rhPtr.rh2ActionOn = rh2ActionOn;
 		this.rhPtr.rhEvtProg.rhEventGroup = evg;
