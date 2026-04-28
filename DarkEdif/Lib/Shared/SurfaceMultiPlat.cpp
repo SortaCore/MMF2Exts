@@ -1612,7 +1612,7 @@ DarkEdif::Surface::Surface(RunHeader* const rhPtr, bool needBitmapFuncs, bool ne
 		// Note D3D9 enum value is before D3D8
 		if (sd >= SurfaceDriver::Direct3D9)
 			depth = 32;
-		// Standard display mode, DirectDraw, does not do HWA textures
+		// Standard display mode (+ DirectDraw?) does not do HWA textures
 		else if (sd == SurfaceDriver::DIB)
 			st = SurfaceType::Memory;
 
