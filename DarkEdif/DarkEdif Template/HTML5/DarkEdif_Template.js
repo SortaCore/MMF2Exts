@@ -110,8 +110,10 @@ globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['darkEdif'].sdkVe
 
 		let editData = edPtrFile.readBuffer(
 			this.sizeBytes -
-			// skip area between eHeader -> Props
-			(ext.ho.privateData - 20) -
+			// skip eHeader
+			ext.ho.privateData -
+			// cursor offset
+			4 -
 			// Skip DarkEdif header
 			header.byteLength
 		);
