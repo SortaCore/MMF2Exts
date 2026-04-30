@@ -113,8 +113,10 @@ window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 20)
 
 		let editData = edPtrFile.readBuffer(
 			this.sizeBytes -
-			// skip area between eHeader -> Props
-			(ext.ho.privateData - 20) -
+			// skip eHeader
+			ext.ho.privateData -
+			// cursor offset
+			4 -
 			// Skip DarkEdif header
 			header.byteLength
 		);

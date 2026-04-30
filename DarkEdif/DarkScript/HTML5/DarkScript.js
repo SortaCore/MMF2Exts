@@ -119,7 +119,7 @@ class DarkEdif {
 		this.numProps = headerDV.getUint16(4 + 4 + 4, true); // Skip past hash and hashTypes
 		this.sizeBytes = headerDV.getUint32(4 + 4 + 4 + 4, true); // skip past numProps and pad
 
-		let editData = edPtrFile.readBuffer(this.sizeBytes - header.byteLength);
+		let editData = edPtrFile.readBuffer(this.sizeBytes - ext.ho.privateData - header.byteLength);
 		this.chkboxes = editData.slice(0, Math.ceil(this.numProps / 8));
 		let that = this;
 		let GetPropertyIndex = function (chkIDOrName) {
