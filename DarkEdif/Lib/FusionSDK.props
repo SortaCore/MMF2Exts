@@ -280,7 +280,7 @@
 		<DarkEdif_UCTaggingINI Condition="$(SDKType)=='DarkEdif' AND $([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_DarkEdif_UCTaggingRegex)).Success)">$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_DarkEdif_UCTaggingRegex)).Result('$1'))</DarkEdif_UCTaggingINI>
 		<DarkEdif_UCTagging Condition="$(DarkEdif_UCTaggingINI.Contains('$(ExtName)'))">1</DarkEdif_UCTagging>
 
-		<!-- This is a lookup of the current MMF2Exts commit SHA. -->
+		<!-- This is a lookup of the current MMF2Exts commit SHA, also confirming root repo + master branch. -->
 		<_MMF2Exts_SHA_DetectRegex>([a-f0-9]{40})\s+branch 'master' of https://github.com/SortaCore/MMF2Exts</_MMF2Exts_SHA_DetectRegex>
 
 		<MMF2Exts_SHA Condition="$(SDKType)=='DarkEdif'">(unset)</MMF2Exts_SHA>
@@ -297,10 +297,22 @@
 		<MMF2Exts_SHA Condition="'$(MMF2Exts_SHA)'=='(unset)' AND Exists('$(MSBuildThisFileDirectory)../../.git/HEAD')">1</MMF2Exts_SHA>
 		<MMF2Exts_SHA Condition="'$(MMF2Exts_SHA)'=='1' AND $([System.IO.File]::ReadAllText($(MSBuildThisFileDirectory)../../.git/HEAD).StartsWith('ref: refs/heads/master'))">2</MMF2Exts_SHA>
 
-		<!-- This fails if it's the wrong git -->
+		<!-- FETCH_HEAD is better than HEAD, as it fails if it's the wrong git -->
 		<MMF2Exts_SHA Condition="'$(MMF2Exts_SHA)'=='2' AND Exists('$(MSBuildThisFileDirectory)../../.git/FETCH_HEAD')">3</MMF2Exts_SHA>
 		<MMF2Exts_SHA Condition="'$(MMF2Exts_SHA)'=='3' AND		$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText($(MSBuildThisFileDirectory)../../.git/FETCH_HEAD)), $(_MMF2Exts_SHA_DetectRegex)).Success)">4</MMF2Exts_SHA>
 		<MMF2Exts_SHA Condition="'$(MMF2Exts_SHA)'=='4'">$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText($(MSBuildThisFileDirectory)../../.git/FETCH_HEAD)), $(_MMF2Exts_SHA_DetectRegex)).Result('$1'))</MMF2Exts_SHA>
+
+		<!-- If we're on unset here, the git files don't exist, so it may be a zip download instead of git clone.
+			 In zip download (git archive), this GitArchiveCommit.md file contents is partially replaced
+			 with substitutions, which is triggered by .gitattributes.
+			 But the file will stay as its original template format string if a properly cloned/forked repo,
+			 failing the regex capture. -->
+		<_MMF2Exts_ZIP_Export_SHA_DetectRegex>^([a-f0-9]{40})\t([^\t]*\bmaster\b[^\t]*)?\nFork:.*(  \(unconfirmed\))?.*</_MMF2Exts_ZIP_Export_SHA_DetectRegex>
+		<MMF2Exts_SHA Condition="$(SDKType)=='DarkEdif' AND '$(MMF2Exts_SHA)'=='(unset)' AND
+		Exists('$(MSBuildThisFileDirectory)/GitArchiveCommit.md')">10</MMF2Exts_SHA>
+		<MMF2Exts_SHA Condition="$(SDKType)=='DarkEdif' AND '$(MMF2Exts_SHA)'=='10' AND		$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText($(MSBuildThisFileDirectory)/GitArchiveCommit.md)), $(_MMF2Exts_ZIP_Export_SHA_DetectRegex)).Success)">11</MMF2Exts_SHA>
+		<MMF2Exts_SHA Condition="$(SDKType)=='DarkEdif' AND '$(MMF2Exts_SHA)'=='11'">$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText($(MSBuildThisFileDirectory)/GitArchiveCommit.md)), $(_MMF2Exts_ZIP_Export_SHA_DetectRegex)).Result('$1'))</MMF2Exts_SHA>
+
 		<!-- Any check failed: revert to unset -->
 		<MMF2Exts_SHA Condition="$(SDKType)!='DarkEdif' OR '$(MMF2Exts_SHA.Length)' != '40'">(unset)</MMF2Exts_SHA>
 	</PropertyGroup>

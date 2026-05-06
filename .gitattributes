@@ -77,3 +77,11 @@ CodeResources text eol=lf
 # HelpNDoc and generated compressed help files
 *.hnd binary
 *.chm binary
+
+# Edits this commit sha text document when GitHub's export zip is used.
+# Does not apply to GitHub actions and regular git clone/forks, for which PreBuildTool
+# will fill the gap by looking for a .git directory.
+# This SHA is used in update check for latest SDK beta test. See FusionSDK.props.
+# If this file is edited automagically and you want it to not show up without modifying gitignore,
+# create/append "DarkEdif/Lib/GitArchiveCommit.md" to the text file ".git/info/exclude".
+"DarkEdif/Lib/GitArchiveCommit.md" export-subst
