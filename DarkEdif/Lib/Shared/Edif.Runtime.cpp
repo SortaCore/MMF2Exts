@@ -226,7 +226,10 @@ void Edif::Runtime::GenerateEvent(int EventID)
 	// This action count won't be reset, so to allow multiple of the same event with different object selection,
 	// we change the count every time, and in an increasing manner.
 	//rhPtr->SetRH2ActionCount(oldActionCount + (++steadilyIncreasing));
-	//rhPtr->SetRH2ActionLoopCount(0);
+	// ^ we swapped that with a non global state, selectionRefreshCounter was declared at DarkEdif\Inc\Shared\Edif.hpp
+	rhPtr->SetRH2ActionCount(oldActionCount + (++selectionRefreshCounter));
+	// uncommenting this V to go along with the previous fix
+	rhPtr->SetRH2ActionLoopCount(0);
 
 	// Saving tokens allows events to be run from inside expressions
 	// https://community.clickteam.com/forum/thread/108993-application-crashed-in-some-cases-when-calling-an-event-via-expression/?postID=769763#post769763
@@ -1342,7 +1345,8 @@ void Edif::Runtime::GenerateEvent(int EventID)
 
 	// This action count won't be reset, so to allow multiple of the same event with different object selection,
 	// we change the count every time, and in an increasing manner.
-	rhPtr->SetRH2ActionCount(oldActionCount + (++steadilyIncreasing));
+	// For some reason this was uncommented here. Let's make it consistent with the windows edit
+	rhPtr->SetRH2ActionCount(oldActionCount + (++selectionRefreshCounter));
 	rhPtr->SetRH2ActionLoopCount(0);
 
 	// In older Fusion builds, the expression token became invalidated and that was the only problem.
