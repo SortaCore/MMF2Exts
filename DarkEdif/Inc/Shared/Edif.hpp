@@ -194,6 +194,11 @@ namespace Edif
 		void * objCExtPtr;
 #endif
 
+	// Seems to me fusion runtime does not reliably reset object selection between loop iterations.
+	// As such we force a new action context each iteration to ensure correct object picking.
+	// This counter is called on DarkEdif\Lib\Shared\Edif.Runtime.cpp.
+	int selectionRefreshCounter = 0;
+
 	public:
 		long param1 = 0, param2 = 0;
 		Edif::SDKClass * SDKPointer = nullptr;
