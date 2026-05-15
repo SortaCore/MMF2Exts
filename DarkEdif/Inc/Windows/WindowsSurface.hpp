@@ -655,12 +655,13 @@ public:
 
 	// Sets this cSurface as the current one in a double-buffer... in what context? How are surfaces paired, and how do we know what the pairs target?
 	void SetCurrentDevice();
-	// TODO: YQ: Rendering to GetRenderTargetSurface()? Where and why do we need to call BeginRendering()?
 	// Implemented in Direct3D 9 and 11 on CF2.5+. Not available in Direct3D 8.
+	// Use if you plan to do your own HWA rendering (i.e, doing rendering with DirectX driver info) onto the surface; if the surface is an HWA render target this function binds the render target as the current one in Fusion's D3D device state.
 	int  BeginRendering(BOOL clear, RGBAREF rgba);
-	// TODO: YQ: Rendering to GetRenderTargetSurface()?
+	// Call after you've finished rendering after a previous BeginRendering() call.
 	int  EndRendering();
-	// TODO: YQ: update how?
+	// Only works on frame surface; redraws Fusion's window.
+	// Note that on D3D9 this usually can't be called in a Display/DisplayRunObject() routine, probably because it is within a BeginScene()/EndScene() pair, which prevents screen updates.
 	BOOL UpdateScreen();
 
 	#ifdef HWABETA
@@ -671,6 +672,7 @@ public:
 		// TODO: YQ: What does this do, how does Max affect it ?
 		void	  Flush(BOOL bMax);
 		// TODO: YQ: I would guess this is the Z position of the buffer, but a float makes no sense here.
+		// Frame-surface only. In D3D9, this enables Z-buffering similar to how you can also enable it in shaders, but I still have no idea what the z2D parameter does..
 		void	  SetZBuffer(float z2D);
 	#endif
 
@@ -1054,10 +1056,18 @@ public:
 	// Transparent monochrome mask
 	ULONG		CreateMask(sMask * pMask, UINT dwFlags);
 
-	// Lost device callback
 #ifdef HWABETA
+private:
+	// This is called after device is lost, which deallocates all unmanaged surfaces.
+	// Not to be called by user code.
 	void 	OnLostDevice();
+public:
+	// Adds a lost device callback to the surface.
+	// Such callback is executed right when the D3D device is lost, and you must free
+	// all D3D resources and unmanaged textures you had associated with this surface.
+	// This is not called after a new device is available, so do not re-create those resources.
 	void 	AddLostDeviceCallBack(LOSTDEVICECALLBACKPROC pCallback, LPARAM lUserParam);
+	// Removes a lost device callback added with AddLostDeviceCallBack().
 	void 	RemoveLostDeviceCallBack(LOSTDEVICECALLBACKPROC pCallback, LPARAM lUserParam);
 
 	// CF2.5+'s Direct3D11 surfaces: Set premultiplied alpha flag
