@@ -8161,10 +8161,9 @@ static int Internal_MessageBox(const TCHAR * titlePrefix, PrintFHintInside const
 {
 	assert(titlePrefix != NULL && msgFormat != NULL);
 
-	// This doesn't work on Windows XP in some scenarios; for an explanation, see the README file.
 #ifdef ThreadSafeStaticInitIsSafe
 	const static std::tstring titleSuffix = _T(" - " PROJECT_NAME ""s);
-#else
+#else // Calling a static constructor doesn't always work on Windows XP, static CRT may use Vista+ thread-safe static init
 	const static TCHAR projNameStatic[] = _T(" - " PROJECT_NAME);
 	const std::tstring titleSuffix = projNameStatic;
 #endif

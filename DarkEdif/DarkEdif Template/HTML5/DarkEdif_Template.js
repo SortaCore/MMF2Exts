@@ -304,7 +304,7 @@ globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['darkEdif'].sdkVe
 				return -1;
 			}
 			
-			return imgID.getUint16(2 * (1 + idx), true)
+			return dv.getUint16(2 * (1 + idx), true)
 		};
 		this['GetPropertyNumImages'] = function(chkIDOrName, imgID) {
 			const idx = GetPropertyIndex(chkIDOrName);

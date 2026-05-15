@@ -523,7 +523,7 @@
 		],
 		"Conditions": [
 			{
-				"Title": "%o : On Error",
+				"Title": "%o : On error",
 				"Triggered": true
 			},
 			{

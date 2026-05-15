@@ -326,27 +326,16 @@ struct FusionD3DDummy {};
 #if defined(FUSION_INTERNAL_ACCESS)
 #pragma pack (push, 1)
 
-// Semi-opaque struct used in D3DSURFINFO; only expert Fusion ext devs should use this.
-// D3D11 only?
-struct FusionD3D11Texture final
-{
-	union {
+// Semi-opaque struct used in FusionD3DSurfDriverInfo; only expert Fusion ext devs should use this.
+union FusionD3D11Texture {
 #ifdef __d3d11_h__
-		// Contains a ID3D11Texture2D; if grabbing, note GetResource increments the ref count,
-		// so ideally store in an atlbase.h CComPtr smart pointer, or call Release().
-		// CComPtr<ID3D11Texture2D> resTextD3D11;
-		// d3d11ShaderResourceView->GetResource((ID3D11Resource**)&resourceTextureD3D11);
-		ID3D11ShaderResourceView* D3D11ShaderResourceView;
+	// Contains a ID3D11Texture2D; if grabbing, note GetResource increments the ref count,
+	// so ideally store in an atlbase.h CComPtr smart pointer, or call Release().
+	// CComPtr<ID3D11Texture2D> resTextD3D11;
+	// d3d11ShaderResourceView->GetResource((ID3D11Resource**)&resourceTextureD3D11);
+	ID3D11ShaderResourceView * D3D11ShaderResourceView;
 #endif
-		FusionD3DDummy * D3DGenericTexture;
-	};
-	std::uint32_t unknown1[3];	// set to 1, 0, 0
-	std::uint32_t width, height;
-	std::uint32_t flags;		// Set to 0xF0
-	std::uint32_t unknown2[2];	// set to 0, 0
-	// Struct may continue further, but D3D ended here
-
-	NO_DEFAULT_CTORS_OR_DTORS(FusionD3D11Texture);
+	FusionD3DDummy * D3DGenericTexture;
 };
 union FusionD3DTexture {
 	// D3D11 has a sub-struct
@@ -588,11 +577,14 @@ public:
 	int GetType();
 	// Returns SD_XX enum, cast to SurfaceDriver enum
 	int GetDriver();
-	// Set of driver info data. See D3DSURFINFO struct. Call with NULL to get the expected struct size to pass as pInfo.
-	// @remarks This is only going to return content if Driver is not DIB, possibly 3DFX+ only.
-	//			3DFX or DirectDraw does not return D3DSURFINFO struct.
+	// Set of driver info data. See struct FusionD3DSurfDriverInfo (Direct3D 8-11 display),
+	// and FusionDDrawSurfDriverInfo (MMF2 DirectX display).
+	// Note some GPU textures are not allocated on surf create, but on first write/blit operation to them.
+	// @remarks Call with NULL to get the expected struct size to pass as pInfo.
+	//			The structs are not described in public SDK files, but were obtained by request.
+	//			It's better to run this on the frame surface, retrieved from WinGetSurface(mV->mvIdEditWin).
+	//			This is only going to return content if Driver is not DIB, possibly 3DFX+ only.
 	//			3DFX has not been tested, as MMF2 does not expose this display mode.
-	//			DirectDraw (MMF2 DirectX mode) returns an as-yet unknown struct of 28 bytes.
 	ULONG GetDriverInfo(void * pInfo);
 
 	// Clone surface(= create with same size + Blit)
