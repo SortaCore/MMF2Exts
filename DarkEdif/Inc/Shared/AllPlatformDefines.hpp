@@ -778,7 +778,7 @@ enum_class_is_a_bitmask(BlitOperation);
 
 // Sprite flags (SF_XX enum)
 // @remarks Source: a list of defines, gathered from CSprite.java/m/h
-enum class SpriteFlag : DWORD
+enum class SpriteFlag : std::uint32_t
 {
 #ifndef __APPLE__
 	// SF_RAMBO: Flag for "collides into everyone".
