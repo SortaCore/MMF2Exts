@@ -18,16 +18,16 @@ enum class CFCERROR {
 
 FusionAPIImport HFILE			FusionAPI	File_OpenA(const char * fname, int mode);
 FusionAPIImport HFILE			FusionAPI	File_CreateA(const char * fname);
-FusionAPIImport int				FusionAPI	File_Read(HFILE hf, void * buf, unsigned int len);
-FusionAPIImport int				FusionAPI	File_ReadAndCount(HFILE hf, void * buf, unsigned int len);
+FusionAPIImport int				FusionAPI	File_Read(HFILE hf, void * buf, DWORD len);
+FusionAPIImport int				FusionAPI	File_ReadAndCount(HFILE hf, void * buf, DWORD len);
 FusionAPIImport int				FusionAPI	File_ReadShortIntelData(HFILE hf, void ** pBuf);
 FusionAPIImport int				FusionAPI	File_ReadShortIntelString(HFILE hf, void ** pBuf);
 FusionAPIImport int				FusionAPI	File_ReadLongIntelData(HFILE hf, void ** pBuf);
-FusionAPIImport int				FusionAPI	File_Write(HFILE hf, void * buf, unsigned int len);
-FusionAPIImport unsigned int	FusionAPI	File_GetPosition(HFILE hf);
-FusionAPIImport unsigned int	FusionAPI	File_SeekBegin(HFILE hf, long pos);
-FusionAPIImport unsigned int	FusionAPI	File_SeekCurrent(HFILE hf, long pos);
-FusionAPIImport unsigned int	FusionAPI	File_SeekEnd(HFILE hf, long pos);
+FusionAPIImport int				FusionAPI	File_Write(HFILE hf, void * buf, DWORD len);
+FusionAPIImport DWORD			FusionAPI	File_GetPosition(HFILE hf);
+FusionAPIImport DWORD			FusionAPI	File_SeekBegin(HFILE hf, long pos);
+FusionAPIImport DWORD			FusionAPI	File_SeekCurrent(HFILE hf, long pos);
+FusionAPIImport DWORD			FusionAPI	File_SeekEnd(HFILE hf, long pos);
 FusionAPIImport long			FusionAPI	File_GetLength(HFILE hf);
 FusionAPIImport void			FusionAPI	File_Close(HFILE hf);
 FusionAPIImport BOOL			FusionAPI	File_ExistA(const char * pName);
@@ -106,14 +106,14 @@ public:
 	static CInputBufFile * NewInstance();
 
 	int						Create(HFILE hf);
-	int						Create(HFILE hf, unsigned int dwOffset, unsigned int dwSize);
+	int						Create(HFILE hf, DWORD dwOffset, DWORD dwSize);
 	int						Create(const char * filename);
-	int						Create(const char * filename, unsigned int dwOffset, unsigned int dwSize);
+	int						Create(const char * filename, DWORD dwOffset, DWORD dwSize);
 	int						Create(const UShortWCHAR * filename);
-	int						Create(const UShortWCHAR * filename, unsigned int dwOffset, unsigned int dwSize);
+	int						Create(const UShortWCHAR * filename, DWORD dwOffset, DWORD dwSize);
 
-	virtual	int				Read(unsigned char * dest, unsigned int lsize);
-	virtual	int				Read(unsigned char * dest, unsigned int lsize, LPDWORD pRead);
+	virtual	int				Read(unsigned char * dest, DWORD lsize);
+	virtual	int				Read(unsigned char * dest, DWORD lsize, LPDWORD pRead);
 	virtual	int				ReadByte(unsigned char * dest);
 	//		virtual	int				ReadWord(LPWORD dest);
 	//		virtual	int				ReadDWord(LPDWORD dest);
@@ -131,18 +131,18 @@ public:
 	virtual	UShortWCHAR * GetFileNameW();
 
 protected:
-	int						Attach(HANDLE hnd, unsigned int dwOffset, unsigned int dwSize);
+	int						Attach(HANDLE hnd, DWORD dwOffset, DWORD dwSize);
 private:
 	HFILE					m_hf;
-	unsigned int			m_curpos;
+	DWORD			m_curpos;
 	unsigned char * m_buffer;
 	unsigned char * m_bufcurr;
-	unsigned int			m_remains;
+	DWORD			m_remains;
 	UShortWCHAR * m_fnameW;
 	char * m_fnameA;
 
-	unsigned int			m_startOffset;
-	unsigned int			m_length;
+	DWORD			m_startOffset;
+	DWORD			m_length;
 };
 typedef	CInputBufFile * LPINPUTBUFFILE;
 
@@ -182,8 +182,8 @@ public:
 private:
 	unsigned char * m_buffer;
 	unsigned char * m_bufcurr;
-	unsigned int			m_curpos;
-	unsigned int			m_remains;
+	DWORD			m_curpos;
+	DWORD			m_remains;
 	BOOL					m_bAutoDelete;
 };
 //typedef	CInputMemFile * LPINPUTMEMFILE;
@@ -206,7 +206,7 @@ public:
 
 	virtual int				Write(unsigned char * pb, UINT sz) = 0;
 	virtual int				Flush() = 0;
-	virtual unsigned int	GetLength() = 0;
+	virtual DWORD	GetLength() = 0;
 
 	virtual long			GetPosition() = 0;
 	virtual long			Seek(long pos, int method) = 0;
@@ -224,14 +224,14 @@ public:
 	virtual					~COutputMemFile();
 
 	int						Create(UINT nBlockSize = 512);
-	int						Create(unsigned char * buffer, unsigned int nBufferSize = 0x7FFFFFF);
+	int						Create(unsigned char * buffer, DWORD nBufferSize = 0x7FFFFFF);
 	unsigned char * GetBuffer();
 	unsigned char * DetachBuffer();
 	static void				FreeBuffer(unsigned char * pBuffer);	// car il faut libérer à l'interieur de la DLL
 
 	virtual int				Write(unsigned char * pb, UINT sz);
 	virtual int				Flush();
-	virtual unsigned int	GetLength();
+	virtual DWORD	GetLength();
 
 	virtual long			GetPosition();
 	virtual long			Seek(long pos, int method);
@@ -242,9 +242,9 @@ public:
 private:
 	unsigned char * m_buffer;
 	unsigned char * m_curptr;
-	unsigned int			m_totalsize;
-	unsigned int			m_cursize;
-	unsigned int			m_blocksize;
+	DWORD			m_totalsize;
+	DWORD			m_cursize;
+	DWORD			m_blocksize;
 	BOOL					m_bReallocable;
 };
 
@@ -261,7 +261,7 @@ public:
 
 	virtual int				Write(unsigned char * pb, UINT sz);
 	virtual int				Flush();
-	virtual unsigned int	GetLength();
+	virtual DWORD	GetLength();
 
 	virtual long			GetPosition();
 	virtual long			Seek(long pos, int method);
@@ -274,8 +274,8 @@ private:
 	UShortWCHAR * m_fnameW;
 	unsigned char * m_buffer;
 	unsigned char * m_curptr;
-	unsigned int			m_cursize;
-	unsigned int			m_buffersize;
+	DWORD			m_cursize;
+	DWORD			m_buffersize;
 	BOOL					m_bBuffered;
 	char * m_fnameA;
 };
