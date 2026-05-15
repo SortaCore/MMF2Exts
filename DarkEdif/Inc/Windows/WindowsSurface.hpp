@@ -661,7 +661,7 @@ public:
 	// Call after you've finished rendering after a previous BeginRendering() call.
 	int  EndRendering();
 	// Only works on frame surface; redraws Fusion's window.
-	// Note that on D3D9 this usually can't be called in a Display/DisplayRunObject() routine, my assumption being that it's due to the fact you'd be in a BeginScene()/EndScene() pair at that point (which D3D9 usually does not allow).
+	// Note that on D3D9 this usually can't be called in a Display/DisplayRunObject() routine, my assumption being that it's due to the fact you'd be in a BeginScene()/EndScene() pair at that point (which, D3D9 usually does not allow screen updates in that case).
 	BOOL UpdateScreen();
 
 	#ifdef HWABETA
