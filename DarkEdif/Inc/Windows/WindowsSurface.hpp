@@ -1057,7 +1057,11 @@ public:
 
 	// Lost device callback
 #ifdef HWABETA
+	// TODO: This apparently must be called inside of a lost-device callback..
 	void 	OnLostDevice();
+	// Adds a lost device callback to the surface.
+	// Such callback is executed right when the D3D device is lost, in which case you must free all custom D3D resources you may have created as part of this surface.
+	// NB: There's no callbacks to recover from device loss, only when it occurs, so you'll need to figure out yourself when to recreate your custom D3D resources had you created any.
 	void 	AddLostDeviceCallBack(LOSTDEVICECALLBACKPROC pCallback, LPARAM lUserParam);
 	void 	RemoveLostDeviceCallBack(LOSTDEVICECALLBACKPROC pCallback, LPARAM lUserParam);
 
