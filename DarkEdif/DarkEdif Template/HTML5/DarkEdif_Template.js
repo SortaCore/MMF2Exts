@@ -77,53 +77,59 @@ globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['darkEdif'].sdkVe
 
 	this['Properties'] = function(ext, edPtrFile, extVersion) {
 		// DarkEdif SDK stores offset of DarkEdif props away from start of EDITDATA inside private data.
-		// eHeader is 20 bytes, so this should be 20+ bytes.
+		// eHeader is 20 bytes, so privateData should be 20+ bytes.
+		// Note that edPtrFile points right after eHeader, not before.
 		if (ext.ho.privateData < 20) {
-			throw "Not smart properties - eHeader missing?";
+			// edPtrFile should point just after eHeader. If you read from edPtrFile
+			// before calling Properties ctor, edPtrFile.pointer will be moved, making it incorrect.
+			throw "Not smart properties - eHeader missing or file pointer incorrect?";
 		}
-		// DarkEdif SDK header read:
-		// header uint32, hash uint32, hashtypes uint32, numprops uint16, pad uint16, sizeBytes uint32 (includes whole EDITDATA)
-		// if prop set v2, then uint64 editor checkbox ptr
-		// then checkbox list, one bit per checkbox, including non-checkbox properties
-		// so skip numProps / 8 bytes
-		// then moving to Data list:
-		// size uint32 (includes whole Data), propType uint16, propNameSize uint8, propname u8 (lowercased), then data bytes
-
-		let bytes = edPtrFile.ccfBytes.slice(edPtrFile.pointer);
+		// Skip data between eHeader and Props. Note edPtrFile points right after eHeader.
+		edPtrFile.skipBytes(ext.ho.privateData - 20);
 		
-		edPtrFile.skipBytes(ext.ho.privateData - 20); // sub size of eHeader; edPtrFile won't start with eHeader
-		const verBuff = new Uint8Array(edPtrFile.readBuffer(4));
-		const verStr = String.fromCharCode.apply('', verBuff.reverse());
+		// Read DarkEdif SDK header:
+		// header version uint32, hash uint32, hashtypes uint32, numprops uint16, pad uint16, sizeBytes uint32
+		// if prop set v2, then uint64 editor checkbox ptr
+		// Note sizeBytes includes whole EDITDATA.
+		const verStr = String.fromCharCode.apply('', (new Uint8Array(edPtrFile.readBuffer(4))).reverse());
 		let propVer;
 		if (verStr == 'DAR2') {
 			propVer = 2;
 		} else if (verStr == 'DAR1') {
 			propVer = 1;
 		} else {
-			throw "Version string " + verStr + " unknown. Did you restore the file offset?";
+			// edPtrFile should point right after eHeader. If you read from edPtrFile
+			// before calling Properties ctor, edPtrFile.pointer will be moved, making it incorrect.
+			throw "Version string " + verStr + " unknown. Did you not restore the file offset before Properties ctor?";
 		}
 		// Pull out hash, hashTypes, numProps, pad, sizeBytes, visibleEditorProps
-		let header = new Uint8Array(edPtrFile.readBuffer(4 + 4 + 2 + 2 + 4 + (propVer > 1 ? 8 : 0)));
-		let headerDV = new DataView(header.buffer);
+		const header = new Uint8Array(edPtrFile.readBuffer(4 + 4 + 2 + 2 + 4 + (propVer > 1 ? 8 : 0)));
+		const headerDV = new DataView(header.buffer);
 		this.numProps = headerDV.getUint16(4 + 4, true); // Skip past hash and hashTypes
-		this.sizeBytes = headerDV.getUint32(4 + 4 + 4, true); // skip past numProps and pad
+		
+		// sizeBytes includes the whole EDITDATA
+		this.sizeBytes = headerDV.getUint32(4 + 4 + 2 + 2, true); // skip past hash, hashTypes, numProps, pad
 
-		let editData = edPtrFile.readBuffer(
+		// Read past the DarkEdif Props header
+		const editData = edPtrFile.readBuffer(
 			this.sizeBytes -
-			// skip area between eHeader -> Props
-			(ext.ho.privateData - 20) -
-			// Skip DarkEdif header
-			header.byteLength
+			// skip eHeader to Props
+			ext.ho.privateData -
+			// Skip verStr and the rest of DarkEdif Props header we already read
+			(4 + header.byteLength)
 		);
+		
+		// After the header, the data starts with checkbox list, one bit per checkbox,
+		// including non-checkbox properties, so read numProps / 8 bytes for that.
 		this.chkboxes = editData.slice(0, Math.ceil(this.numProps / 8));
 		let that = this;
-		let IsComboBoxProp = function(propTypeID) {
+		const IsComboBoxProp = function(propTypeID) {
 			// PROPTYPE_COMBOBOX, PROPTYPE_COMBOBOXBTN, PROPTYPE_ICONCOMBOBOX
 			return propTypeID == 7 || propTypeID == 20 || propTypeID == 24;
 		};
-		let RuntimePropSet = function(data) {
-			let rsDV = new DataView(data.propData.buffer);
-			let rs = /* RuntimePropSet */ { 
+		const RuntimePropSet = function(data) {
+			const rsDV = new DataView(data.propData.buffer);
+			const rs = /* RuntimePropSet */ { 
 				// Always 'S', compared with 'L' for non-set list.
 				setIndicator: String.fromCharCode(rsDV.getUint8(0)),
 				// Number of repeats of this set, 1 is minimum and means one of this set
@@ -148,7 +154,7 @@ globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['darkEdif'].sdkVe
 				throw "Not a prop set!";
 			return rs;
 		};
-		let GetPropertyIndex = function(chkIDOrName) {
+		const GetPropertyIndex = function(chkIDOrName) {
 			if (propVer > 1) {
 				let jsonIdx = -1;
 				if (typeof chkIDOrName == 'number') {
@@ -368,6 +374,12 @@ globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['darkEdif'].sdkVe
 			throw "No set found with name " + setName + ".";
 		}
 
+		// Then moving to Data stream:
+		// sizeBytes uint32, propType uint16, [propJSONIndex uint16 - v2 only], propNameSize uint8,
+		// propName u8 (lowercased), data u8 (sizeBytes - propNameSize bytes)
+		// then next Data starts.
+		// v1 has combo list properties data as text; v2 has a starter S for prop set, L for list.
+		// Format hexpat is available.
 		this.props = [];
 		const data = editData.slice(this.chkboxes.length);
 		const dataDV = new DataView(new Uint8Array(data).buffer);
@@ -375,8 +387,7 @@ globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['darkEdif'].sdkVe
 		this.textDecoder = null;
 		if (globalThis['TextDecoder'] != null) {
 			this.textDecoder = new globalThis['TextDecoder']();
-		}
-		else {
+		} else {
 			// one byte = one char - should suffice for basic ASCII property names
 			this.textDecoder = {
 				decode: function(txt) {
