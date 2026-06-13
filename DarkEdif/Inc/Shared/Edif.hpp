@@ -234,6 +234,24 @@ namespace Edif
 
 		void Rehandle();
 
+		// Used to allow the rough selection restore to work when multiple events are triggered.
+		// @remarks The following explanation is dubious. I can't reproduce the bug scenario anymore.
+		// My original scenario it occurred in was in DarkScript, which generates events from expressions,
+		// and restores object selection across its generated events. Most objects don't do that.
+		// Until I've isolated ActionCount's change scenarios, I'm keeping this in SDK.
+		//
+		// Dubious explanation:
+		// oilActionCount must differ to rhActionCount for a new event to properly loop
+		// object instances during actions. rhActionCount is normally incremented by runtime when a new generated
+		// event is run to cause that difference.
+		// However, that difference invalidates selection in the event that started the generated one,
+		// like running a fastloop will.
+		// To keep caller event selection, DarkEdif rolls back all selection variables to their original
+		// after the generated event. But that same original being incremented means the runtime rhActionCount
+		// is re-incremented to the same value on both first and second generated event.
+		// That breaks the 2nd+ generated event's selection, so instead we increase rhActionCount by 1, 2, etc.
+		static int actionLoopIncrement;
+
 		// Immediately creates an event, calling that condition ID in this object, and invalidating object selection.
 		void GenerateEvent(int EventID);
 		// Queues an event to run at the end of the actions, which will ccall this condition ID.

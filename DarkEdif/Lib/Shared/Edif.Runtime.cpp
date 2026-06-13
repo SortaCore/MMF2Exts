@@ -153,6 +153,9 @@ std::size_t CRunAppMultiPlat::GetNumFusionFrames() {
 #endif
 }
 
+// Static definition
+int Edif::Runtime::actionLoopIncrement = 0;
+
 #if TEXT_OEFLAG_EXTENSION
 std::uint32_t Edif::Runtime::GetRunObjectTextColor() const
 {
@@ -212,7 +215,6 @@ void Edif::Runtime::Rehandle()
 	CallRunTimeFunction2(hoPtr, RFUNCTION::REHANDLE, 0, 0);
 }
 
-//static int steadilyIncreasing = 0;
 void Edif::Runtime::GenerateEvent(int EventID)
 {
 	auto rhPtr = hoPtr->hoAdRunHeader;
@@ -225,10 +227,7 @@ void Edif::Runtime::GenerateEvent(int EventID)
 
 	// This action count won't be reset, so to allow multiple of the same event with different object selection,
 	// we change the count every time, and in an increasing manner.
-	//rhPtr->SetRH2ActionCount(oldActionCount + (++steadilyIncreasing));
-	// ^ we swapped that with a non global state, selectionRefreshCounter was declared at DarkEdif\Inc\Shared\Edif.hpp
-	rhPtr->SetRH2ActionCount(oldActionCount + (++selectionRefreshCounter));
-	// uncommenting this V to go along with the previous fix
+	rhPtr->SetRH2ActionCount(oldActionCount + (++actionLoopIncrement));
 	rhPtr->SetRH2ActionLoopCount(0);
 
 	// Saving tokens allows events to be run from inside expressions
@@ -1331,7 +1330,6 @@ void Edif::Runtime::Rehandle()
 	// GenEdifFunction reHandle
 }
 
-static int steadilyIncreasing = 0;
 void Edif::Runtime::GenerateEvent(int EventID)
 {
 	const auto& rhPtr = this->ObjectSelection.pExtension->rhPtr;
@@ -1345,8 +1343,7 @@ void Edif::Runtime::GenerateEvent(int EventID)
 
 	// This action count won't be reset, so to allow multiple of the same event with different object selection,
 	// we change the count every time, and in an increasing manner.
-	// For some reason this was uncommented here. Let's make it consistent with the windows edit
-	rhPtr->SetRH2ActionCount(oldActionCount + (++selectionRefreshCounter));
+	rhPtr->SetRH2ActionCount(oldActionCount + (++actionLoopIncrement));
 	rhPtr->SetRH2ActionLoopCount(0);
 
 	// In older Fusion builds, the expression token became invalidated and that was the only problem.
