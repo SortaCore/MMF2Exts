@@ -15,7 +15,7 @@
 #include "../Shared/AllPlatformDefines.hpp"
 #include "../Shared/NonWindowsDefines.hpp"
 
-#include <asm-generic\posix_types.h>
+#include <asm-generic/posix_types.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>

@@ -104,7 +104,7 @@ using namespace std::string_view_literals;
 #elif defined(__clang__) && !defined (__INTELLISENSE__)
 	#define PrintFHintInside /* no op */
 	// Defined after a C printf-style function declaration to allow code analysers to check the %x are correct type
-	#define PrintFHintAfter(formatParamIndex,dotsParamIndex) __printflike(formatParamIndex, dotsParamIndex)
+	#define PrintFHintAfter(formatParamIndex,dotsParamIndex) __attribute__((format(printf, formatParamIndex, dotsParamIndex)))
 #else
 	// Defined inside a C printf-style function declaration + definition to allow code analysers to check argument types.
 	#define PrintFHintInside /* no op */
@@ -335,10 +335,10 @@ enum_class_is_a_bitmask(TextCapacity);
 
 // ==================================================================================================
 // DarkEdif logging and macros.
-// 
+//
 // These are printf-based, and expect a newline at end:
 // LOGI(_T("Some text with variable: %d\n"), 50);
-// 
+//
 // Log levels are based on the ANDROID_LOG_XXX enum; in order of highest to lowest severity:
 // LOGF, LOGE, LOGW, LOGI, LOGD, LOGV.
 //

@@ -768,7 +768,7 @@ ProjectFunc void JNICALL JNI_OnUnload([[maybe_unused]] JavaVM * vm, [[maybe_unus
 #endif // DARKEDIF_SIGNAL_HANDLERS
 }
 
-#else // iOS
+#elif defined(__APPLE__)
 #include "Extension.hpp"
 #include "MMF2Lib/CTexture.h"
 #include "MMF2Lib/CImage.h"
@@ -840,7 +840,9 @@ Extension* RunObject::GetExtension()
 	return (Extension *)DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, getCPtr)((CExtension *)this);
 }
 
-#endif // Apple
+#else
+	#error Unexpected platform
+#endif
 
 
 #if DARKEDIF_DISPLAY_TYPE > DARKEDIF_DISPLAY_ANIMATIONS

@@ -37,7 +37,7 @@ bool Edif::IS_COMPATIBLE(mv * v)
 {
 	// mV is not valid at runtime; so someone's trying to use a Runtime MFX as Editor,
 	// which won't work anyway because Runtime MFX lacks A/C/E menus and such.
-	
+
 	// No GetVersion function provided, abort
 	if (!v->GetVersion)
 		return false;
@@ -327,7 +327,7 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 	{
 		DarkEdif::Internal_WindowHandle = mV->HMainWin;
 		DarkEdif::IsFusion25 = ((mV->GetVersion() & MMFVERSION_MASK) == CFVERSION_25);
-		
+
 		// 2.0 uses floats for angles if it's a Direct3D display, Software or DirectDraw uses int
 		// Fusion 2.5 always uses floats, even in Software, and doesn't use DirectDraw at all
 		DarkEdif::IsHWAFloatAngles = DarkEdif::IsFusion25 || mvIsHWAVersion(mV) != FALSE;
@@ -371,7 +371,7 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 			= (decltype(pIsWow64Process2))GetProcAddress(kernDll, "IsWow64Process2");
 		BOOL (WINAPI * pIsWow64Process)(HANDLE hProcess, _Out_ PBOOL Wow64Process)
 			= (decltype(pIsWow64Process))GetProcAddress(kernDll, "IsWow64Process");
-		
+
 		// If this Win10+ func is defined, use it to check if emulation is active
 		// This is the way to distinguish Windows ARM64.
 		if (pIsWow64Process2)
@@ -379,7 +379,7 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 			USHORT procMachine, nativeMachine;
 			if (!pIsWow64Process2(curProc, &procMachine, &nativeMachine))
 				return DarkEdif::MsgBox::Error(_T("DarkEdif CPU detection error"), _T("Couldn't detect CPU arch: IsWow64Process2() error %u."), GetLastError()), -1;
-			
+
 			// If unknown process machine, it matches native machine, so we're not under emulation.
 			if (procMachine == IMAGE_FILE_MACHINE_UNKNOWN)
 				procMachine = nativeMachine;
@@ -1263,7 +1263,7 @@ jmethodID ConditionOrActionManager_Android::getActOrCondParamInt,
 	ConditionOrActionManager_Android::getCndParamString, ConditionOrActionManager_Android::getCndParamFloat, ConditionOrActionManager_Android::getCndParamObject,
 	ConditionOrActionManager_Android::setCndRetInt, ConditionOrActionManager_Android::setCndRetFloat, ConditionOrActionManager_Android::setCndRetString;
 jfieldID ConditionOrActionManager_Android::getRH;
-#else
+#elif defined(__APPLE__)
 
 extern "C"
 {
@@ -1353,6 +1353,8 @@ struct ConditionOrActionManager_iOS : ACEParamReader
 	}
 };
 } // namespace FusionInternals
+#else
+	#error Unexpected platform
 #endif
 
 #ifdef _WIN32
@@ -1368,12 +1370,14 @@ ProjectFunc jlong conditionJump(JNIEnv *, jobject, jlong extPtr, int ID, CCndExt
 	ConditionOrActionManager_Android params(true, ext, (jobject)cndExt);
 	global<jobject> lastCEvent = ext->Runtime.curCEvent.swap_out(); // prevent subfunctions causing this variable to be incorrect
 	ext->Runtime.curCEvent = global((jobject)cndExt, "Current Cnd ext");
-#else
+#elif defined(__APPLE__)
 ProjectFunc long PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _conditionJump(void * cppExtPtr, int ID, void * cndExt))
 {
 	Extension* const ext = (Extension*)cppExtPtr;
 	ConditionOrActionManager_iOS params(true, ext, cndExt);
 	ext->Runtime.curCEvent = cndExt;
+#else
+	#error Unexpected platform
 #endif
 	LOGV(PROJECT_NAME _T(" Condition ID %i start.\n"), ID);
 
@@ -1429,7 +1433,7 @@ ProjectFunc void actionJump(JNIEnv *, jobject, jlong extPtr, jint ID, CActExtens
 	const jobject lastAct = ext->Runtime.curRH4ActBasedOnCEventOnly;
 	ext->Runtime.curRH4ActBasedOnCEventOnly = ext->Runtime.curCEvent.ref;
 #define actreturn /* void */
-#else
+#elif defined(__APPLE__)
 ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _actionJump(void * cppExtPtr, int ID, void * act))
 {
 	Extension* ext = (Extension*)cppExtPtr;
@@ -1437,6 +1441,8 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _actionJump(
 	auto lastCEvent = ext->Runtime.curCEvent;
 	ext->Runtime.curCEvent = act;
 #define actreturn /* void */
+#else
+	#error Unexpected platform
 #endif
 	LOGV(PROJECT_NAME _T(" Action ID %i start.\n"), ID);
 
@@ -1622,7 +1628,7 @@ struct ExpressionManager_Windows : ACEParamReader {
 	}
 
 };
-#else
+#elif defined(__APPLE__)
 // segregate to prevent two iOS exts conflicting
 inline namespace FusionInternals {
 struct ExpressionManager_iOS : ACEParamReader {
@@ -1681,6 +1687,8 @@ struct ExpressionManager_iOS : ACEParamReader {
 	}
 };
 } // namespace FusionInternals
+#else
+	#error Unexpected platform
 #endif
 
 #ifdef _WIN32
@@ -1700,11 +1708,13 @@ ProjectFunc void expressionJump(JNIEnv *, jobject, jlong extPtr, jint ID, CNativ
 	// whereas an expresssion is a sub-variable of a CEvent.
 	//if (ext->Runtime.curCEvent.invalid())
 	//	ext->Runtime.curCEvent = global((jobject)expU, "Current Exp ext");
-#else
+#elif defined(__APPLE__)
 ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _expressionJump(void * cppExtPtr, int ID))
 {
 	Extension* ext = (Extension*)cppExtPtr;
 	ExpressionManager_iOS params(ext);
+#else
+	#error Unexpected platform
 #endif
 
 	if (Edif::SDK->ExpressionFunctions.size() < (unsigned int)ID)
@@ -1948,7 +1958,7 @@ int Edif::GetDependency (char *& Buffer, size_t &Size, const TCHAR * FileExtensi
 	Buffer = (char *)(void *) darkExtJSON;
 	Size = darkExtJSONSize;
 	return DependencyWasResource;
-#else
+#elif defined(__APPLE__)
 	if (_tcsicmp(FileExtension, _T("json")))
 		return DependencyNotFound;
 
@@ -1985,6 +1995,8 @@ int Edif::GetDependency (char *& Buffer, size_t &Size, const TCHAR * FileExtensi
 	AAssetDir_close(assetDir);
 	return DependencyWasFile;
 #endif // File reading
+#else
+	#error Unexpected platform
 #endif // _WIN32
 }
 

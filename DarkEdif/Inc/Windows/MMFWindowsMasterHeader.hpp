@@ -3526,6 +3526,13 @@ enum class BUILDTYPE {
 	XNA_PHONE,
 	XNA_XBOX_APP,
 	XNA_PHONE_APP,
+	HTML5,
+	VITA,
+	VITADEVEL,
+	VITAFINAL,		// no longer used
+	HTML5DEVEL,
+	HTML5FINAL,
+	OUYA,
 	STDMAX,			// end of standard build types
 };
 

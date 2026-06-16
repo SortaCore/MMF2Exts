@@ -99,10 +99,12 @@ std::vector<short> qualToOi::HalfVector(std::size_t first)
 		get_OiList(0);
 	for (std::size_t i = first; i < OiAndOiListLength; i += 2)
 		list.push_back(OiAndOiList[i]);
-#else // apple
+#elif defined(__APPLE__)
 	const short* const qoiList = ((CQualToOiList*)this)->qoiList;
 	for (std::size_t i = first; qoiList[i] != -1; i += 2)
 		list.push_back(qoiList[i]);
+#else
+	#error Unexpected platform
 #endif
 	return list;
 }
@@ -118,7 +120,7 @@ CRunAppMultiPlat* CRunAppMultiPlat::get_ParentApp() {
 	return ParentApp;
 #elif defined(__APPLE__)
 	return (CRunAppMultiPlat*)((CRunApp*)this)->parentApp;
-#else // Android
+#elif defined(__ANDROID__)
 	if (!parentApp && !parentAppIsNull)
 	{
 		// Application/CRunApp parentApp
@@ -132,6 +134,8 @@ CRunAppMultiPlat* CRunAppMultiPlat::get_ParentApp() {
 			parentAppIsNull = true;
 	}
 	return parentApp.get();
+#else
+	#error Unexpected platform
 #endif
 }
 
@@ -140,7 +144,7 @@ std::size_t CRunAppMultiPlat::GetNumFusionFrames() {
 	return hdr.NbFrames;
 #elif defined(__APPLE__)
 	return (std::size_t)((CRunApp*)this)->gaNbFrames;
-#else // Android
+#elif defined(__ANDROID__)
 	if (numTotalFrames == 0)
 	{
 		jfieldID fieldID = threadEnv->GetFieldID(meClass, "gaNbFrames", "I");
@@ -150,6 +154,8 @@ std::size_t CRunAppMultiPlat::GetNumFusionFrames() {
 		numTotalFrames = (std::size_t)totalFrames;
 	}
 	return numTotalFrames;
+#else
+	#error Unexpected platform
 #endif
 }
 
@@ -1580,11 +1586,10 @@ void Edif::Runtime::AttachJVMAccessForThisThread(const char* threadName, bool as
 
 	pthread_setname_np(pthread_self(), threadName);
 
-	JavaVMAttachArgs args = {
-		.name = threadName,
-		.group = NULL,
-		.version = JNI_VERSION_1_6
-	};
+	JavaVMAttachArgs args = {};
+	args.name = threadName;
+	args.group = NULL;
+	args.version = JNI_VERSION_1_6;
 	// Daemon means the JVM won't keep the app running if this thread is still alive.
 	// Do you want main thread exiting to choose whether the app is running or not?
 	jint error;
@@ -3799,7 +3804,7 @@ EventGroupMP::EventGroupMP(jobject me, Edif::Runtime * runtime) :
 	}
 }
 
-#else // iOS
+#elif defined(__APPLE__)
 #include "MMF2Lib/CRunExtension.h"
 #include "MMF2Lib/CRun.h"
 #include "MMF2Lib/CObject.h"
@@ -4397,6 +4402,8 @@ event2* EventGroupMP::GetCAByIndex(size_t index)
 	return ret;
 }
 
-#endif // APPLE
+#else // not APPLE
+	#error Unexpected platform
+#endif // not APPLE
 
 #endif // Apple or Android
