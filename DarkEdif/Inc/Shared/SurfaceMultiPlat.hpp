@@ -369,11 +369,13 @@ namespace DarkEdif
 		//global<jobject> paint;
 		//global<jclass> paintClass;
 	public:
-	#else // apple
+	#elif defined(__APPLE__)
 		// Raw pixels, size and clip rectangle
 		CRenderToTexture* bmp = nullptr;
 		// Data around an image, can wrap a bmp and collision masks
 		//CImage* img;
+	#else
+		#error Unexpected platform
 	#endif
 		/** Updates screen display manually. Runtime does not auto-redraw in some display modes.
 		 * @param zone If NULL or not specified, the whole surface. */

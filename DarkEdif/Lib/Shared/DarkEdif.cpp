@@ -5453,7 +5453,7 @@ void DarkEdif::FontInfoMultiPlat::SetFont(const jobject ptr) {
 	JavaAndCString str((jstring)threadEnv->GetObjectField(ptr, lfFaceName));
 	fontNameDesired = str.str();
 }
-#else // apple
+#elif defined(__APPLE__)
 DarkEdif::FontInfoMultiPlat::FontInfoMultiPlat(CFontInfo* ptr) {
 	cfontinfo = ptr;
 	SetFont(cfontinfo);
@@ -5467,7 +5467,8 @@ void DarkEdif::FontInfoMultiPlat::SetFont(const void * ptr2) {
 	strikeOut = ptr->lfStrikeOut != 0;
 	fontNameDesired = [ptr->lfFaceName UTF8String];
 }
-
+#else
+	#error Unexpected platform
 #endif
 
 DarkEdif::FontInfoMultiPlat::FontInfoMultiPlat() {
@@ -5757,8 +5758,10 @@ int DarkEdif::GetCurrentFusionEventNum(const Extension * const ext)
 	}
 
 	return threadEnv->CallIntMethod(ext->javaExtPtr, getEventIDMethod);
-#else // iOS
+#elif defined(__APPLE__)
 	return DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, getCurrentFusionEventNum)(ext->objCExtPtr);
+#else
+	#error Unexpected platform
 #endif
 }
 
@@ -5796,8 +5799,10 @@ std::tstring DarkEdif::MakePathUnembeddedIfNeeded(const Extension * ext, const s
 	JavaAndCString newPath((jstring)threadEnv->CallObjectMethod(ext->javaExtPtr, getEventIDMethod, origPath.javaRef));
 	// Copy the C++ memory out into its own variable
 	const std::string truePath(newPath.str());
-#else
+#elif defined(__APPLE__)
 	const std::string truePath = DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, makePathUnembeddedIfNeeded)(ext->objCExtPtr, std::string(filePath).c_str());
+#else
+	#error Unexpected platform
 #endif
 	if (filePath != truePath)
 		LOGV(_T("File path extracted from \"%s\" to \"%s\".\n"), std::tstring(filePath).c_str(), truePath.c_str());
@@ -6353,7 +6358,7 @@ void DarkEdif::LOGFInternal(PrintFHintInside const TCHAR * x, ...)
 	DarkEdif::MsgBox::Error(_T("Fatal error"), _T("%s"), buf);
 	std::abort();
 }
-#else // APPLE
+#elif defined(__APPLE__)
 
 #include <unistd.h>
 #include <sys/syscall.h>
@@ -6490,6 +6495,8 @@ void DarkEdif::LOGFInternal(PrintFHintInside const TCHAR * x, ...)
 	va_end(va);
 	exit(EXIT_FAILURE);
 }
+#else
+	#error Unexpected platform
 #endif
 
 
@@ -6516,7 +6523,7 @@ bool DarkEdif::IsDebuggerAttached()
 				return std::stoi(line.substr(10)) != 0;
 		// if no match, fall thru
 	}
-#else // APPLE
+#elif defined(__APPLE__)
 	// Apple is heavily sandboxed. This solution seems like it should work on non-jailbroken iOS.
 	// Other possible alternatives for Apple: getppid() != 1 or isatty(STDERR_FILENO)
 	int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid() };
@@ -6527,7 +6534,9 @@ bool DarkEdif::IsDebuggerAttached()
 	if (!sysctl(mib, 4, &info, &size, nullptr, 0))
 		return (info.kp_proc.p_flag & P_TRACED) != 0;
 	LOGE(_T("Couldn't detect debugger: sysctl() returned error %d\n"), errno);
-#endif // Apple
+#else
+	#error Unexpected platform
+#endif
 
 #ifdef _DEBUG
 	// If debug, if debugger detect fails, we'll assume a debugger is present.
@@ -6874,7 +6883,7 @@ namespace DarkEdif
 
 		// To not make this ANSI ext clobber the debugger's text with replacement characters,
 		// we always talk to CF2.5+ with Wide characters
-		
+
 		// Move caret to end of Fusion debugger text
 		int curTextLen = GetWindowTextLengthW(CF25PlusEditBoxHandle);
 		// On error, default to passing -1, -1, which resets caret

@@ -25,13 +25,13 @@ class Prop;
 	#include "..\Windows\MMFWindowsMasterHeader.hpp"
 	extern HINSTANCE hInstLib;
 #elif defined (__ANDROID__)
-	#include "..\Android\MMFAndroidMasterHeader.hpp"
+	#include "../Android/MMFAndroidMasterHeader.hpp"
 #elif defined (__APPLE__)
-#if MacBuild == 0
-	#include "../iOS/MMFiOSMasterHeader.hpp"
-#else
-	#include "../Mac/MMFMacMasterHeader.hpp"
-#endif
+	#if MacBuild == 0
+		#include "../iOS/MMFiOSMasterHeader.hpp"
+	#else
+		#include "../Mac/MMFMacMasterHeader.hpp"
+	#endif
 #else
 	#error Unexpected platform
 #endif
@@ -217,9 +217,11 @@ namespace Edif
 		// Attaches current thread, and gets JNIEnv for it; errors are fatal
 		static void AttachJVMAccessForThisThread(const char * threadName, bool asDaemon = false);
 		static void DetachJVMAccessForThisThread();
-#else
+#elif defined(__APPLE__)
 		Runtime(Extension* ext, void * const objCExtPtr);
 		void * curCEvent;
+#else
+	#error Unexpected platform
 #endif
 
 		DarkEdif::FontInfoMultiPlat* extFont = NULL;
