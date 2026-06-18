@@ -770,7 +770,7 @@ void WINAPI DLLExport EditorDisplay(mv _far *mV, fpObjInfo oiPtr, fpLevObj loPtr
 		COLORREF dwBackColor = GetSysColor(COLOR_BTNFACE);
 		ps->Fill(rc->left, rc->top, rc->right-rc->left, rc->bottom-rc->top, dwBackColor);
 		ps->Rectangle(rc->left, rc->top, rc->right, rc->bottom, 1, RGB(0,0,0));
-		ps->Rectangle(rc->left+3,min(rc->top+24,rc->bottom), rc->right-3, max(rc->top,rc->bottom-3), 1, RGB(0,0,0));
+		ps->Rectangle(rc->left+3,__min(rc->top+24,rc->bottom), rc->right-3, __max(rc->top,rc->bottom-3), 1, RGB(0,0,0));
 
 	}
 

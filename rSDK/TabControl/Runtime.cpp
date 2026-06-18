@@ -41,8 +41,8 @@ short WINAPI DLLExport CreateRunObject(LPRDATA rdPtr, LPEDATA edPtr, fpcob cobPt
 	rdPtr->hFont = CreateFontIndirect(&edPtr->textFont);
 	rdPtr->dwLastChangedLoopNumber = -1;
 	rdPtr->dwEvtFlags = 0;
-	rdPtr->iconwidth = max(1,edPtr->iconW);
-	rdPtr->iconheight = max(1,edPtr->iconH);
+	rdPtr->iconwidth = __max(1,edPtr->iconW);
+	rdPtr->iconheight = __max(1,edPtr->iconH);
 
 	// Create control window
 	InitCommonControls();

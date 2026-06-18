@@ -142,7 +142,7 @@ ACTION(
 	int img = Param(TYPE_INT);
 	int index = Param(TYPE_INT);
 	if (index == -1) index = TabCtrl_GetItemCount(rdPtr->hWnd);
-	index = max(index,0);
+	index = __max(index,0);
 	TCITEM tie;
 	tie.mask = TCIF_TEXT | TCIF_IMAGE;
 	tie.iImage = img;
@@ -157,7 +157,7 @@ ACTION(
 	/* Params */		(1,PARAM_NUMBER,"Index")
 ) {
 	int index = param1;
-	index = max(index,0);
+	index = __max(index,0);
 	TabCtrl_DeleteItem(rdPtr->hWnd,index);
 }
 
@@ -201,7 +201,7 @@ ACTION(
 	/* Flags */			0,
 	/* Params */		(1,PARAM_NUMBER,"Width")
 ) {
-	rdPtr->rHo.hoImgWidth = max(0,param1);
+	rdPtr->rHo.hoImgWidth = __max(0,param1);
 }
 
 ACTION(
