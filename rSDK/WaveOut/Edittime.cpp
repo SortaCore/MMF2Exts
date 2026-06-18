@@ -912,19 +912,19 @@ void GetCodeTitle(LPEVENTINFOS2 eiPtr, short code, short param, short mn, LPTSTR
 		case MN_CONDITIONS:
 			if (code >= 0 && code < (short)Conditions.size()) {
 				if (param >= 0 && param < (short)Conditions[code]->getParamCount())
-					_tcscpy_s(strBuf, maxLen, Conditions[code]->getParamName(param));
+					Conditions[code]->getParamName(strBuf, maxLen, param);
 			}
 			break;
 		case MN_ACTIONS:
 			if (code >= 0 && code < (short)Actions.size()) {
 				if (param >= 0 && param < (short)Actions[code]->getParamCount())
-					_tcscpy_s(strBuf, maxLen, Actions[code]->getParamName(param));
+					Actions[code]->getParamName(strBuf, maxLen, param);
 			}
 			break;
 		case MN_EXPRESSIONS:
 			if (code >= 0 && code < (short)Expressions.size()) {
 				if (param >= 0 && param < (short)Expressions[code]->getParamCount())
-					_tcscpy_s(strBuf, maxLen, Expressions[code]->getParamName(param));
+					Expressions[code]->getParamName(strBuf, maxLen, param);
 			}
 			break;
 		}
@@ -1075,8 +1075,8 @@ void WINAPI DLLExport GetExpressionString(mv _far *mV, short code, LPTSTR strPtr
 void WINAPI DLLExport GetExpressionParam(mv _far *mV, short code, short param, LPTSTR strBuf, short maxLen)
 {
 #ifndef RUN_ONLY
-	if (_tcslen(Expressions[code]->getParamName(param)))
-		_tcscpy_s(strBuf, maxLen, Expressions[code]->getParamName(param));
+	if (strlen(Expressions[code]->getParamName(param)))
+		Expressions[code]->getParamName(strBuf, maxLen, param);
 	else
 		*strBuf = 0;
 #endif
@@ -1190,14 +1190,14 @@ void WINAPI GetParameterString(mv _far *mV, short code, paramExt* pExt, LPSTR pD
 // Note: ObjComment is also displayed in the Quick Description box in the Insert Object dialog box
 //
 
-void WINAPI	DLLExport GetObjInfos (mv _far *mV, LPEDATA edPtr, LPSTR ObjName, LPSTR ObjAuthor, LPSTR ObjCopyright, LPSTR ObjComment, LPSTR ObjHttp)
+void WINAPI	DLLExport GetObjInfos (mv _far *mV, LPEDATA edPtr, LPTSTR ObjName, LPTSTR ObjAuthor, LPTSTR ObjCopyright, LPTSTR ObjComment, LPTSTR ObjHttp)
 {
 #ifndef RUN_ONLY
-	strcpy_s(ObjName, 255, ObjectName);
-	strcpy_s(ObjAuthor, 255, ObjectAuthor);
-	strcpy_s(ObjCopyright, 255, ObjectCopyright);
-	strcpy_s(ObjComment, 1023, ObjectComment);
-	strcpy_s(ObjHttp, 255, ObjectURL);
+	_tcscpy_s(ObjName, 255, _T(ObjectName));
+	_tcscpy_s(ObjAuthor, 255, _T(ObjectAuthor));
+	_tcscpy_s(ObjCopyright, 255, _T(ObjectCopyright));
+	_tcscpy_s(ObjComment, 1023, _T(ObjectComment));
+	_tcscpy_s(ObjHttp, 255, _T(ObjectURL));
 #endif
 }
 
@@ -1207,10 +1207,10 @@ void WINAPI	DLLExport GetObjInfos (mv _far *mV, LPEDATA edPtr, LPSTR ObjName, LP
 // Returns the help filename of the object.
 //
 
-LPCSTR WINAPI GetHelpFileName()
+LPCTSTR WINAPI GetHelpFileName()
 {
 #ifndef RUN_ONLY
-	return ObjectHelp;
+	return _T(ObjectHelp);
 #else
 	return NULL;
 #endif

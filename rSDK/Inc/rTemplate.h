@@ -209,7 +209,7 @@ public:
 			else
 
 				// It must be a name; push it onto the names vector
-				Name.push_back(va_arg(list,const TCHAR *));
+				Name.push_back(va_arg(list,const char *));
 		}
 
 		// Stop going through the arguments
@@ -219,8 +219,8 @@ public:
 	// This will hold the type of each argument
 	rVector<short> Type;
 
-	// This will hold the name of each argument
-	rVector<const TCHAR *> Name;
+	// This will hold the name of each argument - not converted to Unicode until requested
+	rVector<const char *> Name;
 };
 
 // Temporary declaration of the ExtFunction class
@@ -231,6 +231,8 @@ extern rVector<ExtFunction*> Conditions;
 extern rVector<ExtFunction*> Actions;
 extern rVector<ExtFunction*> Expressions;
 
+extern HINSTANCE hInstLib;
+
 // This class holds an action, condition or expression
 class ExtFunction {
 protected:
@@ -238,8 +240,8 @@ protected:
 	// A vector to hold the types of the parameters
 	rVector<short> ParamTypes;
 
-	// A vector to hold the names of the parameters
-	rVector<const TCHAR *> ParamStrings;
+	// A vector to hold the names of the parameters - not converted to Unicode until requested
+	rVector<const char *> ParamStrings;
 
 	// Pointers to conditions, actions and expressions- we have them all but don't use them all
 	LPCONDITION mCondition;
@@ -315,7 +317,22 @@ public:
 	inline const TCHAR *	getName()				{ return Name; }
 	inline size_t			getParamCount()			{ return ParamTypes.size(); }
 	inline short			getParamType(size_t i)	{ return ParamTypes[i]; }
-	inline const TCHAR *	getParamName(size_t i)	{ return ParamStrings[i]; }
+	inline const char *		getParamName(size_t i)	{ return ParamStrings[i]; }
+	inline void				getParamName(TCHAR* buf, size_t maxsize, size_t i) {
+		const char* str = ParamStrings[i];
+		if (HIWORD((long)str) == 0)
+			LoadString(hInstLib, LOWORD((long)str), buf, maxsize);
+		else
+		{
+			// Convert to Unicode if necessary
+#ifdef _UNICODE
+			MultiByteToWideChar(CP_ACP, 0, str, -1, buf, maxsize);
+#else
+			_tcsncpy(buf, str, maxsize);
+			buf[maxsize - 1] = 0;
+#endif
+		}
+	}
 	inline short			getFlags()				{ return Flags; }
 };
 

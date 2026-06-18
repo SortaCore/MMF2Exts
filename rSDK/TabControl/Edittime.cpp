@@ -1018,19 +1018,19 @@ void GetCodeTitle(LPEVENTINFOS2 eiPtr, short code, short param, short mn, LPTSTR
 		case MN_CONDITIONS:
 			if (code >= 0 && code < (short)Conditions.size()) {
 				if (param >= 0 && param < (short)Conditions[code]->getParamCount())
-					_tcscpy_s(strBuf, maxLen, Conditions[code]->getParamName(param));
+					Conditions[code]->getParamName(strBuf, maxLen, param);
 			}
 			break;
 		case MN_ACTIONS:
 			if (code >= 0 && code < (short)Actions.size()) {
 				if (param >= 0 && param < (short)Actions[code]->getParamCount())
-					_tcscpy_s(strBuf, maxLen, Actions[code]->getParamName(param));
+					Actions[code]->getParamName(strBuf, maxLen, param);
 			}
 			break;
 		case MN_EXPRESSIONS:
 			if (code >= 0 && code < (short)Expressions.size()) {
 				if (param >= 0 && param < (short)Expressions[code]->getParamCount())
-					_tcscpy_s(strBuf, maxLen, Expressions[code]->getParamName(param));
+					Expressions[code]->getParamName(strBuf, maxLen, param);
 			}
 			break;
 		}
@@ -1181,8 +1181,8 @@ void WINAPI DLLExport GetExpressionString(mv _far *mV, short code, LPTSTR strPtr
 void WINAPI DLLExport GetExpressionParam(mv _far *mV, short code, short param, LPTSTR strBuf, short maxLen)
 {
 #ifndef RUN_ONLY
-	if (_tcslen(Expressions[code]->getParamName(param)))
-		_tcscpy_s(strBuf, maxLen, Expressions[code]->getParamName(param));
+	if (strlen(Expressions[code]->getParamName(param)))
+		Expressions[code]->getParamName(strBuf, maxLen, param);
 	else
 		*strBuf = 0;
 #endif
