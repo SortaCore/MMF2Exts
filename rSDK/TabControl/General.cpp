@@ -301,7 +301,9 @@ HGLOBAL WINAPI DLLExport UpdateEditStructure(mv __far *mV, OLDEDITDATA * AnyEdPt
 			p(nImages);
 
 			// Copy final char [], sText
-			MultiByteToWideChar(mvGetAppCodePage(mV, mV->mvEditApp), 0, OldEdPtr->sText, sizeof(OldEdPtr->sText), NewEdPtr->sText, sizeof(NewEdPtr->sText));
+			MultiByteToWideChar(mvGetAppCodePage(mV, mV->mvEditApp), 0,
+				OldEdPtr->sText, sizeof(OldEdPtr->sText) / sizeof(*OldEdPtr->sText),
+				NewEdPtr->sText, sizeof(NewEdPtr->sText) / sizeof(*NewEdPtr->sText));
 
 			// Done
 			return (HGLOBAL)NewEdPtr;
