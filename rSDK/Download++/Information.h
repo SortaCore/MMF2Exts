@@ -9,7 +9,7 @@
 // Basic object details
 #define	ObjectName			"Download++ object"
 #define	ObjectAuthor		"Clickteam & Darkwire Software"
-#define	ObjectCopyright		"Copyright © " asStr(YEAR) " Clickteam & Darkwire Software"
+#define	ObjectCopyright		"Copyright \xA9 " asStr(YEAR) " Clickteam & Darkwire Software"
 #define	ObjectComment		"Allows you to download files from the Internet with HTTP or HTTPS."
 #define	ObjectURL			"https://dark-wire.com/"
 #define	ObjectHelp			""

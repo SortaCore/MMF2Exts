@@ -5,7 +5,7 @@
 // Basic object details
 #define	ObjectName			"OpenCV-Collection of 2D points"
 #define	ObjectAuthor		"Bjorn Goransson aka Bornemix"
-#define	ObjectCopyright		"Copyright © 2009 Bornemix"
+#define	ObjectCopyright		"Copyright \xA9 2009 Bornemix"
 #define	ObjectComment		"Collection of 2D points for use as parameter and return value"
 #define	ObjectURL			""
 #define	ObjectHelp			""

@@ -5,7 +5,7 @@
 // Basic object details
 #define	ObjectName			"OpenCV-Image"
 #define	ObjectAuthor		"Bjorn Goransson aka Bornemix"
-#define	ObjectCopyright		"Copyright © 2009 Bornemix"
+#define	ObjectCopyright		"Copyright \xA9 2009 Bornemix"
 #define	ObjectComment		"General-purpose image data type. Often used to show a live camera feed."
 #define	ObjectURL			""
 #define	ObjectHelp			""

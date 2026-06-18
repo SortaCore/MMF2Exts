@@ -5,7 +5,7 @@
 // Basic object details
 #define	ObjectName			"WaveOut Example"
 #define	ObjectAuthor		"Looki"
-#define	ObjectCopyright		"Copyright © 2012 Looki"
+#define	ObjectCopyright		"Copyright \xA9 2012 Looki"
 #define	ObjectComment		"Shows how to play a continuous audio signal with buffering"
 #define	ObjectURL			"http://www.authorswebpage.com"
 #define	ObjectHelp			"Help\\EmptyObject.chm"

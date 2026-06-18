@@ -5,7 +5,7 @@
 // Basic object details
 #define	ObjectName			"OpenCV-Main"
 #define	ObjectAuthor		"Bjorn Goransson aka Bornemix"
-#define	ObjectCopyright		"Copyright © 2009 Bornemix"
+#define	ObjectCopyright		"Copyright \xA9 2009 Bornemix"
 #define	ObjectComment		"Almighty main instance. Only one of these per MMF frame (level). Specifies things like logging."
 #define	ObjectURL			""
 #define	ObjectHelp			""

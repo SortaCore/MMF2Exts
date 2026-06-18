@@ -5,7 +5,7 @@
 // Basic object details
 #define	ObjectName			"Active Voxel"
 #define	ObjectAuthor		"Bornemix & Looki"
-#define	ObjectCopyright		"Copyright © 2008 Bornemix"
+#define	ObjectCopyright		"Copyright \xA9 2008 Bornemix"
 #define	ObjectComment		"An abandoned pre-alpha for loading voxel files"
 #define	ObjectURL			""
 #define	ObjectHelp			""

@@ -5,7 +5,7 @@
 // Basic object details
 #define	ObjectName			"Empty object"
 #define	ObjectAuthor		"Extension author"
-#define	ObjectCopyright		"Copyright © 2010 Extension author"
+#define	ObjectCopyright		"Copyright \xA9 2010 Extension author"
 #define	ObjectComment		"An empty extension"
 #define	ObjectURL			"http://www.authorswebpage.com"
 #define	ObjectHelp			"Help\\EmptyObject.chm"
