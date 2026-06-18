@@ -2172,13 +2172,13 @@ char* Edif::ConvertAndCopyString(char* str, const std::string_view & utf8String,
 #endif // _UNICODE
 
 
-#if defined(_DEBUG)
-
-
 Edif::recursive_mutex::recursive_mutex()
 {
+#if defined(_DEBUG)
 	this->log << "New recursive mutex.\n"sv;
+#endif
 }
+#if defined(_DEBUG)
 Edif::recursive_mutex::~recursive_mutex()
 {
 	this->log << "Recursive mutex dying.\n"sv;
@@ -2283,9 +2283,6 @@ void Edif::recursive_mutex::unlock(edif_lock_debugParams)
 
 #else // Not debug
 
-Edif::recursive_mutex::recursive_mutex()
-{
-}
 Edif::recursive_mutex::~recursive_mutex()
 {
 }
