@@ -370,7 +370,7 @@ const int Separator=-3;
 
 		void AddMenu(int id,const TCHAR * str,bool disabled=false) {
 			if (id>0) {
-				AppendMenu(SubMenus.back(),MF_BYPOSITION|MF_STRING,id,str);
+				AppendMenu(SubMenus.back(),MF_BYPOSITION|MF_STRING|(disabled ? MF_GRAYED : 0),id,str);
 			} else if (id==SubMenu) {
 				HMENU hSubMenu=CreatePopupMenu();
 				SubMenus.push_back(hSubMenu);
