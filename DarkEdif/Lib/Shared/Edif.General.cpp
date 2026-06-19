@@ -99,24 +99,29 @@ void FusionAPI UnloadObject(mv * mV, EDITDATA * edPtr, int reserved)
 }
 
 
+// This is pointed to by Dependencies, as a stream of null-terminated TCHAR strings.
+static TCHAR singleton[1024];
 const TCHAR * Dependencies[32] = {};
 
 const TCHAR ** FusionAPI GetDependencies()
 {
 #pragma DllExportHint
-	// This is pointed to by Dependencies.
-	static TCHAR singleton[1024];
-
 	if (!Dependencies[0])
 	{
+		// CurLang shouldn't be used here; GetDependencies may be requested early
 		const json_value &DependenciesJSON = Edif::SDK->json["Dependencies"sv];
+
 		TCHAR* singletonPtr = singleton;
 
 		std::size_t Offset = 0;
 
+		// If external JSON, add our own JSON to the requested list
 		if (Edif::ExternalJSON)
 		{
-			TCHAR JSONFilename [MAX_PATH];
+			// We calculate filename live, assuming the MFX is being used like a dummy,
+			// and so we can't rely on the PROJECT_TARGET_NAME defines.
+			// +2 for the off chance of mfx being exactly MAX_PATH chars.
+			TCHAR JSONFilename [MAX_PATH + 2];
 
 			GetModuleFileName (hInstLib, JSONFilename, sizeof (JSONFilename) / sizeof(*JSONFilename));
 
@@ -134,21 +139,44 @@ const TCHAR ** FusionAPI GetDependencies()
 
 			// We append it, then add a pointer to what we just appended
 			// to our pointer list
-			_tcscpy(singletonPtr, ++Iterator);
+			_tcscpy_s(singletonPtr, std::size(singleton), ++Iterator);
 			Dependencies[Offset++] = singletonPtr;
 			singletonPtr += _tcslen(singletonPtr) + 1;
 		}
 
+		// Add any other JSON dependencies, or abort
+		if (DependenciesJSON.type == json_none)
+			return Dependencies;
+
+		std::tstring tstr;
+		if (DependenciesJSON.type == json_string)
+		{
+			if (DependenciesJSON.u.string.length != 0)
+			{
+				tstr = DarkEdif::UTF8ToTString(DependenciesJSON);
+				_tcscpy_s(singletonPtr, std::size(singleton) - (singletonPtr - singleton), tstr.c_str());
+				Dependencies[Offset++] = singletonPtr;
+				singletonPtr += _tcslen(singletonPtr) + 1;
+			}
+
+			return Dependencies;
+		}
+
+		if (DependenciesJSON.type != json_array)
+			return DarkEdif::MsgBox::Error(_T("GetDependencies() error"), _T("DarkExt.json contains incorrect Dependencies type.")), nullptr;
+
+		// Limit of 31 entries, as Dependencies must end with a null entry.
+		// If JSON will be inserted as dependency too, then limit is 30.
+		if (DependenciesJSON.u.array.length > std::size(Dependencies) - (Edif::ExternalJSON ? 2 : 1))
+			return DarkEdif::MsgBox::Error(_T("GetDependencies() error"), _T("DarkExt.json contains too many dependencies.")), nullptr;
+
 		for (unsigned int i = 0; i < DependenciesJSON.u.array.length; ++i)
 		{
-			std::tstring tstr = DarkEdif::UTF8ToTString(DependenciesJSON[i]);
-
-			_tcscpy(singletonPtr, tstr.c_str());
+			tstr = DarkEdif::UTF8ToTString(DependenciesJSON[i]);
+			_tcscpy_s(singletonPtr, std::size(singleton) - (singletonPtr - singleton), tstr.c_str());
 			Dependencies[Offset++] = singletonPtr;
 			singletonPtr += tstr.size() + 1;
 		}
-
-		Dependencies[Offset] = 0;
 	}
 
 	return Dependencies;
