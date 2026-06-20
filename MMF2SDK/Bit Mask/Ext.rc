@@ -195,7 +195,7 @@ STRINGTABLE
 BEGIN
 	IDST_OBJNAME            "Bit Mask Object"
 	IDST_AUTHOR             "Jack Webster. Icon thanks to LIJI. By the request of Dines."
-	IDST_Copyright \xA9        "Copyright \xA9 2007 Jack Webster"
+	IDST_COPYRIGHT          "Copyright \xA9 2007 Jack Webster"
 	IDST_COMMENT            "A few simple bit mask related tools."
 	IDST_HTTP               "http://people.pwf.cam.ac.uk/jlnw3/"
 END

@@ -191,7 +191,7 @@ STRINGTABLE
 BEGIN
 	IDST_OBJNAME            "Simple Control"
 	IDST_AUTHOR             "Clickteam"
-	IDST_Copyright \xA9        "Copyright \xA9 2006 Clickteam"
+	IDST_COPYRIGHT          "Copyright \xA9 2006 Clickteam"
 	IDST_COMMENT            "Simple example of edit box control."
 	IDST_HTTP               "http://www.clickteam.com"
 	IDS_SETTEXT_TITLE       "Please enter text"

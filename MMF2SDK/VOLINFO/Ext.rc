@@ -192,7 +192,7 @@ STRINGTABLE
 BEGIN
 	IDST_OBJNAME            "NRG753 Volume Information"
 	IDST_AUTHOR             "Jack Webster"
-	IDST_Copyright \xA9        "Copyright \xA9 2006 Jack Webster"
+	IDST_COPYRIGHT          "Copyright \xA9 2006 Jack Webster"
 	IDST_COMMENT            "Given a root path, will give the volumes label. By request of NRG753"
 	IDST_HTTP               "(No webpage right now)"
 END
