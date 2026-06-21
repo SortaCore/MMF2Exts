@@ -4810,12 +4810,12 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 				{
 					if (Property["Case"sv].type != json_type::json_none)
 					{
-						MsgBox::WarningOK(_T("DarkEdif JSON property"), _T(R"(Property "%s" is set to "Case"="%hs", but that won't work with property type %hs.)"),
+						MsgBox::WarningOK(errorPrefix, _T(R"(Property "%s" is set to "Case"="%hs", but that won't work with property type %hs.)"),
 							UTF8ToTString(Property["Title"sv]).c_str(), Property["Case"sv].c_str(), Names[CurrentProperty->Type_ID % 1000]);
 					}
 					if (Property["Password"sv].type != json_type::json_none)
 					{
-						MsgBox::WarningOK(_T("DarkEdif JSON property"), _T("Property \"%s\" is set to password mask, but that won't work with property type %hs."),
+						MsgBox::WarningOK(errorPrefix, _T("Property \"%s\" is set to password mask, but that won't work with property type %hs."),
 							UTF8ToTString(Property["Title"sv]).c_str(), Names[CurrentProperty->Type_ID % 1000]);
 					}
 				}
@@ -4860,7 +4860,7 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 				if (std::any_of(Edif::SDK->EdittimePropertySets.cbegin(), Edif::SDK->EdittimePropertySets.cend(),
 					[i](const auto& es) { return es.nameListIdx == i; }))
 				{
-					MsgBox::Error(_T("DarkEdif JSON property"), _T("Items detected in a property set list box %s."),
+					MsgBox::Error(errorPrefix, _T("Items detected in a property set list box %s."),
 						UTF8ToTString(Property["Title"sv]).c_str());
 					SetAllProps(PROPOPT_PARAMREQUIRED, NULL);
 					break;
@@ -4869,7 +4869,7 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 				const json_value& itemsJSON = Property["Items"sv];
 				if (itemsJSON.type != json_type::json_array || itemsJSON.u.array.length == 0)
 				{
-					MsgBox::Error(_T("DarkEdif JSON property"), _T("No Items detected in combobox property %s."),
+					MsgBox::Error(errorPrefix, _T("No Items detected in combobox property %s."),
 						UTF8ToTString(Property["Title"sv]).c_str());
 				}
 
@@ -4902,7 +4902,7 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 							sizeEntry[0].type != json_type::json_integer || sizeEntry[1].type != json_type::json_integer ||
 							(json_int_t)sizeEntry[0] < 0 || (json_int_t)sizeEntry[1] < 0)
 						{
-							DarkEdif::MsgBox::Error(_T("DarkEdif JSON property"), _T("Invalid preset size index %d in size property %s."),
+							MsgBox::Error(errorPrefix, _T("Invalid preset size index %d in size property %s."),
 								index, UTF8ToTString(Property["Title"sv]).c_str());
 						}
 
@@ -4918,7 +4918,7 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 				}
 				if (presetList.type != json_type::json_none)
 				{
-					DarkEdif::MsgBox::Error(_T("DarkEdif JSON property"), _T("Invalid PresetSizes array in size property %s."),
+					MsgBox::Error(errorPrefix, _T("Invalid PresetSizes array in size property %s."),
 						UTF8ToTString(Property["Title"sv]).c_str());
 				}
 
@@ -4940,9 +4940,90 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 
 			// Edit box + browse file button, Parameter = FilenameCreateParams
 			case PROPTYPE_FILENAME:
-			case PROPTYPE_PICTUREFILENAME:
-				SetAllProps(0, NULL);
+			{
+				const auto& filters = Property["Filters"sv];
+				std::tstring filterName;
 
+				if (filters.type == json_none)
+					filterName = _T("All files (*.*)|*.*|"s);
+				else if (filters.type != json_array)
+				{
+					MsgBox::Error(errorPrefix, _T("Property \"Filters\" must be a filter string or array of filter strings."));
+				}
+				else
+				{
+					for (unsigned int i = 0; i < filters.u.array.length; ++i)
+					{
+						const auto& filter = filters[i];
+						if (filter.type != json_array)
+						{
+							MsgBox::Error(errorPrefix, _T("Invalid file filter type; property ID %u must be an array containing the display name, then the corresponding file extensions array."), i);
+							break;
+						}
+						else if (filter.u.array.length != 2)
+						{
+							MsgBox::Error(errorPrefix, _T("File filter index %u must have 2 elements; a display name string, then afterwards the corresponding file extensions array."), i);
+							break;
+						}
+						else if (filter[0].type != json_string)
+						{
+							MsgBox::Error(errorPrefix, _T("File filter index %u's first element must be a display name string."), i);
+							break;
+						}
+
+						std::tstring filterDisplay = UTF8ToTString(filter[0]);
+						if (filterDisplay.find(_T('|')) != std::tstring::npos)
+						{
+							MsgBox::Error(errorPrefix, _T("File filter index %u's display name must not have a \"|\" character. Fusion uses it to seperate file extension names and file extensions themselves."), i);
+							break;
+						}
+
+						filterName += filterDisplay + _T("|"s);
+
+						const auto& filterExts = filter[1];
+						if (filterExts.type == json_array)
+						{
+							if (filterExts.u.array.length < 1)
+							{
+								MsgBox::Error(errorPrefix, _T("File filter index %u's file extensions array is empty."), i);
+								break;
+							}
+
+							for (unsigned int j = 0; j < filterExts.u.array.length; ++j)
+							{
+								const auto& filterExt = filterExts[j];
+								if (filterExt.type != json_string)
+								{
+									MsgBox::Error(errorPrefix, _T("File filter index %u, file extension index %u must be a string."), i, j);
+									break;
+								}
+
+								filterName += UTF8ToTString(filterExt) + _T(";"s);
+							}
+						}
+						else if (filterExts.type == json_string)
+							filterName += UTF8ToTString(filterExts) + _T(";"s);
+						else
+						{
+							MsgBox::Error(errorPrefix, _T("File filter index %u's second element must be either an array of file extension strings or a single file extension."), i);
+						}
+						filterName += _T("|"sv);
+					}
+				}
+
+				// TODO: this is a memory leak, but fixing it via GetPropCreateParam
+				// will mean JSON isn't validated until object is selected and props fully loaded,
+				// rather than error check on object create.
+				FilenameCreateParam * p = new FilenameCreateParam {};
+				p->extFilter = Edif::ConvertString(TStringToUTF8(filterName));
+				p->options = OFN_FILEMUSTEXIST | OFN_EXPLORER;
+				SetAllProps(PROPOPT_PARAMREQUIRED, p);
+			}
+			case PROPTYPE_PICTUREFILENAME:
+			{
+				bool includeAnimations = (bool)Property["UseAnimationFiles"sv];
+				SetAllProps(PROPOPT_PARAMREQUIRED, includeAnimations);
+			}
 			// Font dialog box
 			case PROPTYPE_FONT:
 				SetAllProps(0, NULL);
