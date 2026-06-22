@@ -1,8 +1,16 @@
 #pragma once
 
+#ifndef __INTELLISENSE__
 // Hints to the compiler that the class/function this is attached to is defined externally and imported.
 // Annotating this is not required, but makes more efficient code.
 #define FusionAPIImport __declspec(dllimport)
+#define EXDEF /* no op */
+#else
+// Lie to IntelliSense that the dllimported func is defined locally, so it stops complaining about missing definition
+#define FusionAPIImport /* no op */
+// Make IntelliSense see the function as defined, but contents are assumed unreachable code
+#define EXDEF { __assume(0); }
+#endif
 
 // FusionAPI; incoming or outgoing to Fusion runtime. Uses __stdcall convention.
 #define FusionAPI __stdcall
