@@ -234,7 +234,7 @@ STRINGTABLE
 BEGIN
 	IDST_OBJNAME            "Download Object"
 	IDST_AUTHOR             "François Lionet"
-	IDST_Copyright \xA9        "Copyright \xA9 2006 Clickteam"
+	IDST_COPYRIGHT          "Copyright \xA9 2006 Clickteam"
 	IDST_COMMENT            "Allows you to download file from the Internet."
 	IDST_HTTP               "http://www.clickteam.com"
 END

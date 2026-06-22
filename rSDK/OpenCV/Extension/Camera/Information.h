@@ -5,7 +5,7 @@
 // Basic object details
 #define	ObjectName			"OpenCV-Camera"
 #define	ObjectAuthor		"Bjorn Goransson aka Bornemix"
-#define	ObjectCopyright		"Copyright © 2009 Bornemix"
+#define	ObjectCopyright		"Copyright \xA9 2009 Bornemix"
 #define	ObjectComment		"Camera instance. Represents one camera."
 #define	ObjectURL			""
 #define	ObjectHelp			""

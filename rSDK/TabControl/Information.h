@@ -5,7 +5,7 @@
 // Basic object details
 #define	ObjectName			"Tab Control"
 #define	ObjectAuthor		"Looki"
-#define	ObjectCopyright		"Copyright © 2008-2010 Looki"
+#define	ObjectCopyright		"Copyright \xA9 2008-2010 Looki"
 #define	ObjectComment		"Add tabbing to your applications, e.g. for file managing. Icon made by Ganryu."
 #define	ObjectURL			"https://lukasmeller.com/mmf/"
 #define	ObjectHelp			""

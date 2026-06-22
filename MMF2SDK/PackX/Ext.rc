@@ -215,7 +215,7 @@ STRINGTABLE
 BEGIN
 	IDST_OBJNAME            "PackX object"
 	IDST_AUTHOR             "Jack Webster"
-	IDST_Copyright \xA9        "Copyright \xA9 2003 Jack Webster"
+	IDST_COPYRIGHT          "Copyright \xA9 2003 Jack Webster"
 	IDST_HTTP               "http://www.sylviawebster.f2s.com"
 END
 
