@@ -1,0 +1,40 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.37327.16
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MMF2SDK - VOLINFO", "MMF2SDK - VOLINFO.vcxproj", "{2196C17D-EDAC-43AD-AF88-1D7D6CBD9145}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug Unicode|x86 = Debug Unicode|x86
+		Debug|x86 = Debug|x86
+		Edittime Unicode|x86 = Edittime Unicode|x86
+		Edittime|x86 = Edittime|x86
+		Runtime Unicode|x86 = Runtime Unicode|x86
+		Runtime|x86 = Runtime|x86
+		Vitalize|x86 = Vitalize|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2196C17D-EDAC-43AD-AF88-1D7D6CBD9145}.Debug Unicode|x86.ActiveCfg = Debug Unicode|Win32
+		{2196C17D-EDAC-43AD-AF88-1D7D6CBD9145}.Debug Unicode|x86.Build.0 = Debug Unicode|Win32
+		{2196C17D-EDAC-43AD-AF88-1D7D6CBD9145}.Debug|x86.ActiveCfg = Debug|Win32
+		{2196C17D-EDAC-43AD-AF88-1D7D6CBD9145}.Debug|x86.Build.0 = Debug|Win32
+		{2196C17D-EDAC-43AD-AF88-1D7D6CBD9145}.Edittime Unicode|x86.ActiveCfg = Edittime Unicode|Win32
+		{2196C17D-EDAC-43AD-AF88-1D7D6CBD9145}.Edittime Unicode|x86.Build.0 = Edittime Unicode|Win32
+		{2196C17D-EDAC-43AD-AF88-1D7D6CBD9145}.Edittime|x86.ActiveCfg = Edittime|Win32
+		{2196C17D-EDAC-43AD-AF88-1D7D6CBD9145}.Edittime|x86.Build.0 = Edittime|Win32
+		{2196C17D-EDAC-43AD-AF88-1D7D6CBD9145}.Runtime Unicode|x86.ActiveCfg = Runtime Unicode|Win32
+		{2196C17D-EDAC-43AD-AF88-1D7D6CBD9145}.Runtime Unicode|x86.Build.0 = Runtime Unicode|Win32
+		{2196C17D-EDAC-43AD-AF88-1D7D6CBD9145}.Runtime|x86.ActiveCfg = Runtime|Win32
+		{2196C17D-EDAC-43AD-AF88-1D7D6CBD9145}.Runtime|x86.Build.0 = Runtime|Win32
+		{2196C17D-EDAC-43AD-AF88-1D7D6CBD9145}.Vitalize|x86.ActiveCfg = Vitalize|Win32
+		{2196C17D-EDAC-43AD-AF88-1D7D6CBD9145}.Vitalize|x86.Build.0 = Vitalize|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {244770B2-A722-4976-85DA-F5FFB2A012A3}
+	EndGlobalSection
+EndGlobal
