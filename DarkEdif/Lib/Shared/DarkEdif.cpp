@@ -2,6 +2,7 @@
 #include "Extension.hpp"
 #include <atomic>
 #include <math.h>
+#include <cctype>
 
 #ifdef _WIN32
 extern HINSTANCE hInstLib;

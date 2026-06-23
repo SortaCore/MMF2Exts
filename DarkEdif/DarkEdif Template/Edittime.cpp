@@ -19,7 +19,11 @@ int FusionAPI MakeIconEx(mv * mV, cSurface * pIconSf, TCHAR * lpName, ObjInfo * 
 {
 #pragma DllExportHint
 	pIconSf->Delete();
+	#ifdef MULTIPLEICONS
+	pIconSf->Clone(*Edif::SDK->Image);
+	#else
 	pIconSf->Clone(*Edif::SDK->Icon);
+	#endif
 
 	pIconSf->SetTransparentColor(RGB(255, 0, 255));
 	return 0;
@@ -153,6 +157,8 @@ BOOL FusionAPI EditObject(mv *mV, ObjInfo * oiPtr, LevelObject * loPtr, EDITDATA
 // PROPERTIES
 // ============================================================================
 
+#ifndef NOPROPS
+
 // Inserts properties into the properties of the object.
 BOOL FusionAPI GetProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem)
 {
@@ -227,6 +233,7 @@ void FusionAPI ReleasePropCreateParam(mv *mV, EDITDATA *edPtr, unsigned int Prop
 #pragma DllExportHint
 	return DarkEdif::DLL::DLL_ReleasePropCreateParam(mV, edPtr, PropID, lParam);
 }
+#endif
 
 // ============================================================================
 // ROUTINES USED WHEN BUILDING

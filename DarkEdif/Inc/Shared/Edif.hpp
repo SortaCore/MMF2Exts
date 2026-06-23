@@ -162,6 +162,10 @@ namespace Edif
 #if EditorBuild
 		cSurface * Icon = nullptr;
 		DarkEdif::Surface * ExtIcon = nullptr;
+#ifdef MULTIPLEICONS
+		cSurface * Image = nullptr;
+		DarkEdif::Surface * ExtImage = nullptr;
+#endif
 		std::unique_ptr<PropData[]> EdittimeProperties;
 
 #ifndef NOPROPS
