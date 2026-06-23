@@ -4940,9 +4940,82 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 
 			// Edit box + browse file button, Parameter = FilenameCreateParams
 			case PROPTYPE_FILENAME:
-			case PROPTYPE_PICTUREFILENAME:
-				SetAllProps(0, NULL);
+			{
+				const auto& filters = Property["Filters"sv];
+				std::tstring filterName;
 
+				if (filters.type == json_none)
+				{
+					filterName = _T("All files (*.*)|*.*|");
+				}
+				else if (filters.type != json_array)
+				{
+					DarkEdif::MsgBox::Error(_T("DarkEdif JSON property"), _T("Property \"Filters\" must be an array of filter strings."));
+				}
+				else
+				{
+					for (unsigned int i = 0; i < filters.u.array.length; ++i)
+					{
+						const auto& filter = filters[i];
+						if (filter.type != json_array)
+						{
+							DarkEdif::MsgBox::Error(_T("DarkEdif JSON property"), _T("Invalid file filter type; property ID %u must be an array containing the display name, then the corresponding file extensions array."), i);
+						}
+						else if (filter.u.array.length != 2)
+						{
+							DarkEdif::MsgBox::Error(_T("DarkEdif JSON property"), _T("File filter index %u must have 2 elements; a display name string, then afterwards the corresponding file extensions array."), i);
+						}
+						else if (filter[0].type != json_string)
+						{
+							DarkEdif::MsgBox::Error(_T("DarkEdif JSON property"), _T("File filter index %u's first element must be a display name string."), i);
+						}
+
+						auto filterDisplay = UTF8ToTString(filter[0]);
+						if (filterDisplay.find('|') != std::tstring::npos)
+							DarkEdif::MsgBox::Error(_T("DarkEdif JSON property"), _T("File filter index %u's display name must not have a \"|\" character. Fusion uses it to seperate file extension names and file extensions themselves."), i);
+
+						filterName += filterDisplay;
+						filterName += _T("|");
+
+						auto filterExts = filter[1];
+						if (filterExts.type == json_array)
+						{
+							if (filterExts.u.array.length < 1)
+								DarkEdif::MsgBox::Error(_T("DarkEdif JSON property"), _T("File filter index %u's file extensions array is empty."), i);
+
+							for (unsigned int j = 0; j < filterExts.u.array.length; ++j)
+							{
+								auto filterExt = filterExts[j];
+								if (filterExt.type != json_string)
+									DarkEdif::MsgBox::Error(_T("DarkEdif JSON property"), _T("File filter index %u, file extension index %u must be a string."), i, j);
+
+								filterName += UTF8ToTString(filterExt);
+								filterName += _T(";");
+							}
+						}
+						else if (filterExts.type == json_string)
+						{
+							filterName += UTF8ToTString(filterExts);
+							filterName += _T(";");
+						}
+						else
+						{
+							DarkEdif::MsgBox::Error(_T("DarkEdif JSON property"), _T("File filter index %u's second element must be either an array of file extension strings or a single file extension."), i);
+						}
+						filterName += _T("|");
+					}
+				}
+
+				static FilenameCreateParam p = {};
+				p.extFilter = Edif::ConvertString(TStringToUTF8(filterName));
+				p.options = OFN_FILEMUSTEXIST | OFN_EXPLORER;
+				SetAllProps(PROPOPT_PARAMREQUIRED, &p);
+			}
+			case PROPTYPE_PICTUREFILENAME:
+			{
+				bool includeAnimations = (bool)Property["UseAnimationFiles"sv];
+				SetAllProps(PROPOPT_PARAMREQUIRED, includeAnimations);
+			}
 			// Font dialog box
 			case PROPTYPE_FONT:
 				SetAllProps(0, NULL);

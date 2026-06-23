@@ -763,7 +763,7 @@ typedef struct {
 
 // Initialization structure for file selector property
 typedef struct {
-	const char *	extFilter;	// Filter string for GetOpenFilename dialog (for example "All Files (*.*)|*.*|")
+	const TCHAR*	extFilter;	// Filter string for GetOpenFilename dialog (for example "All Files (*.*)|*.*|")
 	unsigned int	options;	// Options for GetOpenFilename dialog (OFN_FILEMUSTEXIST, OFN_PATHMUSTEXIST, OFN_HIDEREADONLY, etc.)
 } FilenameCreateParam;
 
