@@ -38,8 +38,8 @@ public:
 	virtual LPCSTR		GetFilterFileNameA(int nIndex);
 	virtual DWORD		GetFilterID(int nIndex);
 	virtual int			GetFilterIndex(DWORD dwID);
-	virtual LPCSTR* GetFilterExtsA(int nIndex);
-	virtual LPCSTR* GetFilterDependenciesA(int nIndex);
+	virtual LPCSTR *	GetFilterExtsA(int nIndex);
+	virtual LPCSTR *	GetFilterDependenciesA(int nIndex);
 	virtual BOOL		CanReadFile(int nIndex, CInputFile* pif);
 
 	// Filter object creation

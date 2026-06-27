@@ -1,5 +1,3 @@
-///
-
 #pragma once
 #ifndef _WIN32
 #error Included the wrong header for this OS.
@@ -144,88 +142,153 @@ enum class CallFunctionIDs : int {
 	CREATEIMAGEFROMFILEW,	// Create image from file (runtime only)
 };
 
+// @remarks Source: cnpdll.h, not used in any C++ DLL funcs
 struct Obj
 {
 	NO_DEFAULT_CTORS_OR_DTORS(Obj);
-	unsigned int	size,		// Taille de l'objet: 0 = fin objets
-					PrevSize,	// Taille objet precedent (0 = 1er objet)
-					Type,		// Type d'objet (1=vide,2=appli,3=fenetre,...)
-					Prev,		// Adresse objet precedent de meme type (0 = first)
-					Next;		// Adresse objet suivant de meme type (0 = last)
+	// Taille de l'objet: 0 = fin objets
+	std::uint32_t objSize;
+	// Taille objet precedent (0 = 1er objet)
+	std::uint32_t objPrevSize;
+	// Type d'objet (1=vide,2=appli,3=fenetre,...)
+	std::uint32_t objType;
+	// Adresse objet precedent de meme type (0 = first)
+	std::uint32_t objPrev;
+	// Adresse objet suivant de meme type (0 = last)
+	std::uint32_t objNext;
 };
 //typedef Obj *npObj;
 //typedef Obj *fpObj;
 
-// This is the CSprite class, not the CRSpr class.
-struct Sprite
+// Sprite information: layer, angle, z order, etc. For Actives, mostly.
+// See related RunSprite, used for any object with OEFLAGS::SPRITES.
+// @remarks Source: cnpdll.h, Spr. Only used in C, not C++ exported DLL funcs
+//			This is the CSprite class in non-Windows. Not to be confused with CRSpr.
+struct CSprite
 {
-	NO_DEFAULT_CTORS_OR_DTORS(Sprite);
-	#ifndef SPRLIST
-		Obj			Obj;
-	#endif
-	unsigned int	Flags;	// Flags
-	unsigned short	Layer;	// Sprite plane (layer)
-	short			Angle;	// Angle
-	int				ZOrder,	// Z-order value
-					X,		// X Position
-					Y,		// Y Position
-					X1,		// Bounding box, top left corner X pos
-					Y1,		// Bounding box, top left corner Y pos
-					X2,		// Bounding box, bottom right corner X pos
-					Y2,		// Bounding box, bottom right corner Y pos
-					Xnew,	// New X Position
-					Ynew,	// New Y Position
-					X1new,	// New bounding box, top left corner X pos
-					Y1new,	// New bounding box, top left corner Y pos
-					X2new,	// New bounding box, bottom right corner X pos
-					Y2new,	// New bounding box, bottom right corner Y pos
-					X1z,	// Background bounding box, top left corner X pos
-					Y1z,	// Background bounding box, top left corner Y pos
-					X2z,	// Background bounding box, bottom right corner X pos
-					Y2z;	// Background bounding box, bottom right corner Y pos
-	float			XScale,
-					YScale;
+	NO_DEFAULT_CTORS_OR_DTORS(CSprite);
+
+	// @remarks Only present #ifndef SPRLIST, but SPRLIST is never explained or defined
+	// in ext SDK
+	Obj				sprObj;
+
+	// Sprite flag bit
+	SpriteFlag sprFlags;
+	// Sprite plane (layer)
+	std::uint16_t sprLayer;
+	// Angle
+	std::int16_t sprAngle;
+	// Z-order value
+	std::int32_t sprZOrder;
+	// X Position
+	std::int32_t sprX;
+	// Y Position
+	std::int32_t sprY;
+	// Bounding box, top left corner X pos
+	std::int32_t sprX1;
+	// Bounding box, top left corner Y pos
+	std::int32_t sprY1;
+	// Bounding box, bottom right corner X pos
+	std::int32_t sprX2;
+	// Bounding box, bottom right corner Y pos
+	std::int32_t sprY2;
+	// New X Position
+	std::int32_t sprXnew;
+	// New Y Position
+	std::int32_t sprYnew;
+	// New bounding box, top left corner X pos
+	std::int32_t sprX1new;
+	// New bounding box, top left corner Y pos
+	std::int32_t sprY1new;
+	// New bounding box, bottom right corner X pos
+	std::int32_t sprX2new;
+	// New bounding box, bottom right corner Y pos
+	std::int32_t sprY2new;
+	// Background bounding box, top left corner X pos,
+	std::int32_t sprX1z;
+	// Background bounding box, top left corner Y pos
+	std::int32_t sprY1z;
+	// Background bounding box, bottom right corner X pos
+	std::int32_t sprX2z;
+	// Background bounding box, bottom right corner Y pos
+	std::int32_t sprY2z;
+
+	// TODO: Note: this section was commented out in earlier CF2.5 SDK.
+	// Still present in MMF2 Unicode SDK, so probably MMF2 HWA DLC -> core killed it.
+#ifndef _UNICODE
+	// MMF2: Sprite X scale. Removed in CF2.5.
+	float	sprXScale;
+	// MMF2: Sprite Y scale. Removed in CF2.5.
+	float	sprYScale;
+
 	// Temporary values for collisions
-	unsigned short	TempImg;	// TODO: use unsigned intlater?
-	short			TempAngle;
-	float			TempScaleX,
-					TempScaleY;
+
+	// Temporary image num for collision
+	// TODO: Is this image bank ID? texture bank ID?
+	std::int16_t sprTempImg;
+	// Temporary angle for collision
+	std::int16_t sprTempAngle;
+	// Temporary scale X for collision
+	float sprTempScaleX;
+	// Temporary scale Y for collision
+	float sprTempScaleY;
+#endif
 	// Image or owner-draw routine
 	union {
 		struct {
-			unsigned int Img;			 // Numero d'image
-			unsigned int ImgNew;		  // Nouvelle image
+			// Current image bank ID?
+			std::uint32_t sprImg;
+			// New image bank ID?
+			std::uint32_t sprImgNew;
 		};
-		LPARAM Rout;			// Ownerdraw callback routine
+		// Ownerdraw callback routine
+		// IDrawable ref in Android
+		// Obj-C class id in iOS, Mac
+		LPARAM sprRout;
 	};
 
-	// Ink effect
-	unsigned int	Effect;			// 0 = normal, 1 = semi-transparent, > 16 = routine
-	LPARAM			EffectParam;	// parametre effet (coef transparence, etc...)
+	// Ink effect; see RunSprite::rsEffect
+	BlitOperation sprEffect;
+	// Ink effect parameter e.g. blend coefficient. See RunSprite::rsEffectParam.
+	LPARAM sprEffectParam;
 
-	// Fill color (wipe with color mode)
-	COLORREF	BackColor;
+	// Fill color (wipe with color mode; standard display type only?)
+	COLORREF sprBackColor;
 
 	// Surfaces
-	cSurfaceImplementation *	BackSurf;	// Background surface, if no general background surface
+	cSurfaceImplementation * sprBackSurf;	// Background surface, if no general background surface
 
-	cSurfaceImplementation *	Sf;			// Surface (if stretched or rotated)
-	sMask *						ColMask;	// Collision mask (if stretched or rotated)
+	// Surface (if stretched or rotated)
+	cSurfaceImplementation * sprSf;
 
-	cSurfaceImplementation*		TempSf;			// Temp surface (if stretched or rotated)
-	sMask *						TempColMask;	// Temp collision mask (if stretched or rotated)
+#ifndef _UNICODE
+	// MMF2: Collision mask (if stretched or rotated)
+	// Removed in CF2.5 SDK
+	sMask * sprColMask;
 
-	// User data
-	LPARAM		ExtraInfo;
+	// MMF2: Temp surface (if stretched or rotated)
+	// Removed in CF2.5 SDK
+	cSurfaceImplementation * sprTempSf;
+	// MMF2: Temp collision mask (if stretched or rotated)
+	// Removed in CF2.5 SDK
+	sMask * sprTempColMask;
+#endif // _UNICODE
+
+	// User data - may be a RunObject ptr
+	// This ptr may not be valid offset
+	LPARAM sprExtraInfo;
 
 	// Colliding ites
-	int					CollisList[2];	// liste de ites entrant en collisions
+	// This ptr may not be valid offset
+	std::int32_t	sprCollisList[2];	// liste de ites entrant en collisions
 };
 
-// Maximum number of parameters
+// Maximum number of parameters in A/C/E
+// @remarks Source: evtccx.h
 #define EVI_MAXPARAMS				16
 
 // Structure de definition des conditions / actions POUR LES EXTENSIONS V1
+// @remarks Source: evtccx.h, data struct not used in exported DLL funcs
 struct infosEvents {
 	NO_DEFAULT_CTORS_OR_DTORS(infosEvents);
 	short 	code;					// Le numero de type + code event
@@ -237,7 +300,7 @@ struct infosEvents {
 //typedef	infosEvents *				PINFOEVENTS;
 
 // Event information structure
-// ---------------------------
+// @remarks Source: evtccx.h, data struct not used in exported DLL funcs
 struct eventInformations {
 	NO_DEFAULT_CTORS_OR_DTORS(eventInformations);
 	short		menu;	// Menu identifier
@@ -258,16 +321,22 @@ struct eventInformations {
 
 
 // Definitions for extensions
+// @remarks Source: cncf.h
 #define TYPE_LONG	0x0000
+// @remarks Source: cncf.h
 #define TYPE_INT	TYPE_LONG
+// @remarks Source: cncf.h
 #define TYPE_STRING	0x1
-#define TYPE_FLOAT	0x2				// Pour les extensions
+// @remarks Source: cncf.h
+#define TYPE_FLOAT	0x2
+// @remarks Source: cncf.h
 #define TYPE_DOUBLE 0x2
 
+// @remarks Originally CValue, source: cncf.h; not used in exported DLL funcs
 struct CValueMultiPlat {
 	NO_DEFAULT_CTORS_OR_DTORS(CValueMultiPlat);
-	unsigned int m_type,
-				 m_padding;
+	std::uint32_t m_type;
+	std::uint32_t m_padding;
 	union
 	{
 		std::int32_t m_long;
@@ -279,20 +348,33 @@ struct CValueMultiPlat {
 typedef short *				LPSHORT;
 
 //class CValue;
-// Structure for SaveRect
+// Structure for SaveRect, used to save background
+// @remarks Probably only used for software display mode
+// 			Source: cnpdll.h, only used in C, not C++ exported DLL funcs
 struct saveRect {
 	NO_DEFAULT_CTORS_OR_DTORS(saveRect);
-	unsigned char * pData;
-	RECT			rc;
+	LPBYTE pData;
+	RECT rc;
 };
 //typedef saveRect* fpSaveRect;
 
-// Number of values
+// Number of alterable values, applies to MMF2, not CF2.5
+// Used to be VALUES_NUMBEROF_ALTERABLE
+// @remarks Source: cncf.h
 #define ALTERABLE_VALUES_COUNT 26
+
+// Number of alterable strings, applies to MMF2 and CF2.5, not CF2.5+
+// Used to be STRINGS_NUMBEROF_ALTERABLE
+// @remarks Source: cncf.h
 #define ALTERABLE_STRINGS_COUNT 10
 
+// @remarks Source: cncf.h
 typedef short ITEMTYPE;
+// Object info number
+// @remarks Source: cncf.h
 typedef short OINUM;
+// Handle to frame item instance?
+// @remarks Source: cncf.h
 typedef short HFII;
 // LOGFONT 16 structure for compatibility with old extensions
 /////////////////////////////////////////////////////////////
@@ -315,7 +397,7 @@ struct LOGFONTV1 {
 
 // Flags modifiable by the program
 enum class OEPREFS : short;
-enum class OEFLAGS : unsigned int;
+enum class OEFLAGS : uint32_t;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -1027,9 +1109,13 @@ enum class CPF {
 
 struct ParamObject {
 	NO_DEFAULT_CTORS_OR_DTORS(ParamObject);
-	unsigned short	OffsetListOI,	//
-					Number,			//
-					Type;			// Version > FVERSION_NEWOBJECTS
+	// if positive, index of object in rhOiList
+	// If below -1, a qualifier oiList; mask with & 0x8000 then read rhQualToOiList
+	uint16_t oiList;
+	// Object unique OI number (hoOi)
+	uint16_t oi;
+	// Present only if Fusion version > FVERSION_NEWOBJECTS
+	uint16_t type;
 };
 struct ParamTime {
 	NO_DEFAULT_CTORS_OR_DTORS(ParamTime);
@@ -1057,6 +1143,7 @@ struct ParamInt  {
 };
 struct ParamSound {
 	NO_DEFAULT_CTORS_OR_DTORS(ParamSound);
+	// TODO: Entry index in sound bank? or do we need handleTo?
 	short	Handle,
 			Flags;
 	TCHAR	name[64]; // Max sound name
@@ -1450,17 +1537,50 @@ struct objectsList {
 #define		MAX_INTERMEDIATERESULTS		256
 #define		STEP_TEMPSTRINGS	64
 
+enum class JoystickBtn : uint8_t {
+    Up    = 0b00000001,
+    Down  = 0b00000010,
+    Left  = 0b00000100,
+    Right = 0b00001000,
+    Fire1 = 0b00010000,
+    Fire2 = 0b00100000,
+    Fire3 = 0b01000000,
+    Fire4 = 0b10000000,
+};
+
 struct RunHeader2 {
 	NO_DEFAULT_CTORS_OR_DTORS(RunHeader2);
-	unsigned long	rh2OldPlayer,		// Previous player entries
-					rh2NewPlayer,		// Modified player entries
-					rh2InputMask,		// Inhibated players entries
-					rh2InputPlayers;	// Valid players entries (mask!)
-	unsigned char 	rh2MouseKeys,		// Mousekey entries
-					rh2ActionLoop,		// Actions flag
-					rh2ActionOn,		// Flag: are we in actions? Confirmed by Yves to be used bool-like, 0 or 1 only.
-					rh2EnablePick;  	// Flag: Are we in pick for actions?
+	friend Edif::Runtime;
+	friend RunHeader;
+DarkEdifInternalAccessProtected:
+	// Previous player button press/dir move entries; see RunHeader.rhPlayer
+	// @remarks Player buttons are triggered in game tick before even timer events
+	JoystickBtn	rh2OldPlayer[MAX_PLAYERS];
+	// Modified player button press/dir move entries; see RunHeader.rhPlayer
+	// @remarks Set by (rhPlayer & rh2InputMask) ^ rh2OldPlayer = rh2NewPlayer
+	JoystickBtn	rh2NewPlayer[MAX_PLAYERS];
+	// Inhibited player button press/dir move entries
+	std::uint8_t rh2InputMask[MAX_PLAYERS];
+	// Valid player button press/dir move entries (bitmask)
+	std::uint8_t rh2InputPlayers[MAX_PLAYERS];
 
+	// Mousekey entries (for player object set to mouse movement)
+	std::uint8_t rh2MouseKeys;
+	// Actions flag?
+	// TODO: If true, continues looping other action instances?
+	bool rh2ActionLoop;
+
+	// If true, currently in an action. If false, in condition, Handle, etc.
+	// @remarks Confirmed by Yves to be used bool-like, 0 or 1 only,
+	// 			so was replaced with bool
+	bool rh2ActionOn;
+	// Flag: Are we in pick for actions?
+	// If this and rh2ActionOn are both false, object instances that return false in conditions are deselected.
+	// Otherwise, they are unaffected.
+	// @remarks Replaced with bool due to bool usage in Android/iOS
+	bool rh2EnablePick;
+
+	// Number of the event
 	int		  		rh2EventCount;			// Number of the event
 	qualToOi *		rh2EventQualPos;		// Position in event objects
 	HeaderObject  * rh2EventPos;			// Position in event objects
@@ -1476,14 +1596,24 @@ struct RunHeader2 {
 	int		  		rh2ActionLoopCount;	// Action loops counter
 	void	(*rh2ActionEndRoutine)();	// End of action routine
 
-	// Number of objects created since frame start. Increments per object instance create of any object; wraps at 16-bit.
-	// @remarks While CreationCount starts as 0, 0 isn't used since Fusion b243 and it is incremented again to 1
-	unsigned short	rh2CreationCount;		// Number of objects created since beginning of frame
+	// Number of objects created since frame start. Increments per object instance create of any object; wraps at 16-bit back to 1, not 0.
+	// @remarks CreationCount starts as 0, but since Fusion b243, the wrap increment will be doubled to move from 65535 [-> 0] -> 1.
+	std::uint16_t rh2CreationCount;
+	// The oilType to pick, used with Create's "Pick objects with reference to value",
+	// tied with rh4PickFlags. -1 for all type.
 	short			rh2EventType;
-	POINT 			rh2Mouse;				// Mouse coordinate
+	// Mouse coordinate, relative to screen
+	// TODO: Confirm it is relative to screen, not window
+	POINT 			rh2Mouse;
+	// Mouse coordinate, relative to client window?
+	// TODO: Confirm it is relative to client window
 	POINT 			rh2MouseClient;		// Mouse coordinates in the window
-	short	  		rh2CurrentClick,		// For click events II
-					rh2Free2;				// Ignore - Padding
+	// During click events, set to the click value compared to PARAM_CLICK.
+	// Mouse button 1+ and PARAMCLICK_DOUBLE mask.
+	short rh2CurrentClick;
+private:
+	short rh2Free2;				// Ignore - Padding
+DarkEdifInternalAccessProtected:
 	HeaderObject ** rh2ShuffleBuffer,
 				 ** rh2ShufflePos;
 	int		  		rh2ShuffleNumber;
@@ -1509,6 +1639,9 @@ struct RunHeader2 {
 
 struct RunHeader3 {
 	NO_DEFAULT_CTORS_OR_DTORS(RunHeader3);
+	friend Edif::Runtime;
+	friend RunHeader;
+DarkEdifInternalAccessProtected:
 	unsigned short	rh3Graine,			// Random generator seed
 					rh3Free;			// Ignore - padding
 
@@ -1544,7 +1677,7 @@ struct RunHeader3 {
 // ~~~~~~~~~~~~~~~~~~~~
 #define		KPX_MAXNUMBER					96
 typedef struct tagKPXMSG {
-	short 	( WINAPI * routine) (unsigned int, HWND, unsigned int, WPARAM, LPARAM);
+	short 	( WINAPI * routine) (DWORD, HWND, unsigned int, WPARAM, LPARAM);
 	} kpxMsg;
 #define		KPX_MAXFUNCTIONS				32
 typedef struct tagKPXLIB {
@@ -1600,7 +1733,7 @@ enum class RFUNCTION {
 typedef void (* CALLANIMATIONS) (HeaderObject *, int);
 #define callAnimations(hoPtr, anim) ( (hoPtr->hoAdRunHeader)->rh4.rh4Animations(hoPtr, anim) )
 
-typedef unsigned int (* CALLDIRATSTART) (HeaderObject *, unsigned int);
+typedef DWORD (* CALLDIRATSTART) (HeaderObject *, DWORD);
 #define callDirAtStart(hoPtr, initDir) ( (hoPtr->hoAdRunHeader)->rh4.rh4DirAtStart(hoPtr, initDir) )
 
 typedef BOOL (* CALLMOVEIT) (HeaderObject *);
@@ -1648,7 +1781,7 @@ DarkEdifInternalAccessProtected:
 	// ?
 	void (* rh4Animations)(HeaderObject  *, int);
 	// Get direction at start
-	std::uint32_t (* rh4DirAtStart)(HeaderObject  *, unsigned int);
+	DWORD (* rh4DirAtStart)(HeaderObject  *, DWORD);
 	// Move object
 	BOOL (* rh4MoveIt)(HeaderObject  *);
 	// Approach object
@@ -2461,8 +2594,9 @@ DarkEdifInternalAccessProtected:
 	int	 			rsFlash,				// When flashing objects
 					rsFlashCount,
 					rsLayer,				// Layer
-					rsZOrder,				// Z-order value
-					rsCreationFlags;		// Creation flags
+					rsZOrder;				// Z-order value
+	// Creation flags; although used throughout sprite lifetime
+	SpriteFlag		rsCreaFlags;
 	std::uint32_t	rsBackColor;			// background saving color
 
 	// Sprite blit effects, a bitmask?
@@ -2475,8 +2609,17 @@ DarkEdifInternalAccessProtected:
 	// For software display modes, semi-transparency stores 0 to 0x80,
 	// and other display modes are
 	std::uint32_t	rsEffectParam;
-	RunSpriteFlag	rsFlags;				// Handling flags
-	unsigned short	rsFadeCreationFlags;	// Saved during a fadein
+	// Handling flags
+	RunSpriteFlag	rsFlags;
+
+	// Saved during a fade-in, then put in rsCreaFlags.
+	// This is technically a SpriteFlag set, but the type is too large.
+	// @remarks Noted as something to fix collisions during transition fade-in.
+	// 			However, as it's too large to save all flags, I am concerned it erases
+	//			higher level flags if it's ever read back.
+	//			Besides the initial copy with trim-out from rsCreaFlags,
+	//			only SpriteFlag::Hidden is set and removed.
+	std::uint16_t	rsFadeCreaFlags;
 };
 //typedef RunSprite rSpr;
 //typedef RunSprite *	LPRSP;
@@ -2613,7 +2756,7 @@ DarkEdifInternalAccessProtected:
 
 	int	   		rcNMovement;			// Number of the current movement
 	CRunMvt *	rcRunMvt;				// Pointer to extension movement
-	Sprite * 	rcSprite;				// Sprite ID if defined
+	CSprite * 	rcSprite;				// Sprite ID if defined
 	int	 		rcAnim;					// Wanted animation
 	int	   		rcImage;				// Current frame
 	float		rcScaleX;
@@ -2650,6 +2793,7 @@ DarkEdifInternalAccessProtected:
 struct ForbiddenInternals2;
 
 // RUNDATA, but with all OEFlags and all parts, like what an Active object has
+// @remarks Source: cncf.h
 struct RunObject {
 	NO_DEFAULT_CTORS_OR_DTORS(RunObject);
 	// Reads the header information all objects have available. Cross-platform safe. Never null.
@@ -2700,63 +2844,93 @@ struct RunObject {
 
 
 
-// ------------------------------------------------------
-// EXTENSION EDITION HEADER STRUCTURE
-// ------------------------------------------------------
+// Old extHeader struct, the first member of an ext's EDITDATA
+// @remarks Source: cncf.h
+// TODO: was this used for MMF1?
 struct extHeader_v1
 {
 	NO_DEFAULT_CTORS_OR_DTORS(extHeader_v1);
 DarkEdifInternalAccessProtected:
-	short extSize,
-		  extMaxSize,
-		  extOldFlags,		// For conversion purpose
-		  extVersion;		// Version number
+	// Size of EDITDATA that follows
+	int16_t extSize;
+	// Max possible size of EDITDATA that follows?
+	int16_t extMaxSize;
+	// For conversion purpose
+	int16_t extOldFlags;
+	// Version number
+	int16_t extVersion;
 };
-//typedef extHeader_v1*	extHeader *V1;
+//typedef extHeader_v1*	LPEXTV1;
 
-// ------------------------------------------------------
-// System objects (text, question, score, lives, counter)
-// ------------------------------------------------------
+// System object struct (text, question, score, lives, counter)
+// @remarks Source: cncf.h
 struct rs {
 	NO_DEFAULT_CTORS_OR_DTORS(rs);
 DarkEdifInternalAccessProtected:
-	HeaderObject 	HeaderObject;	// For all the objects
-	rCom			Common;			// Anims / movements / sprites structures
-	rMvt			Movement;		// Mouvement structure
-	RunSprite		Sprite;			// Sprite handling
+	HeaderObject 	rsHeaderObject;	// For all the objects
+	rCom			rsCommon;			// Anims / movements / sprites structures
+	rMvt			rsMovement;		// Mouvement structure
+	RunSprite		rsSprite;			// Sprite handling
 
-	short			Player;			// Number of the player if score or lives
-	short			Flags;			// Type + flags
+	short			rsPlayer;			// Number of the player if score or lives
+	short			rssFlags;			// Type + flags
 
 	union {
-		unsigned char * SubAppli;	// Application (CCA object)
+		LPBYTE rsSubAppli;	// Application (CCA object)
 	};
 	union
 	{
-		int			Mini;
-		int			OldLevel;
+		int			rsMini;
+		int			rsOldLevel;
 	};
 	union
 	{
-		int			Maxi;				//
-		int			Level;
+		int			rsMaxi;				//
+		int			rsLevel;
 	};
-	CValueMultiPlat Value;
-	LONG			BoxCx;			// Dimensions box (for lives, counters, texts)
-	LONG			BoxCy;
-	double			MiniDouble;
-	double			MaxiDouble;
-	short			OldFrame;		// Counter only
-	unsigned char	Hidden;
-	unsigned char	Free;
-	TCHAR *			TextBuffer;		// text buffer
-	int				LBuffer;		// Length of the buffer in BYTES
-	unsigned int	Font;			// Temporary font for texts
+	CValueMultiPlat rsValue;
+	// Max width capacity (for lives, counters, texts)
+	LONG			rsBoxCx;
+	// Max height capacity (for lives, counters, texts)
+	LONG			rsBoxCy;
+	double			rsMiniDouble;
+	double			rsMaxiDouble;
+	// Counter only. When displaying as animation, the index in CDefCounters frames
+	// @remarks When HBar/VBar, is used as a clobber for calculating bar size
+	short			rsOldFrame;
+	// String only. Stores CreateObjectInfo::Flags on create.
+	// If FirstText is set, this object won't be destroyed on request, just hidden.
+	// @remarks The first instance of a String object is not destroyed on request, but hidden.
+	// It is kept so the font entry ID is kept live, but it was a dubious
+	// optimization that nowadays is not useful.
+	// Note rsHidden is also declared in non-Windows Counter ports,
+	// but seems unused.
+	unsigned char	rsHidden;
+private:
+	// Padding
+	unsigned char	rsFree;
+DarkEdifInternalAccessProtected:
+	// String object: the buffer containing alterable text, or a copy of paragraph text.
+	// May be null indicating blank.
+	TCHAR *			rsTextBuffer;
+	// String object: Length of rsTextBuffer in BYTES
+	// Only present in Windows.
+	int				rsBuffer;
+	// Font bank entry ID
+	int16_t rsFont;
+private:
+	// Padding added as rsFont is only int16 in non-Windows,
+	// so it was probably a int32 in OG Windows SDK for faux padding
+	int16_t rsFree2;
+DarkEdifInternalAccessProtected:
 	union {
-		COLORREF	TextColor;		// text color
-		COLORREF	Color1;			// Bar color
+		// String object: Text color
+		COLORREF	rsTextColor;
+		// Counter object: If VBar/HBar mode, the first bar color
+		COLORREF	rsColor1;
 	};
-	COLORREF		Color2;			// Gradient bar color
+	// Counter object: If VBar/HBar mode, the second bar color for gradient mode
+	COLORREF		rsColor2;
 };
 //typedef	rs *	LPRS;
 
@@ -2766,16 +2940,28 @@ DarkEdifInternalAccessProtected:
 // OI (frame object)
 //
 
-// Object Info Load Flags
+// Object Info Load Flags, used in COI structs
+// @remarks Source: cncr.h
+// TODO: Flesh out usage
 enum class OILFlags : std::uint16_t
 {
-	OC_LOADED = 0x1,			//
-	ELT_LOADED = 0x2,			//
-	TO_LOAD = 0x4,				//
-	TO_DELETE = 0x8,			//
-	CUR_FRAME = 0x10,			//
-	TO_RELOAD = 0x20,			// Reload images when frame change
-	IGNORE_LOAD_ON_CALL = 0x40,	// Ignore load on call option
+	// OILF_OCLOADED: ObjectCommon loaded?
+	OC_LOADED = 0x1,
+	// OILF_ELTLOADED: Font/Image bank elements loaded?
+	ELT_LOADED = 0x2,
+	// OILF_TOLOAD: ?
+	TO_LOAD = 0x4,
+	// OILF_TODELETE: ?
+	TO_DELETE = 0x8,
+	// OILF_CURFRAME: ?
+	CUR_FRAME = 0x10,
+	// OILF_TORELOAD: Reload images when frame change
+	// Used with animation replace color action
+	// TODO: When is this used? Just there?
+	TO_RELOAD = 0x20,
+	// OILF_ELTLOADED: Ignore load on call option
+	// TODO: What does this override, including app level and Android frame level options?
+	IGNORE_LOAD_ON_CALL = 0x40,
 };
 enum_class_is_a_bitmask(OILFlags);
 
@@ -4483,22 +4669,22 @@ inline void mvSetAppPropValue(mv * mV, EDITDATA * edPtr, unsigned int nPropID, P
 inline void mvSetFramePropValue(mv * mV, EDITDATA * edPtr, unsigned int nPropID, Prop * pValue) \
 	{ mV->CallFunction(edPtr, CallFunctionIDs::SETFRAMEPROPVALUE, (LPARAM)nPropID, (LPARAM)pValue, (LPARAM)0); }
 
-inline unsigned int mvGetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int nPropID) \
-	{ return (unsigned int)mV->CallFunction(edPtr, CallFunctionIDs::GETPROPCHECK, (LPARAM)nPropID, (LPARAM)0, (LPARAM)0); }
+inline bool mvGetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int nPropID) \
+	{ return mV->CallFunction(edPtr, CallFunctionIDs::GETPROPCHECK, (LPARAM)nPropID, (LPARAM)0, (LPARAM)0) != 0; }
 
-inline unsigned int mvGetAppPropCheck(mv * mV, EDITDATA * edPtr, unsigned int nPropID) \
-	{ return (unsigned int)mV->CallFunction(edPtr, CallFunctionIDs::GETAPPPROPCHECK, (LPARAM)nPropID, (LPARAM)0, (LPARAM)0); }
+inline bool mvGetAppPropCheck(mv * mV, EDITDATA * edPtr, unsigned int nPropID) \
+	{ return mV->CallFunction(edPtr, CallFunctionIDs::GETAPPPROPCHECK, (LPARAM)nPropID, (LPARAM)0, (LPARAM)0) != 0; }
 
-inline unsigned int mvGetFramePropCheck(mv * mV, EDITDATA * edPtr, unsigned int nPropID) \
-	{ return (unsigned int)mV->CallFunction(edPtr, CallFunctionIDs::GETFRAMEPROPCHECK, (LPARAM)nPropID, (LPARAM)0, (LPARAM)0); }
+inline bool mvGetFramePropCheck(mv * mV, EDITDATA * edPtr, unsigned int nPropID) \
+	{ return mV->CallFunction(edPtr, CallFunctionIDs::GETFRAMEPROPCHECK, (LPARAM)nPropID, (LPARAM)0, (LPARAM)0) != 0; }
 
-inline void mvSetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int nPropID, unsigned int nCheck) \
+inline void mvSetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int nPropID, bool nCheck) \
 	{ mV->CallFunction(edPtr, CallFunctionIDs::SETPROPCHECK, (LPARAM)nPropID, (LPARAM)nCheck, (LPARAM)0); }
 
-inline void mvSetAppPropCheck(mv * mV, EDITDATA * edPtr, unsigned int nPropID, unsigned int nCheck) \
+inline void mvSetAppPropCheck(mv * mV, EDITDATA * edPtr, unsigned int nPropID, bool nCheck) \
 	{ mV->CallFunction(edPtr, CallFunctionIDs::SETAPPPROPCHECK, (LPARAM)nPropID, (LPARAM)nCheck, (LPARAM)0); }
 
-inline void mvSetFramePropCheck(mv * mV, EDITDATA * edPtr, unsigned int nPropID, unsigned int nCheck) \
+inline void mvSetFramePropCheck(mv * mV, EDITDATA * edPtr, unsigned int nPropID, bool nCheck) \
 	{ mV->CallFunction(edPtr, CallFunctionIDs::SETFRAMEPROPCHECK, (LPARAM)nPropID, (LPARAM)nCheck, (LPARAM)0); }
 
 // Forces a redraw of the object in the frame editor and updates its icon
@@ -4607,7 +4793,7 @@ struct kpxFunc {
 	void *		kpxUserData;
 
 	// See KGI:: above for int
-	unsigned int (FusionAPI * kpxGetInfos) (int);
+	DWORD (FusionAPI * kpxGetInfos) (int);
 	int  (FusionAPI * kpxLoadObject) (mv *, ObjectInfo *, unsigned char * , int);
 	void (FusionAPI * kpxUnloadObject) (mv *, unsigned char * , int);
 	void (FusionAPI * kpxUpdateFileNames) (mv *, TCHAR *, unsigned char * , void (FusionAPI *)(LPCTSTR, TCHAR *));
@@ -4636,7 +4822,7 @@ struct MvxFnc {
 	HINSTANCE	mvxHInst;
 	TCHAR *		mvxFileTitle;
 
-	CMvt * (CALLBACK * mvxCreateMvt) (unsigned int);
+	CMvt * (CALLBACK * mvxCreateMvt) (DWORD);
 
 	#ifdef VITALIZE
 		BOOL	bValidated;
@@ -4664,7 +4850,7 @@ struct LevelObject {
 					OiParentHandle,	// HOI Parent
 					Layer,			// Layer
 					Type;
-	Sprite *		Spr[4];			// Sprite handles for backdrop objects from layers > 1
+	CSprite *		Spr[4];			// Sprite handles for backdrop objects from layers > 1
 };
 // typedef LO *LPLO;
 // typedef	LO *fpLevObj;
@@ -4686,7 +4872,7 @@ struct bkd2 {
 					colMode,
 					nLayer,
 					obstacleType;
-	Sprite*			pSpr[4];
+	CSprite*		pSpr[4];
 	unsigned int	inkEffect,
 					inkEffectParam;
 };
@@ -5152,13 +5338,15 @@ DarkEdifInternalAccessProtected:
 #if 0
 // Dibs
 // ----
-typedef Appli void;
-unsigned long FusionAPI InitDibHeader(Appli *, int, int, int, BITMAPINFO *);
-void	FusionAPI FillDib(BITMAPINFO *, COLORREF);
-unsigned long	FusionAPI ImageToDib(Appli *, DWORD, DWORD, LPBYTE);
-unsigned long	FusionAPI DibToImage(Appli *, Image *, BITMAPINFOHEADER *);
-unsigned long	FusionAPI DibToImageEx(Appli *, Image *, BITMAPINFOHEADER *, COLORREF, DWORD);
-void	FusionAPI RemapDib(BITMAPINFO *, Appli *, LPBYTE);
+typedef void Appli;
+extern "C" {
+	DWORD	FusionAPI InitDibHeader(_Notnull_ Appli*, int, int, int, BITMAPINFO*) EXDEF;
+	void	FusionAPI FillDib(_Notnull_ BITMAPINFO *, COLORREF) EXDEF;
+	DWORD	FusionAPI ImageToDib(_Notnull_ Appli *, DWORD, DWORD, _Notnull_ LPBYTE) EXDEF;
+	DWORD	FusionAPI DibToImage(_Notnull_ Appli *, _Notnull_ Img *, _Notnull_ BITMAPINFOHEADER *) EXDEF;
+	DWORD	FusionAPI DibToImageEx(_Notnull_ Appli *, _Notnull_ Img *, _Notnull_ BITMAPINFOHEADER *, COLORREF, DWORD) EXDEF;
+	void	FusionAPI RemapDib(_Notnull_ BITMAPINFO *, _Notnull_ Appli *, _Notnull_ LPBYTE) EXDEF;
+}
 #endif
 
 //#include "StockSDKDefines.hpp"

@@ -1078,7 +1078,7 @@ DarkEdif::Surface::Surface(RunHeader * rhPtr, cSurface* surf, bool isFrameSurfac
 	else
 		LOGI(_T("%sCreated surface, describing as: \"%s\".\n"), debugID, Describe().c_str());
 }
-extern "C" FusionAPIImport void* FusionAPI ModifSpriteEffect(void* ptrWin, Sprite * ptSpr, DWORD effect, LPARAM effectParam);
+extern "C" FusionAPIImport void* FusionAPI ModifSpriteEffect(void* ptrWin, CSprite * ptSpr, DWORD effect, LPARAM effectParam) EXDEF;
 #endif
 std::size_t DarkEdif::Surface::Internal_CreateMask(void* mask, const std::uint32_t flags)
 {
