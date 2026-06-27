@@ -24,3 +24,4 @@
 #define ProjectFunc /* no op */
 #define DLLExport32 /* no op */
 #define npWin void *
+#define Fusion64APISwitch /* no op */

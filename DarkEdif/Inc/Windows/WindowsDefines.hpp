@@ -12,6 +12,18 @@
 #define EXDEF { __assume(0); }
 #endif
 
+// Windows 64-bit exporter is surely soon(tm)
+#if !defined(FusionSDKWin64Compat) && defined(_WIN64)
+#define FusionSDKWin64Compat
+#endif
+#ifdef FusionSDKWin64Compat
+// Requires the use of 64-bit replacement function
+#define Fusion64APISwitch(repl) __declspec(deprecated, repl)
+#else
+// When enabled, requires the use of 64-bit replacement function
+#define Fusion64APISwitch(repl) /* no op */
+#endif
+
 // FusionAPI; incoming or outgoing to Fusion runtime. Uses __stdcall convention.
 #define FusionAPI __stdcall
 
