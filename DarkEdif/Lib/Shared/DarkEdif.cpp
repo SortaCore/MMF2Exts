@@ -7808,12 +7808,12 @@ DWORD WINAPI DarkEdifUpdateThread(void * pIsUniVer)
 #pragma warning (push)
 #pragma warning (disable: 4996)
 		struct hostent * host = gethostbyname(domain);
-#pragma warning (pop)
 
 		// Port 80, default of Darkwire hardcode IP: 80.229.219.2, network byte order
 		// We'll look it up on DNS in case Darkwire migrates, although we'll make every effort not to!
 		SOCKADDR_IN SockAddr = { AF_INET, htons(80), { (UCHAR)80, (UCHAR)229, (UCHAR)219, (UCHAR)2 } };
 		assert(SockAddr.sin_family == AF_INET && SockAddr.sin_port == htons(80) && SockAddr.sin_addr.s_addr == inet_addr("80.229.219.2"));
+#pragma warning (pop)
 
 		// DNS found, switch over; guaranteed IPv4 as we specified AF_INET
 		if (host != NULL)
