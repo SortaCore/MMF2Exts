@@ -173,7 +173,6 @@ namespace DarkEdif {
 			}
 		public:
 			// Explicitly not copiable
-			DebugItem(DebugItem&) = delete;
 			DebugItem(const DebugItem&) = delete;
 			// Explicitly moveable - moves are done by std::vector adding
 			DebugItem(DebugItem&&) = default;

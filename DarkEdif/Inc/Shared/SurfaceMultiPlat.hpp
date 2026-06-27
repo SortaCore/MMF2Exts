@@ -204,8 +204,6 @@ namespace DarkEdif
 		}
 		Holder(C* clazz, T ptr, void (deleter)(C*,T)) :
 			clazz(clazz), ptr(ptr), deleter(deleter) { }
-		Holder(Holder&&) = delete;
-		Holder(Holder&) = delete;
 		Holder(const Holder&&) = delete;
 		Holder(const Holder&) = delete;
 		~Holder() {
@@ -475,10 +473,8 @@ namespace DarkEdif
 		// Copying and moving surfaces is explicitly disallowed, as it's unclear
 		// if you want to copy the entire underlying memory, and allows edge cases
 		// of copying when a buffer is locked.
-		Surface(Surface&) = delete;
 		Surface(const Surface&) = delete;
 		Surface(Surface&&) = delete;
-		Surface(const Surface&&) = delete;
 		~Surface();
 
 		bool wasaltered = false;
