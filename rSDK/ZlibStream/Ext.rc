@@ -68,16 +68,16 @@ END
 
 #if defined(APSTUDIO_INVOKED) || defined(EDITOR)
 #if defined(APSTUDIO_INVOKED)
-EXO_ICON$(EDITOR)       BITMAP    "Icon.bmp"
+EXO_ICON$(EDITOR)       BITMAP    "Icons\\Icon.bmp"
 #else
-EXO_ICON                BITMAP    "Icon.bmp"
+EXO_ICON                BITMAP    "Icons\\Icon.bmp"
 #endif
 #endif
 #if defined(APSTUDIO_INVOKED) || defined(EDITOR)
 #if defined(APSTUDIO_INVOKED)
-EXO_IMAGE$(EDITOR)      BITMAP    "Img.bmp"
+EXO_IMAGE$(EDITOR)      BITMAP    "Icons\\Img.bmp"
 #else
-EXO_IMAGE               BITMAP    "Img.bmp"
+EXO_IMAGE               BITMAP    "Icons\\Img.bmp"
 #endif
 #endif
 

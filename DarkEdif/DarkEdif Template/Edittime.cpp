@@ -19,7 +19,7 @@ int FusionAPI MakeIconEx(mv * mV, cSurface * pIconSf, TCHAR * lpName, ObjInfo * 
 {
 #pragma DllExportHint
 	pIconSf->Delete();
-	#ifdef MULTIPLEICONS
+	#ifdef DARKEDIF_MULTIPLE_ICONS
 	pIconSf->Clone(*Edif::SDK->Image);
 	#else
 	pIconSf->Clone(*Edif::SDK->Icon);

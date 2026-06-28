@@ -2,7 +2,7 @@
 // Microsoft Developer Studio generated include file.
 // Used by Ext.rc
 //
-#ifdef MULTIPLEICONS
+#ifdef DARKEDIF_MULTIPLE_ICONS
 #define IDR_EDIF_IMAGE					100
 #endif
 #define IDR_EDIF_ICON					101
