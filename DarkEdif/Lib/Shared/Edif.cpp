@@ -700,7 +700,7 @@ Edif::SDKClass::SDKClass(mv * mV, json_value &_json) : json (_json)
 			}
 			ExtIcon = new DarkEdif::Surface(nullptr, Icon);
 
-			#ifdef MULTIPLEICONS
+			#ifdef DARKEDIF_MULTIPLE_ICONS
 			Image = new cSurface();
 			char * ImageData;
 			size_t ImageSize;

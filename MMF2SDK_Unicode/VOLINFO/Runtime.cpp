@@ -3,7 +3,7 @@
 // This file contains routines that are handled during the Runtime.
 //
 // Including creating, display, and handling your object.
-// 
+//
 // ============================================================================
 
 // Common Include

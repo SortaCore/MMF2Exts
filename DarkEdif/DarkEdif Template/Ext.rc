@@ -154,7 +154,7 @@ END
 
 #if EditorBuild
 IDR_EDIF_ICON	Edif	"Icon.png"
-#ifdef MULTIPLEICONS
+#ifdef DARKEDIF_MULTIPLE_ICONS
 IDR_EDIF_IMAGE	Edif	"Image.png"
 #endif
 #if !defined(DARKEXT_JSON_FILE_EXTERNAL)

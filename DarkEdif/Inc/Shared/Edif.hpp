@@ -162,7 +162,7 @@ namespace Edif
 #if EditorBuild
 		cSurface * Icon = nullptr;
 		DarkEdif::Surface * ExtIcon = nullptr;
-#ifdef MULTIPLEICONS
+#ifdef DARKEDIF_MULTIPLE_ICONS
 		cSurface * Image = nullptr;
 		DarkEdif::Surface * ExtImage = nullptr;
 #endif
