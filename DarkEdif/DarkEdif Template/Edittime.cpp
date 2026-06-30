@@ -157,8 +157,6 @@ BOOL FusionAPI EditObject(mv *mV, ObjInfo * oiPtr, LevelObject * loPtr, EDITDATA
 // PROPERTIES
 // ============================================================================
 
-#ifndef NOPROPS
-
 // Inserts properties into the properties of the object.
 BOOL FusionAPI GetProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem)
 {
@@ -233,7 +231,6 @@ void FusionAPI ReleasePropCreateParam(mv *mV, EDITDATA *edPtr, unsigned int Prop
 #pragma DllExportHint
 	return DarkEdif::DLL::DLL_ReleasePropCreateParam(mV, edPtr, PropID, lParam);
 }
-#endif
 
 // ============================================================================
 // ROUTINES USED WHEN BUILDING
