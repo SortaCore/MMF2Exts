@@ -19,7 +19,11 @@ int FusionAPI MakeIconEx(mv * mV, cSurface * pIconSf, TCHAR * lpName, ObjInfo * 
 {
 #pragma DllExportHint
 	pIconSf->Delete();
+	#ifdef DARKEDIF_MULTIPLE_ICONS
+	pIconSf->Clone(*Edif::SDK->Image);
+	#else
 	pIconSf->Clone(*Edif::SDK->Icon);
+	#endif
 
 	pIconSf->SetTransparentColor(RGB(255, 0, 255));
 	return 0;
