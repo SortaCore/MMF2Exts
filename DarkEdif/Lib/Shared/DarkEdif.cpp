@@ -7845,6 +7845,11 @@ DWORD WINAPI DarkEdifUpdateThread(void * pIsUniVer)
 				reportError = false;
 				updateLog << "The DNS provider couldn't find the update server; is your computer offline?\n"sv;
 			}
+			// This machine had internet, but doesn't anymore
+			else if (lastWSAError == WSAENETUNREACH) {
+				reportError = false;
+				updateLog << "The network is unreachable; is your computer offline?\n"sv;
+			}
 			// Server machine is online, but refusing connection - e.g. http service is offline
 			else if (lastWSAError == WSAECONNREFUSED) {
 				reportError = false;
