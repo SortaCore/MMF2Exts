@@ -2753,10 +2753,16 @@ DarkEdifInternalAccessProtected:
 	RCROUTINE	rcRoutineAnimation;		// Offset to animation routine
 
 	int	   		rcPlayer;				// Player who controls
-
+	
 	int	   		rcNMovement;			// Number of the current movement
 	CRunMvt *	rcRunMvt;				// Pointer to extension movement
-	CSprite * 	rcSprite;				// Sprite ID if defined
+	// Sprite ID if defined; can be nulled mid-runtime for a live object,
+	// if object is deactivated by being out of frame area (rh3XMinimum etc)
+	// @remarks An inactivated object is also indicated by RSFLAG::SLEEPING set in ros.rsFlags
+	//			When it's destroyed from being far instead (rh3XMinimumKill etc),
+	//			then not just rcSprite, but the whole ext instance is destroyed,
+	//			like the usual Destroy action.
+	CSprite * 	rcSprite;
 	int	 		rcAnim;					// Wanted animation
 	int	   		rcImage;				// Current frame
 	float		rcScaleX;
@@ -2998,10 +3004,10 @@ DarkEdifInternalAccessProtected:
 	// @remarks Ties with EventProgram RepeatFlag, which doesn't feature in Windows SDK
 	std::int8_t oilNextFlag;
 
-private:
-	std::uint16_t oilFree; // Padding
+	// Qualifier optimization variable, previously oilFree
+	// https://community.clickteam.com/forum/thread/111194-about-the-oilfree/?postID=784444#post784444
+	std::uint16_t oilQualOptValue;
 
-DarkEdifInternalAccessProtected:
 	// Number of all object instances of this type
 	std::int32_t oilNObjects;
 
