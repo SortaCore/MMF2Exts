@@ -6959,7 +6959,7 @@ int FusionAPI EnumElts(mv* mV, EDITDATA* edPtr, ENUMELTPROC enumProc, ENUMELTPRO
 #if EditorBuild
 			LOGV(_T("Adding font of property %s from font bank ID %hu.\n"),
 				UTF8ToTString(d->ReadPropName()).c_str(), *(std::uint16_t*)d->ReadPropValue());
-#endif
+#endif // EditorBuild
 			if ((error = enumProc((std::uint16_t*)d->ReadPropValue(), FONT_TAB, p1, p2)) != 0)
 			{
 				MsgBox::Error(_T("EnumElts"), _T("Adding font property %s, font ID %hu failed! Error %d.\n"),
@@ -6974,7 +6974,7 @@ int FusionAPI EnumElts(mv* mV, EDITDATA* edPtr, ENUMELTPROC enumProc, ENUMELTPRO
 #if EditorBuild
 			LOGV(_T("Adding images of property %s, num IDs %hu...\n"),
 				UTF8ToTString(d->ReadPropName()).c_str(), imgProp->numImages);
-#endif
+#endif // EditorBuild
 			for (std::size_t i = 0; i < imgProp->numImages; ++i)
 			{
 				if ((error = enumProc(&imgProp->imageIDs[i], IMG_TAB, p1, p2)) != 0)
