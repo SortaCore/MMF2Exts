@@ -420,4 +420,34 @@ void FusionAPI PrepareFlexBuild(mv * pMV, EDITDATA * edPtr, const wchar_t * wTem
 }
 #endif // DARKEXT_JSON_FILE_EXTERNAL
 
+// Return true if your extension uses filters. Called only in editor builds, during Windows EXE building.
+BOOL FusionAPI GetFilters(mv* mV, EDITDATA* edPtr, DWORD dwFlags, LPVOID pReserved)
+{
+#pragma DllExportHint
+	// These are taken from defines in ccx.h
+	static constexpr DWORD GETFILTERS_IMAGES = 1, GETFILTERS_SOUNDS = 2;
+
+	const json_value& useImgFiltersJSON = Edif::SDK->json["UsesImageFilters"sv],
+		useSoundFiltersJSON = Edif::SDK->json["UsesSoundFilters"sv];
+
+	// Default to image filters supported, as DarkEdif::Surface expects it,
+	// but this can be overridden with UsesImageFilters false.
+	// Non-display extensions may use Surface, so we can't use the DE display type.
+	int jsonFlags = GETFILTERS_IMAGES;
+	if (useImgFiltersJSON.type == json_boolean)
+		jsonFlags = (bool)useImgFiltersJSON ? GETFILTERS_IMAGES : 0;
+	else if (useImgFiltersJSON.type != json_none)
+		DarkEdif::MsgBox::Error(_T("GetFilters error"), _T("UsesImageFilters JSON value was set to an invalid type."));
+
+	// Default to sound filters not requested
+	if (useSoundFiltersJSON.type == json_boolean)
+		jsonFlags |= (bool)useSoundFiltersJSON ? GETFILTERS_SOUNDS : 0;
+	else if (useSoundFiltersJSON.type != json_none)
+		DarkEdif::MsgBox::Error(_T("GetFilters error"), _T("UsesSoundFilters JSON value was set to an invalid type."));
+
+	return (dwFlags & jsonFlags) != 0;
+}
+
+
+
 #endif // EditorBuild
