@@ -354,6 +354,7 @@ enum_class_is_a_bitmask(TextCapacity);
 #define DARKEDIF_LOG_FATAL 7
 namespace DarkEdif {
 	void Log(int logLevel, PrintFHintInside const TCHAR* msgFormat, ...) PrintFHintAfter(2,3);
+	[[noreturn]] void LOGFInternal(PrintFHintInside const TCHAR* msgFormat, ...) PrintFHintAfter(1, 2);
 }
 
 #ifndef DARKEDIF_LOG_MIN_LEVEL
