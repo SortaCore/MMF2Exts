@@ -1767,79 +1767,6 @@ BOOL DarkEdif::DLL::DLL_IsPropEnabled(mv * mV, EDITDATA * edPtr, unsigned int Pr
 	return FALSE;
 }
 
-int FusionAPI EnumElts(mv* mV, EDITDATA* edPtr, ENUMELTPROC enumProc, ENUMELTPROC undoProc, LPARAM p1, LPARAM p2)
-{
-#pragma DllExportHint
-	LOGV(_T("Call to %s with edPtr %p.\n"), _T(__FUNCTION__), edPtr);
-	// Note from Yves that the textual font properties - that is, TEXT_OEFLAG_EXTENSION,
-	// GetTextFont(), do not need their fonts enumed here, they are automatically grabbed during build.
-	//
-	// Direct3D 11 apps:	All LOGFONT used by TEXT_OEFLAG_EXTENSION automatically stored.
-	//						Only TTF fonts are supported by D3D11.
-	// Direct3D 8 + 9 apps: Will need to use Font Embed object, the one for Windows.
-	//						It's manual: you embed the font yourself in Data Elements,
-	//						then extract it at runtime, then pass the extracted path to its action.
-	//						This supports all fonts.
-	// Android apps:		Requires the Android Font Embed object to embed fonts.
-	// iOS + Mac apps:		You have to manually add the font into your xcodeproj's Resources,
-	//						and then add them to the plist as UIAppFonts. Don't just put them in
-	//						the Resources directory, you must link them.
-	//						You may also need to add the font to Build Phases.
-	//						https://community.clickteam.com/forum/thread/67739-custom-fonts/
-
-	// Note that enumProc may change the image or font number passed to it.
-	int error = 0;
-	std::vector<std::pair<std::uint16_t*, int>> IdAndType;
-
-	const auto& realProps = Elevate(edPtr->Props);
-	if (realProps.propVersion != 'DAR2')
-	{
-		DarkEdif::MsgBox::Error(_T("DarkEdif property error"), _T("Properties aren't as expected inside EnumElts()."));
-		return 0;
-	}
-
-	const DarkEdif::Properties::Data* d = realProps.Internal_FirstData();
-	for (std::size_t i = 0, j = realProps.numProps; i < j; ++i)
-	{
-		if (d->propTypeID == Edif::Properties::IDs::PROPTYPE_FONT)
-		{
-			LOGV(_T("Adding font of property %s from font bank ID %hu.\n"),
-				UTF8ToTString(d->ReadPropName()).c_str(), *(std::uint16_t*)d->ReadPropValue());
-			if ((error = enumProc((std::uint16_t*)d->ReadPropValue(), FONT_TAB, p1, p2)) != 0)
-			{
-				MsgBox::Error(_T("EnumElts"), _T("Adding font property %s, font ID %hu failed! Error %d.\n"),
-					UTF8ToTString(d->ReadPropName()).c_str(), *(std::uint16_t *)d->ReadPropValue(), error);
-				goto postLoop;
-			}
-			IdAndType.emplace_back(std::make_pair((std::uint16_t*)d->ReadPropValue(), FONT_TAB));
-		}
-		else if (d->propTypeID == Edif::Properties::IDs::PROPTYPE_IMAGELIST)
-		{
-			ImgListProperty* imgProp = (ImgListProperty*)d->ReadPropValue();
-			LOGV(_T("Adding images of property %s, num IDs %hu...\n"),
-				UTF8ToTString(d->ReadPropName()).c_str(), imgProp->numImages);
-			for (std::size_t i = 0; i < imgProp->numImages; ++i)
-			{
-				if ((error = enumProc(&imgProp->imageIDs[i], IMG_TAB, p1, p2)) != 0)
-				{
-					MsgBox::Error(_T("EnumElts"), _T("Adding image of property %s, ID %hu failed! Error %d.\n"),
-						UTF8ToTString(d->ReadPropName()).c_str(), imgProp->imageIDs[i], error);
-					goto postLoop;
-				}
-				IdAndType.emplace_back(std::make_pair(&imgProp->imageIDs[i], IMG_TAB));
-			}
-		}
-		d = d->Next();
-	}
-postLoop:
-	// In case of error, undo it
-	if (error != 0)
-	{
-		for (int i = IdAndType.size() - 1; i >= 0; --i)
-			undoProc(std::get<0>(IdAndType[i]), std::get<1>(IdAndType[i]), p1, p2);
-	}
-	return error;
-}
 
 struct Properties::PreSmartPropertyReader : Properties::PropertyReader
 {
@@ -6989,6 +6916,86 @@ void FusionAPI EditDebugItem(RUNDATA *rdPtr, int id)
 #endif // EditorBuild
 
 #endif // USE_DARKEDIF_FUSION_DEBUGGER
+
+#ifdef _WIN32
+// Called by Fusion edittime and runtime, requesting IDs used in the element banks (image bank, font bank)
+// @remarks There are only object property types for images and fonts, but there are banks
+//			for samples, collision masks and image HWA textures as well; see BK_XX enum in Cnpdll.h
+int FusionAPI EnumElts(mv* mV, EDITDATA* edPtr, ENUMELTPROC enumProc, ENUMELTPROC undoProc, LPARAM p1, LPARAM p2)
+{
+#pragma DllExportHint
+	LOGV(_T("Call to %s with edPtr %p.\n"), _T(__FUNCTION__), edPtr);
+
+	// Note from Yves that the textual font properties - that is, TEXT_OEFLAG_EXTENSION,
+	// GetTextFont(), do not need their fonts enumed here, they are automatically grabbed during build.
+	//
+	// Direct3D 11 apps:	All LOGFONT used by TEXT_OEFLAG_EXTENSION automatically stored.
+	//						Only TTF fonts are supported by D3D11.
+	// Direct3D 8 + 9 apps: Will need to use Font Embed object, the one for Windows.
+	//						It's manual: you embed the font yourself in Data Elements,
+	//						then extract it at runtime, then pass the extracted path to its action.
+	//						This supports all fonts.
+	// Android apps:		Requires the Android Font Embed object to embed fonts.
+	// iOS + Mac apps:		You have to manually add the font into your xcodeproj's Resources,
+	//						and then add them to the plist as UIAppFonts. Don't just put them in
+	//						the Resources directory, you must link them.
+	//						You may also need to add the font to Build Phases.
+	//						https://community.clickteam.com/forum/thread/67739-custom-fonts/
+
+	// Note that enumProc may change the image or font number passed to it.
+	int error = 0;
+	std::vector<std::pair<std::uint16_t*, int>> IdAndType;
+
+	const auto& realProps = Elevate(edPtr->Props);
+	if (realProps.propVersion != 'DAR2')
+	{
+		DarkEdif::MsgBox::Error(_T("DarkEdif property error"), _T("Properties aren't as expected inside EnumElts()."));
+		return 0;
+	}
+
+	const DarkEdif::Properties::Data* d = realProps.Internal_FirstData();
+	for (std::size_t i = 0, j = realProps.numProps; i < j; ++i)
+	{
+		if (d->propTypeID == Edif::Properties::IDs::PROPTYPE_FONT)
+		{
+			LOGV(_T("Adding font of property %s from font bank ID %hu.\n"),
+				UTF8ToTString(d->ReadPropName()).c_str(), *(std::uint16_t*)d->ReadPropValue());
+			if ((error = enumProc((std::uint16_t*)d->ReadPropValue(), FONT_TAB, p1, p2)) != 0)
+			{
+				MsgBox::Error(_T("EnumElts"), _T("Adding font property %s, font ID %hu failed! Error %d.\n"),
+					UTF8ToTString(d->ReadPropName()).c_str(), *(std::uint16_t*)d->ReadPropValue(), error);
+				goto postLoop;
+			}
+			IdAndType.emplace_back(std::make_pair((std::uint16_t*)d->ReadPropValue(), FONT_TAB));
+		}
+		else if (d->propTypeID == Edif::Properties::IDs::PROPTYPE_IMAGELIST)
+		{
+			ImgListProperty* imgProp = (ImgListProperty*)d->ReadPropValue();
+			LOGV(_T("Adding images of property %s, num IDs %hu...\n"),
+				UTF8ToTString(d->ReadPropName()).c_str(), imgProp->numImages);
+			for (std::size_t i = 0; i < imgProp->numImages; ++i)
+			{
+				if ((error = enumProc(&imgProp->imageIDs[i], IMG_TAB, p1, p2)) != 0)
+				{
+					MsgBox::Error(_T("EnumElts"), _T("Adding image of property %s, ID %hu failed! Error %d.\n"),
+						UTF8ToTString(d->ReadPropName()).c_str(), imgProp->imageIDs[i], error);
+					goto postLoop;
+				}
+				IdAndType.emplace_back(std::make_pair(&imgProp->imageIDs[i], IMG_TAB));
+			}
+		}
+		d = d->Next();
+	}
+postLoop:
+	// In case of error, undo it
+	if (error != 0)
+	{
+		for (int i = IdAndType.size() - 1; i >= 0; --i)
+			undoProc(std::get<0>(IdAndType[i]), std::get<1>(IdAndType[i]), p1, p2);
+	}
+	return error;
+}
+#endif // _WIN32
 
 static bool didLateInit = false;
 void DarkEdif::LateInit(Extension* ext)
