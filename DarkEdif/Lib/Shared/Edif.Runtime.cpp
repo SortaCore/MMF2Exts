@@ -1893,7 +1893,7 @@ ProjectFunc void setRunObjectTextColor(JNIEnv*, jobject, jlong ext, int rgb) {
 
 
 // Edit this to monitor specific jobject/jclass references. End with null.
-const char * globalToMonitor[] = { NULL };
+const char * const globalToMonitor[] = { NULL };
 
 // Gets the RH2 event count, used in object selection
 int RunHeader::GetRH2EventCount()
