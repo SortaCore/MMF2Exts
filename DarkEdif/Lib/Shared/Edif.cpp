@@ -529,11 +529,12 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 #endif
 
 		// Non-Unicode ext used in Unicode-compatible runtime
+		// This is dangerous if reading Fusion internals, as strings are incorrect type
 #if !defined(_UNICODE) && !defined(ALLOW_ANSI_EXT_IN_UNICODE_RUNTIME)
 		if (mvIsUnicodeVersion(mV))
 		{
-			DarkEdif::MsgBox::Error(_T("Not using Unicode"), _T("You are using a non-Unicode extension when the Fusion runtime and ")
-				PROJECT_TARGET_NAME " extension is capable of Unicode.\nEnsure you have extracted all the " PROJECT_TARGET_NAME " extension files.");
+			return DarkEdif::MsgBox::Error(_T("Not using Unicode"), _T("You are using a non-Unicode extension when the Fusion runtime and ")
+				PROJECT_TARGET_NAME " extension is capable of Unicode.\nEnsure you have extracted all the " PROJECT_TARGET_NAME " extension files."), -1;
 		}
 #endif
 
