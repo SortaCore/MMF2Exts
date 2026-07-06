@@ -5145,8 +5145,23 @@ struct CBinaryFile {
 
 struct CRunApp {
 	NO_DEFAULT_CTORS_OR_DTORS(CRunApp);
-	CRunApp* get_ParentApp();
+	// Returns parent app if subapp, or null if not subapp
+	// Subapps can themselves have subapps, but it is uncommon
+	_Maybenull_ CRunAppMultiPlat* get_ParentApp();
+	// Returns number of Fusion frames
 	std::size_t GetNumFusionFrames();
+	// Gets current Fusion frame number (0-based)
+	int get_nCurrentFrame();
+	// Gets frame pointer
+	CRunFrameMultiPlat * get_Frame();
+	// Gets application name
+	FusionANSIWarning const TCHAR * get_name();
+	// Gets application filepath - Windows only!
+	FusionANSIWarning const TCHAR * get_appFileName();
+	// Gets editor filepath - not available in Android
+	FusionANSIWarning const TCHAR * get_editorFileName();
+	// Gets original MFA filepath - not available in Android
+	FusionANSIWarning const TCHAR * get_targetFileName();
 
 DarkEdifInternalAccessProtected:
 	friend Edif::Runtime;

@@ -70,6 +70,7 @@
     <ClInclude Include="..\Inc\iOS\MMF2Lib\CRenderToTexture.h" />
     <ClInclude Include="..\Inc\iOS\MMF2Lib\CRenderUtils.h" />
     <ClInclude Include="..\Inc\iOS\MMF2Lib\CRSpr.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRunFrame.h" />
     <ClInclude Include="..\Inc\iOS\MMF2Lib\CShader.h" />
     <ClInclude Include="..\Inc\iOS\MMF2Lib\CTexture.h" />
     <ClInclude Include="..\Inc\iOS\MMFiOSMasterHeader.hpp" />
