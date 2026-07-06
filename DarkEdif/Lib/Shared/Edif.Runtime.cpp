@@ -159,26 +159,13 @@ std::size_t CRunAppMultiPlat::GetNumFusionFrames() {
 	#error Unexpected platform
 #endif
 }
-// Gets current Fusion frame number (1+)
-std::uint16_t CRunAppMultiPlat::GetCurrentFrameNum() {
 #ifdef _WIN32
-	assert(((1 + nCurrentFrame) & 0xFFFF) == nCurrentFrame);
-	// Original frame number is 0-based
-	return 1 + nCurrentFrame;
 #elif defined(__APPLE__)
-	assert(((((CRunApp*)this)->nCurrentFrame + 1) & 0xFFFF) == 1 + (((CRunApp*)this)->nCurrentFrame);
-	return 1 + ((std::uint16_t)((CRunApp*)this)->nCurrentFrame);
 #elif defined(__ANDROID__)
-	if (currentFrame == 0)
 	{
-		const jfieldID fieldID = threadEnv->GetFieldID(meClass, "currentFrame", "I");
 		JNIExceptionCheck();
-		const jint javaCurrentFrame = threadEnv->GetIntField(me, fieldID);
 		JNIExceptionCheck();
-		assert((javaCurrentFrame & 0xFFFF) == javaCurrentFrame);
-		currentFrame = (std::uint16_t)javaCurrentFrame;
 	}
-	return currentFrame;
 #else
 #error Unexpected platform
 #endif
@@ -3122,17 +3109,7 @@ AltVals::AltVals(RunObject * ro) : ro(ro)
 	}
 }
 
-int CRunAppMultiPlat::get_nCurrentFrame()
 {
-	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
-	if (!nCurrentFrame.has_value())
-	{
-		static jfieldID fieldID = threadEnv->GetFieldID(meClass, "currentFrame", "I");
-		JNIExceptionCheck();
-		nCurrentFrame = threadEnv->GetIntField(me, fieldID);
-		JNIExceptionCheck();
-	}
-	return nCurrentFrame.value();
 }
 CRunAppMultiPlat::CRunAppMultiPlat(jobject me, Edif::Runtime* runtime) :
 	me(me, "CRunApp"), meClass(threadEnv->GetObjectClass(me), "CRunApp class"), runtime(runtime)

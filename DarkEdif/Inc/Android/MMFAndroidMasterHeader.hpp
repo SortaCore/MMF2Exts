@@ -723,7 +723,6 @@ struct RunHeader {
 	qualToOi * GetQualToOiListByOffset(std::size_t index);
 	RunObjectMultiPlatPtr GetObjectListOblOffsetByIndex(std::size_t index);
 	EventGroupFlags GetEVGFlags();
-	std::uint16_t GetCurrentFrameNum();
 	CRunAppMultiPlat* get_App();
 	CEventProgram* get_EventProgram();
 	RunHeader(jobject me, jclass meClass, Edif::Runtime * runtime);

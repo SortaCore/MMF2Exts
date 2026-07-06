@@ -5147,8 +5147,6 @@ struct CRunApp {
 	NO_DEFAULT_CTORS_OR_DTORS(CRunApp);
 	CRunApp* get_ParentApp();
 	std::size_t GetNumFusionFrames();
-	// Gets current Fusion frame number (1+)
-	std::uint16_t GetCurrentFrameNum();
 
 DarkEdifInternalAccessProtected:
 	friend Edif::Runtime;
