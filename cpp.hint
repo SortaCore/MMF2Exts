@@ -25,3 +25,4 @@
 #define DLLExport32 /* no op */
 #define npWin void *
 #define Fusion64APISwitch /* no op */
+#define FusionANSIWarning /* no op */

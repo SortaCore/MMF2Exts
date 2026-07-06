@@ -24,6 +24,23 @@
 #define Fusion64APISwitch(repl) /* no op */
 #endif
 
+// Fusion runtime doesn't host two variants of its internals for ANSI and Unicode extensions;
+// a string pointer is based on what runtime is. Unicode runtime = Unicode strings.
+// If you have an ANSI extension loaded by Unicode runtime, it won't correctly read the Wide
+// Fusion internal strings, and the compiler will not suggest why.
+// Most of the time this will result in a single character being read.
+//
+// You can test for Unicode runtime using mvIsUnicodeVersion(), and LOSSILY convert with
+// DarkEdif::WideToANSI(), but it will not be able to convert all characters.
+// DarkEdif::WideToUTF8() is better, but most char-functions on Windows are ANSI, not UTF8.
+// If you don't understand this error: build Unicode or don't read Fusion internals.
+#if defined(DARKEDIF_INTERNAL_INCLUDE) || defined(_UNICODE) || \
+		!defined(ALLOW_ANSI_EXT_IN_UNICODE_RUNTIME) || defined(DARKEDIF_SUPPRESS_ANSI_INTERNALS_WARNING)
+	#define FusionANSIWarning /* no op */
+#else // non-Unicode and warning alive
+	#define FusionANSIWarning [[deprecated("This string is not ANSI. It may be wide if the Fusion runtime is Unicode (CF2.5 or MMF2 + Unicode add-on).")]]
+#endif
+
 // FusionAPI; incoming or outgoing to Fusion runtime. Uses __stdcall convention.
 #define FusionAPI __stdcall
 
