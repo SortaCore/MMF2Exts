@@ -1,3 +1,6 @@
+// Suppress warnings for popping up for DE's own internal usage
+#define DARKEDIF_INTERNAL_INCLUDE
+
 #include "Common.hpp"
 #include "Extension.hpp"
 #include <atomic>
@@ -5449,7 +5452,7 @@ std::tstring DarkEdif::FontInfoMultiPlat::GetActualFontName() {
 	// Font names may be localised, particularly for CJK and English.
 	// Hat tip: https://stackoverflow.com/a/7193439
 	// See a workaround: https://chromium.googlesource.com/chromium/blink/+/e2b472488d4a23f4eb7acdf2d590d513b802820e/Source/platform/fonts/win/FontCacheWin.cpp#64
-	HWND ourWin = Edif::SDK->mV->RunApp->hEditWin;
+	HWND ourWin = DarkEdif::Internal_WindowHandle;
 	HDC ourDC = GetDC(ourWin);
 	if (ourDC == NULL)
 		return LOGE(_T("Couldn't get original DC, error %u."), GetLastError()), _T("<error>"s);

@@ -26,3 +26,8 @@
 #define npWin void *
 #define Fusion64APISwitch /* no op */
 #define FusionANSIWarning /* no op */
+#define CRunApp CRunAppMultiPlat
+#define CRunFrame CRunFrameMultiPlat
+#define NO_DEFAULT_CTORS_OR_DTORS(x) /* no op */
+#define NO_DEFAULT_CTORS(x) /* no op */
+#define DarkEdifInternalAccessProtected protected
