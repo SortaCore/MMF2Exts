@@ -341,7 +341,7 @@ struct CValueMultiPlat {
 	{
 		std::int32_t m_long;
 		double		 m_double;
-		TCHAR *		 m_pString;
+		FusionANSIWarning TCHAR * m_pString;
 	};
 };
 
@@ -392,7 +392,7 @@ struct LOGFONTV1 {
 					ClipPrecision,
 					Quality,
 					PitchAndFamily;
-	TCHAR			FaceName[32];
+	FusionANSIWarning TCHAR	FaceName[32];
 };
 
 // Flags modifiable by the program
@@ -448,7 +448,11 @@ struct OCStrings
 {
 	NO_DEFAULT_CTORS_OR_DTORS(OCStrings);
 	unsigned short	number;
-	TCHAR			str[2];
+	// TODO: In OG SDK, this was aligned to have two chars or one wchar_t.
+	// Not sure what the use of either is, as it should be 4 bytes if it's a pointer,
+	// and if it's an offset it should be a number, and if this struct is a header,
+	// the plurality naming and careful 2-byte sizing is counter-intuitive.
+	FusionANSIWarning TCHAR str[sizeof(wchar_t) / sizeof(TCHAR)];
 };
 // typedef	OCStringsA*			LPOCSTRINGS;
 // typedef	OCStringsW*			LPOCSTRINGS;
@@ -457,7 +461,8 @@ struct OCValueNames
 {
 	NO_DEFAULT_CTORS_OR_DTORS(OCValueNames);
 	unsigned short	number;
-	char	str[2];
+	// TODO: OG SDK has this as ANSI, but it may be TCHAR?
+	char str[2];
 };
 //typedef	OCValueNames*		LPOCVALUENAMES;
 
@@ -1146,7 +1151,7 @@ struct ParamSound {
 	// TODO: Entry index in sound bank? or do we need handleTo?
 	short	Handle,
 			Flags;
-	TCHAR	name[64]; // Max sound name
+	FusionANSIWarning TCHAR	name[64]; // Max sound name
 	enum SoundFlags {
 		UNINTERRUPTABLE = 0x1,
 		BAD = 0x2,
@@ -1185,8 +1190,8 @@ struct ParamShoot {
 };
 struct ParamAnimation {
 	NO_DEFAULT_CTORS_OR_DTORS(ParamAnimation);
-	short	Number;
-	TCHAR *	name;
+	short Number;
+	FusionANSIWarning TCHAR * name;
 };
 struct ParamNoP {
 	NO_DEFAULT_CTORS_OR_DTORS(ParamNoP);
@@ -1198,8 +1203,7 @@ struct ParamPlayer {
 };
 struct ParamEvery {
 	NO_DEFAULT_CTORS_OR_DTORS(ParamEvery);
-	long	Delay,
-			Counter;
+	long Delay, Counter;
 };
 struct ParamKey {
 	NO_DEFAULT_CTORS_OR_DTORS(ParamKey);
@@ -1260,8 +1264,10 @@ struct ParamClick {
 struct ParamProgram {
 	NO_DEFAULT_CTORS_OR_DTORS(ParamProgram);
 	short	Flags;				// Default flags
-	TCHAR	Path[MAX_PATH],		// name of the program
-			Command[108];		// Command line
+	// name of the program
+	FusionANSIWarning TCHAR Path[MAX_PATH];
+	// Command line
+	FusionANSIWarning TCHAR	Command[108];
 
 	enum Masks {
 		Wait = 0x1,
@@ -1270,27 +1276,30 @@ struct ParamProgram {
 };
 struct ParamCondSound {
 	NO_DEFAULT_CTORS_OR_DTORS(ParamCondSound);
-	unsigned short	Number,
-					Flags,
-					Loops;
-	TCHAR *			name;
+	std::uint16_t Number;
+	std::uint16_t Flags;
+	std::uint16_t Loops;
+	FusionANSIWarning TCHAR * name;
 };
 struct ParamEditorComment {
 	NO_DEFAULT_CTORS_OR_DTORS(ParamEditorComment);
 	LOGFONTV1		LogFont;			// Font
-	COLORREF		ColourFont,			// text color
-					ColourBack;			// Background color
+	// These may be incorrectly positioned if ANSI ext working with Unicode runtime
+	COLORREF		ColourFont;			// text color
+	COLORREF		ColourBack;			// Background color
 	short			Align;				// Alignement flags
 	unsigned short	TextId;				// text number in the buffer
-	TCHAR			Style[40];			// Style
+	FusionANSIWarning TCHAR Style[40];	// Style
 };
 struct ParamGroup {
 	NO_DEFAULT_CTORS_OR_DTORS(ParamGroup);
 	short			Flags,			// Active / Inactive?
 					ID;				// Group identifier
 	// May be editor-only, missing in runtime:
-	TCHAR			Title[80],		// Title (max 80? chars)
-					Password[16];	// Protection (max 16? chars)
+	FusionANSIWarning TCHAR Title[80];
+	// If not missing in runtime, ANSI ext + Uni runtime will have this misaligned
+	FusionANSIWarning TCHAR Password[16];
+	// If not missing in runtime, ANSI ext + Uni runtime will have this misaligned
 	unsigned long	Checksum;		// Checksum
 	enum Masks {
 		INACTIVE		= 0x1,
@@ -1312,11 +1321,11 @@ struct ParamGroupPointer {
 };
 struct ParamFilename {
 	NO_DEFAULT_CTORS_OR_DTORS(ParamFilename);
-	TCHAR * FileName;
+	FusionANSIWarning TCHAR * FileName;
 };
 struct ParamString {
 	NO_DEFAULT_CTORS_OR_DTORS(ParamString);
-	TCHAR * String;
+	FusionANSIWarning TCHAR * String;
 };
 struct ParamCmpTime {
 	NO_DEFAULT_CTORS_OR_DTORS(ParamCmpTime);
@@ -1372,7 +1381,7 @@ struct Param8Dirs {
 struct ParamMvt {
 	NO_DEFAULT_CTORS_OR_DTORS(ParamMvt);
 	short	mvtNumber;
-	TCHAR	mvtName[32];	// Max movement name = 32 bytes
+	FusionANSIWarning TCHAR	mvtName[32];
 };
 struct ParamProgram2 {
 	NO_DEFAULT_CTORS_OR_DTORS(ParamProgram2);
@@ -1384,7 +1393,7 @@ struct ParamProgram2 {
 };
 struct ParamEffect {
 	NO_DEFAULT_CTORS_OR_DTORS(ParamEffect);
-	TCHAR *	name;
+	FusionANSIWarning TCHAR * name;
 };
 
 namespace Edif {
@@ -1399,10 +1408,10 @@ namespace Edif {
 struct FastLoop
 {
 	NO_DEFAULT_CTORS_OR_DTORS(FastLoop);
-	TCHAR *			Next;
-	TCHAR			name[64];	// Max fast loop name (64 bytes)
-	unsigned short	Flags;
-	long			Index;
+	FusionANSIWarning TCHAR * Next;
+	FusionANSIWarning TCHAR	name[64];	// Max fast loop name (64 bytes)
+	unsigned short Flags;
+	long Index;
 	enum Masks {
 		Stop = 0x1,
 	};
@@ -1497,9 +1506,15 @@ enum
 
 struct EditDebugInfo
 {
+	// Title to edit. Cannot be null if ANSI ext in Unicode editor; otherwise if null uses a default text.
+	// @remarks This is Fusion internals, but matches the ext encoding.
 	TCHAR * Title;
+	// Integer to edit. Floats aren't allowed.
 	int		value;
+	// Text to edit.
+	// @remarks Fusion internals, but matches the ext encoding.
 	TCHAR * text;
+	// Text length in characters, not including null; used to indicate buffer size, max of DB_BUFFERSIZE.
 	int		lText;
 };
 
@@ -1801,14 +1816,14 @@ DarkEdifInternalAccessProtected:
 	// Save the current action
 	event2 * rh4ActionStart;
 	std::int32_t rh4PauseKey;
-	TCHAR * rh4CurrentFastLoop;
+	FusionANSIWarning TCHAR * rh4CurrentFastLoop;
 	std::int32_t rh4EndOfPause;
 	// Number of the event for OR conditions - not useful for exts
 	std::int32_t rh4EventCountOR;
 	std::int16_t rh4ConditionsFalse;
 	std::int16_t rh4MouseWheelDelta;
 	std::int32_t rh4OnMouseWheel;
-	TCHAR * rh4PSaveFilename;
+	FusionANSIWarning TCHAR * rh4PSaveFilename;
 	std::uint32_t rh4MusicHandle;
 	std::uint32_t rh4MusicFlags;
 	std::uint32_t rh4MusicLoops;
@@ -1845,10 +1860,10 @@ DarkEdifInternalAccessProtected:
 
 	std::int16_t rh4DroppedFlag;
 	std::int16_t rh4NDroppedFiles;
-	TCHAR * rh4DroppedFiles;
+	FusionANSIWarning TCHAR * rh4DroppedFiles;
 
 	FastLoop * rh4FastLoops;
-	TCHAR * rh4CreationErrorMessages;
+	FusionANSIWarning TCHAR * rh4CreationErrorMessages;
 	// New V2
 	CValueMultiPlat	rh4ExpValue1;
 	CValueMultiPlat rh4ExpValue2;
@@ -1936,7 +1951,7 @@ DarkEdifInternalAccessProtected:
 	std::int32_t rh4Operators[MAX_INTERMEDIATERESULTS];
 
 	// Debut zone 256 long ?
-	TCHAR ** rh4PTempStrings;
+	FusionANSIWarning TCHAR ** rh4PTempStrings;
 	std::int32_t rh4MaxTempStrings;
 	// Free buffer ?
 	std::int32_t rh4Free4[256-2];
@@ -2197,7 +2212,7 @@ DarkEdifInternalAccessProtected:
 	// Used with path movement, works with rhLoopCount
 	int hoMark1, hoMark2;
 	// Name of the current node for path movements
-	TCHAR * hoMT_NodeName;
+	FusionANSIWarning TCHAR * hoMT_NodeName;
 
 	// 0+ ID of the current A/C/E call, set before their ext function is run
 	// This is not Fusion event number, it is A/C/E index in ext
@@ -2449,7 +2464,7 @@ DarkEdifInternalAccessProtected:
 			int		MT_XStart;
 			int		MT_YStart;
 			int		MT_Pause;
-			TCHAR *	MT_GotoNode;
+			FusionANSIWarning TCHAR * MT_GotoNode;
 		};
 		struct
 		{
@@ -2640,7 +2655,7 @@ DarkEdifInternalAccessProtected:
 			int				  Free1[25 - 1];	// 26 = number of alterable values
 			std::uint32_t	  InternalFlags;
 			std::uint8_t	  Free2[26];		// 26 = number of alterable values
-			const TCHAR * *   Strings;			// Alterable strings (will be null if never used, including if blank in obj properties); change with mvMalloc/mvFree
+			FusionANSIWarning const TCHAR * *   Strings;			// Alterable strings (will be null if never used, including if blank in obj properties); change with mvMalloc/mvFree
 			int				  NumAltStrings;
 		} CF25;
 		struct MMF2 {
@@ -2648,14 +2663,14 @@ DarkEdifInternalAccessProtected:
 			int				  rvFree1[26 - 1];
 			std::uint32_t	  rvValueFlags;
 			std::uint8_t	  rvFree2[26];
-			const TCHAR *	  rvStrings[10];	// Alterable strings (will be null if never used, including if blank in obj properties); change with mvMalloc/mvFree
+			FusionANSIWarning const TCHAR *	  rvStrings[10];	// Alterable strings (will be null if never used, including if blank in obj properties); change with mvMalloc/mvFree
 		} MMF2;
 	};
 
 public:
 	std::size_t GetAltValueCount() const;
 	std::size_t GetAltStringCount() const;
-	const TCHAR* GetAltStringAtIndex(const std::size_t) const;
+	FusionANSIWarning const TCHAR* GetAltStringAtIndex(const std::size_t) const;
 	const CValueMultiPlat * GetAltValueAtIndex(const std::size_t) const;
 	void SetAltStringAtIndex(const std::size_t, const std::tstring_view&);
 	void SetAltValueAtIndex(const std::size_t, const double);
@@ -2918,10 +2933,10 @@ private:
 DarkEdifInternalAccessProtected:
 	// String object: the buffer containing alterable text, or a copy of paragraph text.
 	// May be null indicating blank.
-	TCHAR *			rsTextBuffer;
+	FusionANSIWarning TCHAR * rsTextBuffer;
 	// String object: Length of rsTextBuffer in BYTES
 	// Only present in Windows.
-	int				rsBuffer;
+	int rsBuffer;
 	// Font bank entry ID
 	int16_t rsFont;
 private:
@@ -3062,7 +3077,7 @@ DarkEdifInternalAccessProtected:
 	// Qualifiers for this object
 	std::int16_t oilQualifiers[MAX_QUALIFIERS];
 	// user-specified object name, cropped to 24 chars, guaranteed end with NULL
-	TCHAR oilName[OINAME_SIZE];
+	FusionANSIWarning TCHAR oilName[OINAME_SIZE];
 	// Selection in a list of events with OR
 	std::int32_t 	oilEventCountOR;
 	#ifdef HWABETA
@@ -3114,7 +3129,7 @@ public:
 	// @remarks The name is the top field in the About tab of object properties.
 	//			This cropping is done on Fusion runtime side, and stored in built apps pre-cropped,
 	//			so it is cropped on all platforms.
-	const TCHAR * get_name();
+	FusionANSIWarning const TCHAR * get_name();
 
 	// Reads the qualifiers array of this object at passed zero-based index. Pass 0 to 7 only. Returns -1 if invalid.
 	// @remarks Objects cannot have more than MAX_QUALIFIERS (8) qualifiers.
@@ -4133,10 +4148,10 @@ typedef otText	*	fpot;
 typedef	struct txString {
 	NO_DEFAULT_CTORS_OR_DTORS(txString);
 DarkEdifInternalAccessProtected:
-	unsigned short		tsFont;				// Font
-	unsigned short		tsFlags;			// Flags
-	COLORREF			tsColor;			// Color
-	TCHAR				tsChar[];
+	unsigned short tsFont;				// Font
+	unsigned short tsFlags;			// Flags
+	COLORREF tsColor;			// Color
+	FusionANSIWarning TCHAR	tsChar[];
 } txString;
 typedef	txString	*	fpts;
 //#define	sizeof_ts	8					// (sizeof(txString)-1)
@@ -4497,33 +4512,41 @@ struct mv {
 	HPALETTE			HPal256;			// 256 color palette
 	unsigned short		AppMode,			// Screen mode with flags
 						ScrMode;			// Screen mode (SM_8=256, SM_15=32768, SM_16=65536, SM_32=16 million colors)
-	DWORD		EditDXDocToClient,			// Edit time only: top-left coordinates
-						EditDYDocToClient;
-	CImageFilterMgr *	ImgFilterMgr;		// Image filter manager
-	CSoundFilterMgr *	SndFilterMgr;		// Sound filter manager
-	CSoundManager *		SndMgr;				// Sound manager
+	// Edit time only: top-left coordinates
+	DWORD EditDXDocToClient, EditDYDocToClient;
 
-	union {
-		CEditApp *		EditApp;			// Current application, edit time - different address per loaded MFA
-		CRunApp *		RunApp;				// Current application, runtime - not usable in frame editor and co, just runtime
-	};
-	union {
-		CEditFrame *	EditFrame;
-		CRunFrame *		RunFrame;
-	};
+	// Image filter manager
+	CImageFilterMgr * ImgFilterMgr;
+	// Sound filter manager
+	CSoundFilterMgr * SndFilterMgr;
+	// Sound manager
+	CSoundManager *	SndMgr;
 
-	// Runtime
-	RunHeader *			RunHdr;				// Current RunHeader
-	DWORD		PextsHoldingGlobals;		// Preferences (sound on/off)
-	TCHAR *				subType;
-	BOOL				FullScreen;			// Full screen mode
-	TCHAR *				MainAppFileName;	// App filename
+#if EditorBuild
+	// Opaque struct for Fusion. Only known detail is it is a different address between MFAs loaded in Fusion.
+	CEditApp *		EditApp;
+	CEditFrame *	EditFrame;
+#else
+	// Current application, runtime - not usable in frame editor and co, just runtime
+	CRunApp *		RunApp;
+	CRunFrame *		RunFrame;
+#endif
+
+	// Current RunHeader, containing most main details as rhPtr
+	RunHeader *			RunHdr;
+	DWORD PextsHoldingGlobals;
+	// Preferences (sound on/off)
+	FusionANSIWarning TCHAR * subType;
+	// Full screen mode
+	BOOL FullScreen;
+	// App filename
+	FusionANSIWarning TCHAR * MainAppFileName;
 	int					AppListCount;
 	int					AppListSize;
 	CRunApp**			AppList;
 	int					ExtListCount;
 	int					ExtListSize;
-	TCHAR **			ExtList;
+	FusionANSIWarning TCHAR ** ExtList;
 	int					NbDllTrans;
 	dllTrans*			DllTransList;
 	DWORD				JoyCaps[32];
@@ -4801,8 +4824,8 @@ enum class KGI : int {
 struct kpxFunc {
 	NO_DEFAULT_CTORS_OR_DTORS(kpxFunc);
 	HINSTANCE	kpxHInst;
-	TCHAR *		kpxName,
-		  *		kpxSubType;
+	FusionANSIWarning TCHAR * kpxName;
+	FusionANSIWarning TCHAR * kpxSubType;
 	void *		kpxUserData;
 
 	// See KGI:: above for int
@@ -4833,7 +4856,7 @@ struct kpxFunc {
 struct MvxFnc {
 	NO_DEFAULT_CTORS_OR_DTORS(MvxFnc);
 	HINSTANCE	mvxHInst;
-	TCHAR *		mvxFileTitle;
+	FusionANSIWarning TCHAR * mvxFileTitle;
 
 	CMvt * (CALLBACK * mvxCreateMvt) (DWORD);
 
@@ -4900,8 +4923,8 @@ struct bkd2 {
 struct RunFrameLayer
 {
 	NO_DEFAULT_CTORS_OR_DTORS(RunFrameLayer);
-	// name
-	TCHAR *		pName;			// name
+	// Layer name
+	FusionANSIWarning TCHAR * pName;
 
 	// Offset
 	int			x, y,			// Current offset
@@ -4987,11 +5010,17 @@ struct objTransInfo {
 
 struct CRunFrame {
 	NO_DEFAULT_CTORS_OR_DTORS(CRunFrame);
+
+	// Gets the frame name
+	_Notnull_ FusionANSIWarning const TCHAR * get_name();
+
+DarkEdifInternalAccessProtected:
+	friend Edif::Runtime;
 	// Header
 	FrameHeader			hdr;
 
-	// name
-	TCHAR *				name;
+	// Frame name
+	FusionANSIWarning TCHAR * name;
 
 	// Palette
 	LPLOGPALETTE		palette;
@@ -5075,14 +5104,15 @@ struct CRunFrame {
 						PasteMask;
 
 	int					CurTempString;
-	TCHAR *				TempString[MAX_TEMPSTRING];	// not used
+	// Not sure if this is always Fusion runtime native, or just a set of ptrs.
+	FusionANSIWarning  TCHAR * TempString[MAX_TEMPSTRING];
 
 	// Other
 	cSurface *			SaveSurface;
 	int					EditWinWidth,	// Frame (not virtual) width
 						EditWinHeight;	// Frame (not virtual) height
 	unsigned int		ColMaskBits;
-	TCHAR *				demoFilePath;
+	FusionANSIWarning TCHAR * demoFilePath;
 	unsigned short		RandomSeed,
 						Free;							// Ignore - padding
 	unsigned int		MvtTimerBase;
@@ -5110,27 +5140,22 @@ struct CRunFrame {
 // Binary files
 //
 struct CBinaryFile {
-	TCHAR			Path[MAX_PATH],	// path stored in ccn file
-		  *			TempPath;		// path in temporary folder, if any
-	unsigned int	FileSize,		// file size
-					FileOffset;		// file offset in EXE/CCN file
-	int				TempCount;		// usage count
+	// Path stored in ccn file
+	FusionANSIWarning TCHAR Path[MAX_PATH];
+	// Path in temporary folder, if any
+	// Will not be valid in ANSI ext in Unicode runtime, due to Path offset prior.
+	FusionANSIWarning TCHAR * TempPath;
 
-	CBinaryFile() :
-		TempPath(NULL), FileSize(0), FileOffset(0), TempCount(0)
-	{
-		memset(Path, 0, MAX_PATH);
-	}
-	~CBinaryFile()
-	{
-		if (TempPath)
-		{
-			_tremove(TempPath);
-			free(TempPath);
-			TempPath = NULL;
-			TempCount = 0;
-		}
-	}
+	// file size
+	std::uint32_t FileSize;
+	// file offset in EXE/CCN file
+	std::uint32_t FileOffset;
+	// usage count
+	int TempCount;
+
+	// While this struct was defined with C++ ctors/dtors in original Fusion SDK, it is not used in any MMFS2 function,
+	// and creating new CBinaryFile isn't expected.
+	NO_DEFAULT_CTORS_OR_DTORS(CBinaryFile);
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -5166,33 +5191,46 @@ struct CRunApp {
 DarkEdifInternalAccessProtected:
 	friend Edif::Runtime;
 	friend DarkEdif::FontInfoMultiPlat;
-	// Application info
-	AppMiniHeader	miniHdr;	 		// Version
-	AppHeader		hdr;				// General info
-	TCHAR *			name,				// name of the application
-		  *			appFileName,		// filename (temporary file in editor mode)
-		  *			editorFileName,		// filename of original .mfa file
-		  *			copyright,			// copyright
-		  *			aboutText;			// text to display in the About box
 
-	// File infos
-	TCHAR *			targetFileName;		// filename of original CCN/EXE file
-	TCHAR *			tempPath;			// Temporary directory for external files
-	HFILE			file;				// File handle - Yves confirmed it was opened with CreateFile, not fopen
-	unsigned int	startOffset;
+	// Application version info
+	AppMiniHeader miniHdr;
+	// Application general info
+	AppHeader hdr;
+	// Application name
+	FusionANSIWarning TCHAR * name;
+	// filename (temporary file in editor mode)
+	FusionANSIWarning TCHAR* appFileName;
+	// filename of original .mfa file
+	FusionANSIWarning TCHAR * editorFileName;
+	// Fusion-app copyright
+	FusionANSIWarning TCHAR * copyright;
+	// text to display in the About box
+	FusionANSIWarning TCHAR * aboutText;
 
-	// Help file
-	TCHAR *			doc;				// Help file pathname
+	// Filename of original CCN/EXE file
+	FusionANSIWarning TCHAR * targetFileName;
+	// Temporary directory for external files
+	FusionANSIWarning TCHAR * tempPath;
+	// File handle - Yves confirmed it was opened with CreateFile, not fopen
+	HFILE file;
+	unsigned int startOffset;
 
-	// Icon
-	unsigned char *	icon16x16x8;		// = LPBITMAPINFOHEADER
-	HICON			hIcon16x16x8;		// Small icon for the main window
+	// Fusion app help filepath
+	FusionANSIWarning TCHAR * doc;
 
-	// Menu
-	HMENU			hRunMenu;			// Menu
-	unsigned char * accels;				// Accelerators
-	TCHAR *			pMenuTexts;			// Menu texts (for ownerdraw menu)
-	unsigned char * pMenuImages;		// Images index used in the menu
+	// Fusion app icon - documented as LPBITMAPINFOHEADER, but may be LPBITMAPINFO itself?
+	unsigned char* icon16x16x8;
+	// Small icon for the main window
+	HICON hIcon16x16x8;
+
+	// Menu handle
+	HMENU hRunMenu;
+	// Menu accelerators
+	unsigned char * accels;
+	// Menu texts (for ownerdraw menu)
+	FusionANSIWarning TCHAR * pMenuTexts;
+	// Images index used in the menu
+	unsigned char * pMenuImages;
 	MenuHdr *		pMenu;
 
 	// Frame offsets
@@ -5201,8 +5239,8 @@ DarkEdifInternalAccessProtected:
 	unsigned short *	frame_handle_to_index;		// Handle -> index table
 	unsigned int *		frameOffset;				// Frame offsets in the file
 
-	// Frame passwords
-	TCHAR **			framePasswords;				// Table of frame passwords (TCHAR * [])
+	// Table of frame passwords
+	FusionANSIWarning TCHAR **	framePasswords;
 
 	// Extensions
 	int				nbKpx;						// Number of extensions
@@ -5213,9 +5251,10 @@ DarkEdifInternalAccessProtected:
 	int				nbMvx;						// Number of movement extensions
 	MvxFnc *		mvxTable;					// DLL info
 
-	// Elements
-	TCHAR *			eltFileName[MAX_TABREF];	// Element banks
-	HFILE			hfElt[MAX_TABREF];
+	// Element bank file paths
+	FusionANSIWarning TCHAR * eltFileName[MAX_TABREF];
+	// Element bank handles
+	HFILE hfElt[MAX_TABREF];
 
 	unsigned int	eltBaseOff;
 	unsigned short	nbEltOff[MAX_TABREF];		// Sizes of file offset tables
@@ -5299,16 +5338,21 @@ DarkEdifInternalAccessProtected:
 		*			pScores;
 
 	// Global values (warning: not valid if sub-app and global values are shared)
+	// Default global value values
 	unsigned char * pGlobalValuesInit;
-	int				nGlobalValues;				// Number of global values
+	// Number of global values
+	int nGlobalValues;				
 	CValueMultiPlat * pGlobalValues;			// Global values
-	unsigned char *	pFree,						// No longer used
-				  *	pGlobalValueNames,
+	unsigned char *	pFree;						// No longer used
+	// Global value names
+	unsigned char * pGlobalValueNames;
 
-	// Global strings (warning: not valid if sub-app and global values are shared)
-				  *	pGlobalStringInit;			// Default global string values
-	int				nGlobalStrings;				// Number of global strings
-	TCHAR **		pGlobalString;				// Pointers to global strings
+	// Default global string values
+	unsigned char * pGlobalStringInit;
+	// Number of global strings
+	int nGlobalStrings;
+	// Global strings (warning: not valid if sub-app and global strings are shared)
+	FusionANSIWarning TCHAR ** pGlobalString;
 	unsigned char * pGlobalStringNames;
 
 	// Global objects
@@ -5318,18 +5362,19 @@ DarkEdifInternalAccessProtected:
 	short			NConditions[7+32-1];		// NUMBER_OF_SYSTEM_OBJECTS + KPX_BASE - 1->0 base change
 
 	// External sound files
-	TCHAR *			pExtMusicFile,
-		  *			pExtSampleFile[32];			// External sample file per channel
+	FusionANSIWarning TCHAR * pExtMusicFile;
+	// External sample file per channel
+	FusionANSIWarning TCHAR * pExtSampleFile[32];
 
 	int				nInModalLoopCount;
-	TCHAR *			pPlayerNames;
+	FusionANSIWarning TCHAR * pPlayerNames;
 	unsigned int	dwColorCache;
 
 	unsigned char * pVtz4Opt;					// not used
 	unsigned int	dwFree;						// not used
 
 	// Application load
-	TCHAR *			pLoadFilename;
+	FusionANSIWarning TCHAR * pLoadFilename;
 	unsigned int	saveVersion;
 	BOOL			bLoading;
 
