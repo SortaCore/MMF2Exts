@@ -1,3 +1,5 @@
+// Suppress warnings for popping up for DE's own internal usage
+#define DARKEDIF_INTERNAL_INCLUDE
 #include "Common.hpp"
 #include "Edif.hpp"
 #include "DarkEdif.hpp"
@@ -9,6 +11,7 @@
 #include "MMF2Lib/CRunApp.h"
 #include "MMF2Lib/CRCom.h"
 #include "MMF2Lib/CRSpr.h"
+#include "MMF2Lib/CRunFrame.h"
 #endif
 
 struct EdifGlobal
@@ -115,6 +118,47 @@ std::vector<short> qualToOi::GetAllOi() {
 	return HalfVector(0);
 }
 
+const TCHAR * CRunFrameMultiPlat::get_name()
+{
+#ifdef _WIN32
+	return name;
+#elif defined(__APPLE__)
+	return [((CRunFrame*)this)->frameName UTF8String];
+#elif defined(__ANDROID__)
+	if (frameName.empty())
+	{
+		const jfieldID fieldID = threadEnv->GetFieldID(meClass, "frameName", "Ljava/lang/String;");
+		JNIExceptionCheck();
+		JavaAndCString javaFrameName((jstring)threadEnv->GetObjectField(me, fieldID));
+		frameName = std::string(javaFrameName.str());
+	}
+	return frameName.c_str();
+#else
+#error Unexpected platform
+#endif
+}
+
+int CRunAppMultiPlat::get_nCurrentFrame()
+{
+#ifdef _WIN32
+	return nCurrentFrame;
+#elif defined(__APPLE__)
+	return (std::size_t)((CRunApp*)this)->currentFrame;
+#elif defined(__ANDROID__)
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
+	if (!nCurrentFrame.has_value())
+	{
+		static jfieldID fieldID = threadEnv->GetFieldID(meClass, "currentFrame", "I");
+		JNIExceptionCheck();
+		nCurrentFrame = threadEnv->GetIntField(me, fieldID);
+		JNIExceptionCheck();
+	}
+	return nCurrentFrame.value();
+#else
+#error Unexpected platform
+#endif
+}
+
 CRunAppMultiPlat* CRunAppMultiPlat::get_ParentApp() {
 #ifdef _WIN32
 	return ParentApp;
@@ -159,18 +203,103 @@ std::size_t CRunAppMultiPlat::GetNumFusionFrames() {
 	#error Unexpected platform
 #endif
 }
+
+// Gets frame pointer
+CRunFrameMultiPlat* CRunAppMultiPlat::get_Frame()
+{
 #ifdef _WIN32
+	return Frame;
 #elif defined(__APPLE__)
+	return (CRunFrameMultiPlat *)((CRunApp*)this)->frame;
 #elif defined(__ANDROID__)
+	if (!frame)
 	{
+		const jfieldID fieldID = threadEnv->GetFieldID(meClass, "frame", "LApplication/CRunFrame;");
 		JNIExceptionCheck();
+		const jobject javaCurrentFrame = threadEnv->GetObjectField(me, fieldID);
 		JNIExceptionCheck();
+		assert(javaCurrentFrame); // should never be null
+		frame = std::make_unique<CRunFrameMultiPlat>(javaCurrentFrame, runtime);
 	}
+	return frame.get();
 #else
 #error Unexpected platform
 #endif
-
 }
+
+// Gets application name
+const TCHAR * CRunAppMultiPlat::get_name()
+{
+#ifdef _WIN32
+	// TODO: Is this ANSI or Unicode?
+	return name;
+#elif defined(__APPLE__)
+	// NSString to C++ string
+	return [((CRunApp*)this)->appName UTF8String];
+#elif defined(__ANDROID__)
+	if (appName.empty())
+	{
+		const jfieldID fieldID = threadEnv->GetFieldID(meClass, "appName", "Ljava/lang/String;");
+		JNIExceptionCheck();
+		JavaAndCString javaAppName((jstring)threadEnv->GetObjectField(me, fieldID));
+		JNIExceptionCheck();
+		appName = std::tstring(javaAppName.str());
+	}
+	return appName.c_str();
+#else
+#error Unexpected platform
+#endif
+}
+
+// Gets application filepath
+const TCHAR * CRunAppMultiPlat::get_appFileName()
+{
+#ifdef _WIN32
+	// TODO: Is this ANSI or Unicode?
+	return appFileName;
+#elif defined(__ANDROID__) || defined(__APPLE__)
+	LOGV("Reading CRunAppMultiPlat::appFileName variable, not available in non-Windows\n");
+	return "<Not available in non-Windows>";
+#else
+#error Unexpected platform
+#endif
+}
+// Gets editor filepath
+const TCHAR * CRunAppMultiPlat::get_editorFileName()
+{
+#ifdef _WIN32
+	// TODO: Is this ANSI or Unicode?
+	return editorFileName;
+#elif defined(__APPLE__)
+	// NSString to C++ string
+	return [((CRunApp*)this)->appEditorPathname UTF8String];
+#elif defined(__ANDROID__)
+	// available in chunk CHUNK_APPEDITORFILENAME 0x222E, but high effort
+	LOGV("Reading CRunAppMultiPlat::editorFileName variable, not available in Android\n");
+	return "<Not available in Android>";
+#else
+#error Unexpected platform
+#endif
+}
+
+// Gets original MFA filepath
+const TCHAR * CRunAppMultiPlat::get_targetFileName()
+{
+#ifdef _WIN32
+	// TODO: Is this ANSI or Unicode?
+	return targetFileName;
+#elif defined(__APPLE__)
+	// NSString to C++ string
+	return [((CRunApp*)this)->appTargetPathname UTF8String];
+#elif defined(__ANDROID__)
+	// available in chunk CHUNK_APPTARGETFILENAME 0x222F, but high effort
+	LOGV("Reading CRunAppMultiPlat::targetFileName variable, not available in Android\n");
+	return "<Not available in Android>";
+#else
+#error Unexpected platform
+#endif
+}
+
 
 // Static definition
 int Edif::Runtime::actionLoopIncrement = 0;
@@ -3109,8 +3238,12 @@ AltVals::AltVals(RunObject * ro) : ro(ro)
 	}
 }
 
+CRunFrameMultiPlat::CRunFrameMultiPlat(jobject me, Edif::Runtime* runtime) :
+	me(me, "CRunFrame"), meClass(threadEnv->GetObjectClass(me), "CRunFrame class"), runtime(runtime)
 {
+
 }
+
 CRunAppMultiPlat::CRunAppMultiPlat(jobject me, Edif::Runtime* runtime) :
 	me(me, "CRunApp"), meClass(threadEnv->GetObjectClass(me), "CRunApp class"), runtime(runtime)
 {
@@ -4392,6 +4525,10 @@ std::uint16_t EventGroupMP::get_evgIdentifier() const {
 std::uint16_t EventGroupMP::get_evgInhibit() const {
 	return *(std::uint16_t*)&((tagEVG*)this)->evgInhibit;
 }
+EventGroupFlags EventGroupMP::get_evgFlags() const {
+	return *(EventGroupFlags*)&((tagEVG*)this)->evgFlags;
+}
+
 
 event2* EventGroupMP::GetCAByIndex(size_t index)
 {

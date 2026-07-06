@@ -123,5 +123,8 @@
     <ClInclude Include="..\Inc\iOS\MMF2Lib\CExtension.h">
       <Filter>Global to all extensions</Filter>
     </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRunFrame.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

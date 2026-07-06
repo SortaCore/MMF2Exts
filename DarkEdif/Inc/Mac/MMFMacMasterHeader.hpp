@@ -230,7 +230,7 @@ inline namespace FusionInternals
 	};
 
 	struct CRunFrameMultiPlat {
-
+		const TCHAR * get_name();
 	};
 	struct CRunAppMultiPlat {
 		NO_DEFAULT_CTORS(CRunAppMultiPlat);
@@ -238,6 +238,10 @@ inline namespace FusionInternals
 		CRunFrameMultiPlat* get_Frame();
 		CRunAppMultiPlat* get_ParentApp();
 		std::size_t GetNumFusionFrames();
+		const TCHAR * get_name();
+		const TCHAR * get_appFileName();
+		const TCHAR * get_editorFileName();
+		const TCHAR * get_targetFileName();
 	};
 
 	struct RunHeader {

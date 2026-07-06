@@ -637,35 +637,45 @@ protected:
 	global<jclass> meClass;
 	Edif::Runtime* runtime;
 };
-struct CRunFrame {
-	NO_DEFAULT_CTORS(CRunFrame);
+struct CRunFrameMultiPlat {
+	NO_DEFAULT_CTORS(CRunFrameMultiPlat);
 
 	CEventProgram* get_eventProgram();
+	const TCHAR * get_name();
 
+	CRunFrameMultiPlat(jobject app, Edif::Runtime* runtime);
 protected:
 	friend class Edif::Runtime;
 	friend struct RunHeader;
+	std::string frameName;
+
+	global<jobject> me;
+	global<jclass> meClass;
 	Edif::Runtime* runtime;
-	jobject me;
 };
 
 
 struct CRunAppMultiPlat {
 	NO_DEFAULT_CTORS(CRunAppMultiPlat);
 	int get_nCurrentFrame();
-	CRunFrame* get_Frame();
+	CRunFrameMultiPlat * get_Frame();
 	CRunAppMultiPlat * get_ParentApp();
 	std::size_t GetNumFusionFrames();
+	const TCHAR * get_name();
+	const TCHAR * get_appFileName();
+	const TCHAR * get_editorFileName();
+	const TCHAR * get_targetFileName();
 
 	CRunAppMultiPlat(jobject app, Edif::Runtime * runtime);
 protected:
 	friend class Edif::Runtime;
 	friend struct RunHeader;
 	friend DarkEdif::Surface;
-	std::unique_ptr<CRunFrame> frame;
+	std::unique_ptr<CRunFrameMultiPlat> frame;
 	std::optional<int> nCurrentFrame;
 	std::size_t numTotalFrames = 0; // 0 if unset
 	std::uint16_t currentFrame = 0; // 0 if unset, 1+ if set
+	std::string appName; // Blank if unset
 	std::unique_ptr<CRunAppMultiPlat> parentApp;
 	bool parentAppIsNull = false;
 	global<jobject> me;
