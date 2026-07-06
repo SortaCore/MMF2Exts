@@ -139,6 +139,7 @@ CRunAppMultiPlat* CRunAppMultiPlat::get_ParentApp() {
 #endif
 }
 
+// Gets current Fusion frame number (1+)
 std::size_t CRunAppMultiPlat::GetNumFusionFrames() {
 #ifdef _WIN32
 	return hdr.NbFrames;
@@ -157,6 +158,31 @@ std::size_t CRunAppMultiPlat::GetNumFusionFrames() {
 #else
 	#error Unexpected platform
 #endif
+}
+// Gets current Fusion frame number (1+)
+std::uint16_t CRunAppMultiPlat::GetCurrentFrameNum() {
+#ifdef _WIN32
+	assert(((1 + nCurrentFrame) & 0xFFFF) == nCurrentFrame);
+	// Original frame number is 0-based
+	return 1 + nCurrentFrame;
+#elif defined(__APPLE__)
+	assert(((((CRunApp*)this)->nCurrentFrame + 1) & 0xFFFF) == 1 + (((CRunApp*)this)->nCurrentFrame);
+	return 1 + ((std::uint16_t)((CRunApp*)this)->nCurrentFrame);
+#elif defined(__ANDROID__)
+	if (currentFrame == 0)
+	{
+		const jfieldID fieldID = threadEnv->GetFieldID(meClass, "currentFrame", "I");
+		JNIExceptionCheck();
+		const jint javaCurrentFrame = threadEnv->GetIntField(me, fieldID);
+		JNIExceptionCheck();
+		assert((javaCurrentFrame & 0xFFFF) == javaCurrentFrame);
+		currentFrame = (std::uint16_t)javaCurrentFrame;
+	}
+	return currentFrame;
+#else
+#error Unexpected platform
+#endif
+
 }
 
 // Static definition

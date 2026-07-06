@@ -230,6 +230,7 @@ inline namespace FusionInternals
 		CRunFrameMultiPlat* get_Frame();
 		CRunAppMultiPlat* get_ParentApp();
 		std::size_t GetNumFusionFrames();
+		std::uint16_t GetCurrentFrameNum();
 	};
 
 	struct RunHeader {

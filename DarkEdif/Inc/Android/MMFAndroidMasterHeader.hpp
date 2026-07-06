@@ -665,6 +665,7 @@ protected:
 	std::unique_ptr<CRunFrame> frame;
 	std::optional<int> nCurrentFrame;
 	std::size_t numTotalFrames = 0; // 0 if unset
+	std::uint16_t currentFrame = 0; // 0 if unset, 1+ if set
 	std::unique_ptr<CRunAppMultiPlat> parentApp;
 	bool parentAppIsNull = false;
 	global<jobject> me;
@@ -722,6 +723,7 @@ struct RunHeader {
 	qualToOi * GetQualToOiListByOffset(std::size_t index);
 	RunObjectMultiPlatPtr GetObjectListOblOffsetByIndex(std::size_t index);
 	EventGroupFlags GetEVGFlags();
+	std::uint16_t GetCurrentFrameNum();
 	CRunAppMultiPlat* get_App();
 	CEventProgram* get_EventProgram();
 	RunHeader(jobject me, jclass meClass, Edif::Runtime * runtime);
