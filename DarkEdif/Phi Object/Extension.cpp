@@ -3,6 +3,7 @@
 #ifdef __ANDROID__
 #include <android/sensor.h>
 #endif
+#include <optional>
 ///
 /// EXTENSION CONSTRUCTOR/DESTRUCTOR
 ///
@@ -73,16 +74,134 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const 
 	LinkExpression(25, GetAppRoot);
 	LinkExpression(26, GetNetworkType);
 
+#ifdef _WIN32
+#if WINVER < _WIN32_WINNT_WIN7
+#if WINVER < _WIN32_WINNT_WIN8
+	_Struct_size_bytes_(Size) struct SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX {
+		LOGICAL_PROCESSOR_RELATIONSHIP Relationship;
+		DWORD Size;
+		union {
+			PROCESSOR_RELATIONSHIP Processor;
+			NUMA_NODE_RELATIONSHIP NumaNode;
+			CACHE_RELATIONSHIP Cache;
+			GROUP_RELATIONSHIP Group;
+			SHARED_COMPUTE_UNIT_RELATIONSHIP SharedComputeUnit;
+		} DUMMYUNIONNAME;
+	};
+	typedef struct _SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX, * PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX;
+#endif
+	DWORD slpiSizeExp, slpiSizeAct;
+	if (DarkEdif::Windows::Has7Plus())
+	{
+		std::vector<SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX> slpiEx;
+		BOOL(WINAPI* const GLPIExFunc)(PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX, PDWORD) =
+			(decltype(GLPIExFunc))GetProcAddress(GetModuleHandle(_T("kernel32")), "GetLogicalProcessorInformationEx");
+		assert(GLPIExFunc);
+		while (true)
+		{
+			slpiEx.push_back({});
+			slpiSizeAct = slpiSizeExp = slpiEx.size() * sizeof(slpiEx[0]);
+			if (GLPIExFunc(&slpiEx[0], &slpiSizeAct) && slpiSizeAct <= slpiSizeExp)
+				break;
 
+			if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+			{
+				DarkEdif::MsgBox::Error(_T("!!"), _T("Error code: %u."), GetLastError());
+				break;
+			}
+			if (slpiSizeAct < slpiSizeExp && !(slpiSizeAct % sizeof(slpi[0])))
+				slpi.resize((slpiSizeAct / sizeof(slpi[0])) - 1);
+		}
+		// extra data?
+		if (slpiSizeAct % sizeof(slpiEx[0]))
+		{
+			DarkEdif::MsgBox::Error(_T("!!"), _T("Extra data: %zu (%zu bytes) is actually %zu, has %zu extra bytes."),
+				slpiEx.size(), slpiSizeExp,
+				slpiSizeAct, slpiSizeAct % sizeof(slpiEx[0]));
+			slpiEx.erase(slpiEx.cend());
+		}
+	}
+	else
+	{
+		std::vector<SYSTEM_LOGICAL_PROCESSOR_INFORMATION> slpi;
+		BOOL(WINAPI* const GLPIFunc)(PSYSTEM_LOGICAL_PROCESSOR_INFORMATION, PDWORD) =
+			(decltype(GLPIFunc))GetProcAddress(GetModuleHandle(_T("kernel32")), "GetLogicalProcessorInformation");
+		assert(GLPIFunc);
+		while (true)
+		{
+			slpi.push_back({});
+			slpiSizeAct = slpiSizeExp = slpi.size() * sizeof(slpi[0]);
+			if (GLPIFunc(&slpi[0], &slpiSizeAct) && slpiSizeAct <= slpiSizeExp)
+				break;
+
+			if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+			{
+				DarkEdif::MsgBox::Error(_T("!!"), _T("Error code: %u."), GetLastError());
+				break;
+			}
+			if (slpiSizeAct < slpiSizeExp && !(slpiSizeAct % sizeof(slpi[0])))
+				slpi.resize((slpiSizeAct / sizeof(slpi[0])) - 1);
+		}
+		// extra data?
+		if (slpiSizeAct % sizeof(slpi[0]))
+		{
+			DarkEdif::MsgBox::Error(_T("!!"), _T("Extra data: %zu (%zu bytes) is actually %zu, has %zu extra bytes."),
+				slpi.size(), slpiSizeExp,
+				slpiSizeAct, slpiSizeAct % sizeof(slpi[0]));
+			slpi.erase(slpi.cend());
+		}
+		struct CPUCore {
+			int baseFrequencyMHz;
+			int turboFrequencyMHz;
+			//
+			int curFrequencyMHz;
+			int maxFrequencyMHz;
+		};
+		struct CPUPackage {
+			bool isEfficiency = false;
+			int numCores = 0;
+			int numLogicalProcessors = 0;
+			std::vector<int> coreStockMHz;
+			int (*mHZAtCore)(int);
+			int mHZTotal(int);
+		};
+		std::vector<CPUPackage> packages;
+		std::optional<CPUPackage> cur;
+
+		for (const auto& i : slpi)
+		{
+			if (i.Relationship == RelationProcessorCore)
+			{
+				++cur->numCores;
+				cur->numLogicalProcessors += __builtin_popcount(i.ProcessorMask);
+				CallNtPowerInformation()
+				int cpuInfo[4];
+				__cpuid(cpuInfo, 0x16);
+				CallNtPowerInformation()
+				cur->coreStockMHz = i.
+			}
+			else if (i.Relationship == RelationProcessorPackage)
+			{
+				if (cur.has_value())
+					packages.emplace_back(CPUPackage());
+				cur = CPUPackage();
+			}
+		}
+	}
 	/*
-		This is where you'd do anything you'd do in CreateRunObject in the original SDK
+		Windows: Use GetLogicalProcessorInformationEx() and group cores by EfficiencyClass to get P/E.
+			Win11+ has EfficiencyClass; lower doesn't.
+			Current frequency sometimes available with __cpuid(int[4], 0x16), EAX = Base MHz, EBX = Max MHz, ECX = Bus MHz
+			CallNtPowerInformation(ProcessorInformation or ProcessorPerformanceInformation, xx)
+				requires #include <powrprof.h> #pragma comment(lib, "PowrProf.lib")
 
-		It's the only place you'll get access to edPtr at runtime, so you should transfer
-		anything from edPtr to the extension class here.
-
+		Android/Linux: Read /sys/devices/system/cpu/cpu##/cpufreq/cpuinfo_max_freq (or cpu_capacity if available)
+			and group cores with the same capacity/frequency into clusters.
+		macOS/iOS: Prefer the undocumented hw.perflevel*.physicalcpu and hw.perflevel*.logicalcpu sysctls when available,
+			falling back to just total physical / logical core counts if they aren't present.
 	*/
 
-#ifdef __ANDROID__
+#elif defined(__ANDROID__)
 	do {
 		androidSensorManager = ASensorManager_getInstance();
 		if (androidSensorManager == NULL) {

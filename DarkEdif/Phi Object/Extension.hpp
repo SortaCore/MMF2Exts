@@ -57,6 +57,7 @@ public:
 	std::vector<std::tstring> errorList;
 	Edif::recursive_mutex errorListLock;
 	std::vector<std::tstring> frameNames;
+	std::size_t cpuProcessorCount, cpuCoreCount = 0;
 
 	void GetFrameNames();
 
