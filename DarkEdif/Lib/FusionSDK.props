@@ -63,6 +63,7 @@
 
 		<!-- For ..\Inc and ..\Lib; OpenCV is in two levels of subfolders. -->
 		<SDKRootFolder>..</SDKRootFolder>
+		<SDKRootFolder Condition="Exists('$(ProjectDir)\Lib\FusionSDK.props')">.</SDKRootFolder>
 		<SDKRootFolder Condition="$(ProjectDir.Contains('OpenCV'))">..\..\..</SDKRootFolder>
 		<!--<SDKRootFolder>$([System.IO.Path]::GetFullPath('$(SDKRootFolder)'))</SDKRootFolder>-->
 
@@ -402,7 +403,7 @@
 		<IntDir>$(_FusionSDKTempDir)\</IntDir>
 
 		<!-- Minifies JSON file and builds call table for runtimes that lack A/C/E ASM -->
-		<DarkEdifPreBuildToolParams>/ProjName="$(ExtName)" /TargetPlat="$(_TargetPlatInclMac)" /TargetArch="$(TargetArch)" /MacroInputFile="$(SDKRootFolder)\Lib\Shared\ACECallTable_Macro.cpp"  /MacroOutputFile="$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp" /JSONInputPathToMinify="$(ProjectDir)\DarkExt.json" /FusionConfigIniPath="$(_FusionSDKConfigIniPath)" /UsingSmartPropertySystem=$(UsingSmartPropertySystem) /ExtDisplayType=$(DarkEdif_DisplayType) /IsTextExt=$(DarkEdif_OEFLAGTextPresent) /IsPausableExt=$(DarkEdif_PausableExt)</DarkEdifPreBuildToolParams>
+		<DarkEdifPreBuildToolParams>/ProjName="$(ExtName)" /TargetPlat="$(_TargetPlatInclMac)" /TargetArch="$(TargetArch)" /MacroInputFile="$(SDKRootFolder)\Lib\Shared\ACECallTable_Macro.cpp"  /MacroOutputFile="$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp" /JSONInputPathToMinify="$(ProjectDir)\DarkExt.json" /FusionConfigIniPath="$(_FusionSDKConfigIniPath)" /UsingSmartPropertySystem=$(UsingSmartPropertySystem) /ExtDisplayType=$(DarkEdif_DisplayType) /IsTextExt=$(DarkEdif_OEFLAGTextPresent) /IsPausableExt=$(DarkEdif_PausableExt) /SDKRootFolder="$(SDKRootFolder)"</DarkEdifPreBuildToolParams>
 	</PropertyGroup>
 	<!-- Worth noting a When cannot contain a ItemDefinitionGroup -->
 	<ItemDefinitionGroup Label="Configuration">

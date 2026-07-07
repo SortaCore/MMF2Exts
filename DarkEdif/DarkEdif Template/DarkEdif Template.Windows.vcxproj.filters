@@ -24,6 +24,21 @@
     <ClInclude Include="..\Inc\Windows\WindowsSurface.hpp">
       <Filter>Global to all extensions</Filter>
     </ClInclude>
+    <ClInclude Include="..\Inc\Windows\CFile.hpp">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\Windows\Palet.hpp">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\Windows\ObjectInfo.hpp">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\Windows\FilterMgr.hpp">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\Windows\ImageFlt.hpp">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Icon.png">

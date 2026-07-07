@@ -72,6 +72,11 @@
     <ClCompile Include="Edittime.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Inc\Windows\CFile.hpp" />
+    <ClInclude Include="..\Inc\Windows\FilterMgr.hpp" />
+    <ClInclude Include="..\Inc\Windows\ImageFlt.hpp" />
+    <ClInclude Include="..\Inc\Windows\ObjectInfo.hpp" />
+    <ClInclude Include="..\Inc\Windows\Palet.hpp" />
     <ClInclude Include="..\Inc\Windows\Props.hpp" />
     <ClInclude Include="..\Inc\Windows\WindowsSurface.hpp" />
     <ClInclude Include="..\Inc\Windows\WindowsDefines.hpp" />
