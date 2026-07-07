@@ -73,3 +73,7 @@
 *.plist text eol=lf
 *.java text eol=lf
 CodeResources text eol=lf
+
+# HelpNDoc and generated compressed help files
+*.hnd binary
+*.chm binary
