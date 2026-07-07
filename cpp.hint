@@ -17,6 +17,17 @@
 #define lw_downgrade_to(x) downgrade(lw_rwlock_debugParamDefs, x)
 //#endif
 #define z_const
-#define FusionAPIImport __declspec(dllimport)
-#define FusionAPI __stdcall
+#define FusionAPIImport /* no op */
+#define FusionAPI /* no op */
 #define PrintFHintAfter(formatParamIndex, dotsParamIndex) /* no op */
+#define EXDEF { __assume(0); }
+#define ProjectFunc /* no op */
+#define DLLExport32 /* no op */
+#define npWin void *
+#define Fusion64APISwitch /* no op */
+#define FusionANSIWarning /* no op */
+#define CRunApp CRunAppMultiPlat
+#define CRunFrame CRunFrameMultiPlat
+#define NO_DEFAULT_CTORS_OR_DTORS(x) /* no op */
+#define NO_DEFAULT_CTORS(x) /* no op */
+#define DarkEdifInternalAccessProtected protected

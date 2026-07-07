@@ -104,7 +104,7 @@ using namespace std::string_view_literals;
 #elif defined(__clang__) && !defined (__INTELLISENSE__)
 	#define PrintFHintInside /* no op */
 	// Defined after a C printf-style function declaration to allow code analysers to check the %x are correct type
-	#define PrintFHintAfter(formatParamIndex,dotsParamIndex) __printflike(formatParamIndex, dotsParamIndex)
+	#define PrintFHintAfter(formatParamIndex,dotsParamIndex) __attribute__((format(printf, formatParamIndex, dotsParamIndex)))
 #else
 	// Defined inside a C printf-style function declaration + definition to allow code analysers to check argument types.
 	#define PrintFHintInside /* no op */
@@ -335,10 +335,10 @@ enum_class_is_a_bitmask(TextCapacity);
 
 // ==================================================================================================
 // DarkEdif logging and macros.
-// 
+//
 // These are printf-based, and expect a newline at end:
 // LOGI(_T("Some text with variable: %d\n"), 50);
-// 
+//
 // Log levels are based on the ANDROID_LOG_XXX enum; in order of highest to lowest severity:
 // LOGF, LOGE, LOGW, LOGI, LOGD, LOGV.
 //
@@ -354,6 +354,7 @@ enum_class_is_a_bitmask(TextCapacity);
 #define DARKEDIF_LOG_FATAL 7
 namespace DarkEdif {
 	void Log(int logLevel, PrintFHintInside const TCHAR* msgFormat, ...) PrintFHintAfter(2,3);
+	[[noreturn]] void LOGFInternal(PrintFHintInside const TCHAR* msgFormat, ...) PrintFHintAfter(1, 2);
 }
 
 #ifndef DARKEDIF_LOG_MIN_LEVEL
@@ -419,16 +420,12 @@ namespace DarkEdif {
 #define NO_DEFAULT_CTORS_OR_DTORS(className) \
 	className() = delete; \
 	~className() = delete; \
-	className(className&) = delete; \
 	className(className&&) = delete; \
-	className(const className&) = delete; \
-	className(const className&&) = delete;
+	className(const className&) = delete;
 #define NO_DEFAULT_CTORS(className) \
 	className() = delete; \
-	className(className&) = delete; \
 	className(className&&) = delete; \
-	className(const className&) = delete; \
-	className(const className&&) = delete;
+	className(const className&) = delete;
 
 struct extHeader final
 {
@@ -696,8 +693,22 @@ enum class RunSpriteFlag : std::uint16_t {
 	Rotate_Antialias = 0x10,
 	// Object is visible, flashing accounted for, layer visibility not accounted for - overridden by Hidden flag
 	Visible = 0x20,
-	// Runtime use only: Object's effect has been constructed in runtime side
+
+#ifndef __JAVASCRIPT__
+	// For runtime use only: Object's effect has been constructed in runtime side
+	// Value used differently in JS based runtimes
 	Created_Effect = 0x40
+#else // JavaScript-based runtime
+	// Probably JS based CSprite and CRSpr flags were conflated,
+	// as Rambo is SF_RAMBO, in non-JS based, used in CSprite sprFlags only,
+
+	// RSFLAG_RAMBO: HTML5/UWP: Enables collision detection,
+	// used in place of CSprite.sprFlags and its SpriteFlag::Rambo
+	Rambo = 0x40,
+	// RSFLAG_COLBOX: HTML5/UWP: Collision based on rectangle, not fine collision,
+	// used in place of CSprite.sprFlags and its SpriteFlag::Rambo
+	CollisionBox = 0x80,
+#endif // JavaScript
 }; // RSFLAG_XX enum
 enum_class_is_a_bitmask(RunSpriteFlag);
 
@@ -765,3 +776,100 @@ enum class BlitOperation {
 };
 enum_class_is_a_bitmask(BlitOperation);
 
+
+// Sprite flags (SF_XX enum)
+// @remarks Source: a list of defines, gathered from CSprite.java/m/h
+enum class SpriteFlag : std::uint32_t
+{
+#ifndef __APPLE__
+	// SF_RAMBO: Flag for "collides into everyone".
+	// Different value in iOS/Mac.
+	// Seems to decide if collision checks are run,
+	// but in Android is usually reset to true by movements.
+	Rambo = 0x00000001,
+#else // Apple
+	// SF_TOKILL: Marked for destruction
+	// Different value in Windows/Android.
+	ToKill = 0x00000001,
+#endif // Apple
+	// SF_RECALCSURF: Recalculates surface (if rotated or stretch)
+	// Commented out in Android/iOS, may not be used anymore
+	RecalcSurf = 0x00000002,
+	// SF_PRIVATE: Internal flag used for fade destruction
+	Private = 0x00000004,
+	// SF_INACTIF: Inactive: redraw only if intersecting another object
+	Inactive = 0x00000008,
+	// SF_TOHIDE: Marked for hiding
+	ToHide = 0x00000010,
+#ifdef __APPLE__
+	// SF_RAMBO: Flag for "collides into everyone".
+	// Different value in Windows/Android.
+	// Seems to decide if collision checks are run,
+	// but in Android is usually reset to true by movements.
+	Rambo = 0x00000020,
+#else // not Apple
+	// SF_TOKILL: Marked for destruction
+	// Different value in iOS/Mac.
+	ToKill = 0x00000020,
+#endif // not Apple
+
+	// SF_REAF: Marked for redraw
+	Redraw = 0x00000040,
+	// SF_HIDDEN: Currently hidden by set invisible; see Disabled flag
+	Hidden = 0x00000080,
+	// SF_COLBOX: Use bounding-box collision detection, rather than fine collision
+	BoxCollision = 0x00000100,
+	// SF_NOSAVE: Do not save background
+	NoBackgroundSave = 0x00000200,
+	// SF_FILLBACK: Fill background with solid color
+	FillBackgroundWithColor = 0x00000400,
+	// SF_DISABLED: Indicates alpha/semi-transp value shows full transparency; also see flag
+	Disabled = 0x00000800,
+	// SF_REAFINT: Redraw internal-use flag (seems only to be turned off in runtimes)
+	Redraw_Internal = 0x00001000,
+	// SF_OWNERDRAW: Drawn by owner, not by runtime rendering sprImg. See also RunSpriteFlag::OwnerDraw.
+	OwnerDraw = 0x00002000,
+	// SF_OWNERSAVE: Background save handled by owner.
+	// @remarks See OEFLAGS::INTERNAL_BACK_SAVE, and HeaderObject::hoBackSave.
+	OwnerBackgroundSave = 0x00004000,
+	// SF_FADE: Internal flag indicating fade
+	Fade = 0x00008000,
+	// SF_OBSTACLE: Obstacle
+	Obstacle = 0x00010000,
+	// SF_PLATFORM: Platform
+	Platform = 0x00020000,
+	// SF_BACKGROUND: Backdrop object
+	Background = 0x00080000,
+	// SF_SCALE_RESAMPLE: Resample when scaling
+	ScaleResample = 0x00100000,
+	// SF_ROTATE_ANTIA: Antialias when rotating
+	Rotate_Antialis = 0x00200000,
+	// SF_NOHOTSPOT: Ignore hotspot/origin
+	NoHotspot = 0x00400000,
+	// SF_OWNERCOLMASK: Owner-drawn sprite provides collision mask
+	OwnerDrawn_CollisionMask = 0x00800000,
+	// SF_UPDATECOLLIST: Update collision list
+	UpdateCollisionList = 0x10000000,
+
+#if defined(__APPLE__)
+	// SF_NOKILLDATA: iOS/Mac: Does not kill the sprite data when killing the sprite.
+	// Only checked for when OwnerDraw is also set, in CSpriteGen::KillSprite()
+	NoKillData = 0x20000000,
+
+	// Notes for posterity
+#elif 0
+	// SF_ANTIALIASING: Android: Antialias when rendering
+	// iOS/Mac use NoKillData for this value.
+	// May be a typo and meant to be BlitOperation::Antialias,
+	// as EFFECTFLAG_ANTIALIAS is also defined there to the same value,
+	// and both are stored in rsCreationFlags.
+	// @remarks Android does not seem to reference SF_ANTIALIASING or SF_NOKILLDATA
+	// in the runtime java files. It may be used in the display SOs.
+	// Note that Android display doesn't implement GetRunObjectSurface,
+	// so possibly that's the difference.
+	Antialiasing = 0x20000000,
+	// SF_TRUEOBJECT: XNA: Used with software QuickDisplay drawing
+	TrueObject = 0x20000000,
+#endif
+};
+enum_class_is_a_bitmask(SpriteFlag);

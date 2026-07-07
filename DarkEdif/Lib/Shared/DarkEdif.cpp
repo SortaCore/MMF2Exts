@@ -1,3 +1,6 @@
+// Suppress warnings for popping up for DE's own internal usage
+#define DARKEDIF_INTERNAL_INCLUDE
+
 #include "Common.hpp"
 #include "Extension.hpp"
 #include <atomic>
@@ -1768,79 +1771,6 @@ BOOL DarkEdif::DLL::DLL_IsPropEnabled(mv * mV, EDITDATA * edPtr, unsigned int Pr
 	return FALSE;
 }
 
-int FusionAPI EnumElts(mv* mV, EDITDATA* edPtr, ENUMELTPROC enumProc, ENUMELTPROC undoProc, LPARAM p1, LPARAM p2)
-{
-#pragma DllExportHint
-	LOGV(_T("Call to %s with edPtr %p.\n"), _T(__FUNCTION__), edPtr);
-	// Note from Yves that the textual font properties - that is, TEXT_OEFLAG_EXTENSION,
-	// GetTextFont(), do not need their fonts enumed here, they are automatically grabbed during build.
-	//
-	// Direct3D 11 apps:	All LOGFONT used by TEXT_OEFLAG_EXTENSION automatically stored.
-	//						Only TTF fonts are supported by D3D11.
-	// Direct3D 8 + 9 apps: Will need to use Font Embed object, the one for Windows.
-	//						It's manual: you embed the font yourself in Data Elements,
-	//						then extract it at runtime, then pass the extracted path to its action.
-	//						This supports all fonts.
-	// Android apps:		Requires the Android Font Embed object to embed fonts.
-	// iOS + Mac apps:		You have to manually add the font into your xcodeproj's Resources,
-	//						and then add them to the plist as UIAppFonts. Don't just put them in
-	//						the Resources directory, you must link them.
-	//						You may also need to add the font to Build Phases.
-	//						https://community.clickteam.com/forum/thread/67739-custom-fonts/
-
-	// Note that enumProc may change the image or font number passed to it.
-	int error = 0;
-	std::vector<std::pair<std::uint16_t*, int>> IdAndType;
-
-	const auto& realProps = Elevate(edPtr->Props);
-	if (realProps.propVersion != 'DAR2')
-	{
-		DarkEdif::MsgBox::Error(_T("DarkEdif property error"), _T("Properties aren't as expected inside EnumElts()."));
-		return 0;
-	}
-
-	const DarkEdif::Properties::Data* d = realProps.Internal_FirstData();
-	for (std::size_t i = 0, j = realProps.numProps; i < j; ++i)
-	{
-		if (d->propTypeID == Edif::Properties::IDs::PROPTYPE_FONT)
-		{
-			LOGV(_T("Adding font of property %s from font bank ID %hu.\n"),
-				UTF8ToTString(d->ReadPropName()).c_str(), *(std::uint16_t*)d->ReadPropValue());
-			if ((error = enumProc((std::uint16_t*)d->ReadPropValue(), FONT_TAB, p1, p2)) != 0)
-			{
-				MsgBox::Error(_T("EnumElts"), _T("Adding font property %s, font ID %hu failed! Error %d.\n"),
-					UTF8ToTString(d->ReadPropName()).c_str(), *(std::uint16_t *)d->ReadPropValue(), error);
-				goto postLoop;
-			}
-			IdAndType.emplace_back(std::make_pair((std::uint16_t*)d->ReadPropValue(), FONT_TAB));
-		}
-		else if (d->propTypeID == Edif::Properties::IDs::PROPTYPE_IMAGELIST)
-		{
-			ImgListProperty* imgProp = (ImgListProperty*)d->ReadPropValue();
-			LOGV(_T("Adding images of property %s, num IDs %hu...\n"),
-				UTF8ToTString(d->ReadPropName()).c_str(), imgProp->numImages);
-			for (std::size_t i = 0; i < imgProp->numImages; ++i)
-			{
-				if ((error = enumProc(&imgProp->imageIDs[i], IMG_TAB, p1, p2)) != 0)
-				{
-					MsgBox::Error(_T("EnumElts"), _T("Adding image of property %s, ID %hu failed! Error %d.\n"),
-						UTF8ToTString(d->ReadPropName()).c_str(), imgProp->imageIDs[i], error);
-					goto postLoop;
-				}
-				IdAndType.emplace_back(std::make_pair(&imgProp->imageIDs[i], IMG_TAB));
-			}
-		}
-		d = d->Next();
-	}
-postLoop:
-	// In case of error, undo it
-	if (error != 0)
-	{
-		for (int i = IdAndType.size() - 1; i >= 0; --i)
-			undoProc(std::get<0>(IdAndType[i]), std::get<1>(IdAndType[i]), p1, p2);
-	}
-	return error;
-}
 
 struct Properties::PreSmartPropertyReader : Properties::PropertyReader
 {
@@ -4811,12 +4741,12 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 				{
 					if (Property["Case"sv].type != json_type::json_none)
 					{
-						MsgBox::WarningOK(_T("DarkEdif JSON property"), _T(R"(Property "%s" is set to "Case"="%hs", but that won't work with property type %hs.)"),
+						MsgBox::WarningOK(errorPrefix, _T(R"(Property "%s" is set to "Case"="%hs", but that won't work with property type %hs.)"),
 							UTF8ToTString(Property["Title"sv]).c_str(), Property["Case"sv].c_str(), Names[CurrentProperty->Type_ID % 1000]);
 					}
 					if (Property["Password"sv].type != json_type::json_none)
 					{
-						MsgBox::WarningOK(_T("DarkEdif JSON property"), _T("Property \"%s\" is set to password mask, but that won't work with property type %hs."),
+						MsgBox::WarningOK(errorPrefix, _T("Property \"%s\" is set to password mask, but that won't work with property type %hs."),
 							UTF8ToTString(Property["Title"sv]).c_str(), Names[CurrentProperty->Type_ID % 1000]);
 					}
 				}
@@ -4861,7 +4791,7 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 				if (std::any_of(Edif::SDK->EdittimePropertySets.cbegin(), Edif::SDK->EdittimePropertySets.cend(),
 					[i](const auto& es) { return es.nameListIdx == i; }))
 				{
-					MsgBox::Error(_T("DarkEdif JSON property"), _T("Items detected in a property set list box %s."),
+					MsgBox::Error(errorPrefix, _T("Items detected in a property set list box %s."),
 						UTF8ToTString(Property["Title"sv]).c_str());
 					SetAllProps(PROPOPT_PARAMREQUIRED, NULL);
 					break;
@@ -4870,7 +4800,7 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 				const json_value& itemsJSON = Property["Items"sv];
 				if (itemsJSON.type != json_type::json_array || itemsJSON.u.array.length == 0)
 				{
-					MsgBox::Error(_T("DarkEdif JSON property"), _T("No Items detected in combobox property %s."),
+					MsgBox::Error(errorPrefix, _T("No Items detected in combobox property %s."),
 						UTF8ToTString(Property["Title"sv]).c_str());
 				}
 
@@ -4903,7 +4833,7 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 							sizeEntry[0].type != json_type::json_integer || sizeEntry[1].type != json_type::json_integer ||
 							(json_int_t)sizeEntry[0] < 0 || (json_int_t)sizeEntry[1] < 0)
 						{
-							DarkEdif::MsgBox::Error(_T("DarkEdif JSON property"), _T("Invalid preset size index %d in size property %s."),
+							MsgBox::Error(errorPrefix, _T("Invalid preset size index %d in size property %s."),
 								index, UTF8ToTString(Property["Title"sv]).c_str());
 						}
 
@@ -4919,7 +4849,7 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 				}
 				if (presetList.type != json_type::json_none)
 				{
-					DarkEdif::MsgBox::Error(_T("DarkEdif JSON property"), _T("Invalid PresetSizes array in size property %s."),
+					MsgBox::Error(errorPrefix, _T("Invalid PresetSizes array in size property %s."),
 						UTF8ToTString(Property["Title"sv]).c_str());
 				}
 
@@ -4941,9 +4871,90 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 
 			// Edit box + browse file button, Parameter = FilenameCreateParams
 			case PROPTYPE_FILENAME:
-			case PROPTYPE_PICTUREFILENAME:
-				SetAllProps(0, NULL);
+			{
+				const auto& filters = Property["Filters"sv];
+				std::tstring filterName;
 
+				if (filters.type == json_none)
+					filterName = _T("All files (*.*)|*.*|"s);
+				else if (filters.type != json_array)
+				{
+					MsgBox::Error(errorPrefix, _T("Property \"Filters\" must be a filter string or array of filter strings."));
+				}
+				else
+				{
+					for (unsigned int i = 0; i < filters.u.array.length; ++i)
+					{
+						const auto& filter = filters[i];
+						if (filter.type != json_array)
+						{
+							MsgBox::Error(errorPrefix, _T("Invalid file filter type; property ID %u must be an array containing the display name, then the corresponding file extensions array."), i);
+							break;
+						}
+						else if (filter.u.array.length != 2)
+						{
+							MsgBox::Error(errorPrefix, _T("File filter index %u must have 2 elements; a display name string, then afterwards the corresponding file extensions array."), i);
+							break;
+						}
+						else if (filter[0].type != json_string)
+						{
+							MsgBox::Error(errorPrefix, _T("File filter index %u's first element must be a display name string."), i);
+							break;
+						}
+
+						std::tstring filterDisplay = UTF8ToTString(filter[0]);
+						if (filterDisplay.find(_T('|')) != std::tstring::npos)
+						{
+							MsgBox::Error(errorPrefix, _T("File filter index %u's display name must not have a \"|\" character. Fusion uses it to seperate file extension names and file extensions themselves."), i);
+							break;
+						}
+
+						filterName += filterDisplay + _T("|"s);
+
+						const auto& filterExts = filter[1];
+						if (filterExts.type == json_array)
+						{
+							if (filterExts.u.array.length < 1)
+							{
+								MsgBox::Error(errorPrefix, _T("File filter index %u's file extensions array is empty."), i);
+								break;
+							}
+
+							for (unsigned int j = 0; j < filterExts.u.array.length; ++j)
+							{
+								const auto& filterExt = filterExts[j];
+								if (filterExt.type != json_string)
+								{
+									MsgBox::Error(errorPrefix, _T("File filter index %u, file extension index %u must be a string."), i, j);
+									break;
+								}
+
+								filterName += UTF8ToTString(filterExt) + _T(";"s);
+							}
+						}
+						else if (filterExts.type == json_string)
+							filterName += UTF8ToTString(filterExts) + _T(";"s);
+						else
+						{
+							MsgBox::Error(errorPrefix, _T("File filter index %u's second element must be either an array of file extension strings or a single file extension."), i);
+						}
+						filterName += _T("|"sv);
+					}
+				}
+
+				// TODO: this is a memory leak, but fixing it via GetPropCreateParam
+				// will mean JSON isn't validated until object is selected and props fully loaded,
+				// rather than error check on object create.
+				FilenameCreateParam * p = new FilenameCreateParam {};
+				p->extFilter = Edif::ConvertString(TStringToUTF8(filterName));
+				p->options = OFN_FILEMUSTEXIST | OFN_EXPLORER;
+				SetAllProps(PROPOPT_PARAMREQUIRED, p);
+			}
+			case PROPTYPE_PICTUREFILENAME:
+			{
+				bool includeAnimations = (bool)Property["UseAnimationFiles"sv];
+				SetAllProps(PROPOPT_PARAMREQUIRED, includeAnimations);
+			}
 			// Font dialog box
 			case PROPTYPE_FONT:
 				SetAllProps(0, NULL);
@@ -5373,7 +5384,7 @@ void DarkEdif::FontInfoMultiPlat::SetFont(const jobject ptr) {
 	JavaAndCString str((jstring)threadEnv->GetObjectField(ptr, lfFaceName));
 	fontNameDesired = str.str();
 }
-#else // apple
+#elif defined(__APPLE__)
 DarkEdif::FontInfoMultiPlat::FontInfoMultiPlat(CFontInfo* ptr) {
 	cfontinfo = ptr;
 	SetFont(cfontinfo);
@@ -5387,7 +5398,8 @@ void DarkEdif::FontInfoMultiPlat::SetFont(const void * ptr2) {
 	strikeOut = ptr->lfStrikeOut != 0;
 	fontNameDesired = [ptr->lfFaceName UTF8String];
 }
-
+#else
+	#error Unexpected platform
 #endif
 
 DarkEdif::FontInfoMultiPlat::FontInfoMultiPlat() {
@@ -5441,7 +5453,7 @@ std::tstring DarkEdif::FontInfoMultiPlat::GetActualFontName() {
 	// Font names may be localised, particularly for CJK and English.
 	// Hat tip: https://stackoverflow.com/a/7193439
 	// See a workaround: https://chromium.googlesource.com/chromium/blink/+/e2b472488d4a23f4eb7acdf2d590d513b802820e/Source/platform/fonts/win/FontCacheWin.cpp#64
-	HWND ourWin = Edif::SDK->mV->RunApp->hEditWin;
+	HWND ourWin = DarkEdif::Internal_WindowHandle;
 	HDC ourDC = GetDC(ourWin);
 	if (ourDC == NULL)
 		return LOGE(_T("Couldn't get original DC, error %u."), GetLastError()), _T("<error>"s);
@@ -5677,8 +5689,10 @@ int DarkEdif::GetCurrentFusionEventNum(const Extension * const ext)
 	}
 
 	return threadEnv->CallIntMethod(ext->javaExtPtr, getEventIDMethod);
-#else // iOS
+#elif defined(__APPLE__)
 	return DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, getCurrentFusionEventNum)(ext->objCExtPtr);
+#else
+	#error Unexpected platform
 #endif
 }
 
@@ -5716,8 +5730,10 @@ std::tstring DarkEdif::MakePathUnembeddedIfNeeded(const Extension * ext, const s
 	JavaAndCString newPath((jstring)threadEnv->CallObjectMethod(ext->javaExtPtr, getEventIDMethod, origPath.javaRef));
 	// Copy the C++ memory out into its own variable
 	const std::string truePath(newPath.str());
-#else
+#elif defined(__APPLE__)
 	const std::string truePath = DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, makePathUnembeddedIfNeeded)(ext->objCExtPtr, std::string(filePath).c_str());
+#else
+	#error Unexpected platform
 #endif
 	if (filePath != truePath)
 		LOGV(_T("File path extracted from \"%s\" to \"%s\".\n"), std::tstring(filePath).c_str(), truePath.c_str());
@@ -6273,7 +6289,7 @@ void DarkEdif::LOGFInternal(PrintFHintInside const TCHAR * x, ...)
 	DarkEdif::MsgBox::Error(_T("Fatal error"), _T("%s"), buf);
 	std::abort();
 }
-#else // APPLE
+#elif defined(__APPLE__)
 
 #include <unistd.h>
 #include <sys/syscall.h>
@@ -6410,6 +6426,8 @@ void DarkEdif::LOGFInternal(PrintFHintInside const TCHAR * x, ...)
 	va_end(va);
 	exit(EXIT_FAILURE);
 }
+#else
+	#error Unexpected platform
 #endif
 
 
@@ -6436,7 +6454,7 @@ bool DarkEdif::IsDebuggerAttached()
 				return std::stoi(line.substr(10)) != 0;
 		// if no match, fall thru
 	}
-#else // APPLE
+#elif defined(__APPLE__)
 	// Apple is heavily sandboxed. This solution seems like it should work on non-jailbroken iOS.
 	// Other possible alternatives for Apple: getppid() != 1 or isatty(STDERR_FILENO)
 	int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid() };
@@ -6447,7 +6465,9 @@ bool DarkEdif::IsDebuggerAttached()
 	if (!sysctl(mib, 4, &info, &size, nullptr, 0))
 		return (info.kp_proc.p_flag & P_TRACED) != 0;
 	LOGE(_T("Couldn't detect debugger: sysctl() returned error %d\n"), errno);
-#endif // Apple
+#else
+	#error Unexpected platform
+#endif
 
 #ifdef _DEBUG
 	// If debug, if debugger detect fails, we'll assume a debugger is present.
@@ -6794,7 +6814,7 @@ namespace DarkEdif
 
 		// To not make this ANSI ext clobber the debugger's text with replacement characters,
 		// we always talk to CF2.5+ with Wide characters
-		
+
 		// Move caret to end of Fusion debugger text
 		int curTextLen = GetWindowTextLengthW(CF25PlusEditBoxHandle);
 		// On error, default to passing -1, -1, which resets caret
@@ -6900,6 +6920,86 @@ void FusionAPI EditDebugItem(RUNDATA *rdPtr, int id)
 #endif // EditorBuild
 
 #endif // USE_DARKEDIF_FUSION_DEBUGGER
+
+#ifdef _WIN32
+// Called by Fusion edittime and runtime, requesting IDs used in the element banks (image bank, font bank)
+// @remarks There are only object property types for images and fonts, but there are banks
+//			for samples, collision masks and image HWA textures as well; see BK_XX enum in Cnpdll.h
+int FusionAPI EnumElts(mv* mV, EDITDATA* edPtr, ENUMELTPROC enumProc, ENUMELTPROC undoProc, LPARAM p1, LPARAM p2)
+{
+#pragma DllExportHint
+	LOGV(_T("Call to %s with edPtr %p.\n"), _T(__FUNCTION__), edPtr);
+
+	// Note from Yves that the textual font properties - that is, TEXT_OEFLAG_EXTENSION,
+	// GetTextFont(), do not need their fonts enumed here, they are automatically grabbed during build.
+	//
+	// Direct3D 11 apps:	All LOGFONT used by TEXT_OEFLAG_EXTENSION automatically stored.
+	//						Only TTF fonts are supported by D3D11.
+	// Direct3D 8 + 9 apps: Will need to use Font Embed object, the one for Windows.
+	//						It's manual: you embed the font yourself in Data Elements,
+	//						then extract it at runtime, then pass the extracted path to its action.
+	//						This supports all fonts.
+	// Android apps:		Requires the Android Font Embed object to embed fonts.
+	// iOS + Mac apps:		You have to manually add the font into your xcodeproj's Resources,
+	//						and then add them to the plist as UIAppFonts. Don't just put them in
+	//						the Resources directory, you must link them.
+	//						You may also need to add the font to Build Phases.
+	//						https://community.clickteam.com/forum/thread/67739-custom-fonts/
+
+	// Note that enumProc may change the image or font number passed to it.
+	int error = 0;
+	std::vector<std::pair<std::uint16_t*, int>> IdAndType;
+
+	const auto& realProps = Elevate(edPtr->Props);
+	if (realProps.propVersion != 'DAR2')
+	{
+		DarkEdif::MsgBox::Error(_T("DarkEdif property error"), _T("Properties aren't as expected inside EnumElts()."));
+		return 0;
+	}
+
+	const DarkEdif::Properties::Data* d = realProps.Internal_FirstData();
+	for (std::size_t i = 0, j = realProps.numProps; i < j; ++i)
+	{
+		if (d->propTypeID == Edif::Properties::IDs::PROPTYPE_FONT)
+		{
+			LOGV(_T("Adding font of property %s from font bank ID %hu.\n"),
+				UTF8ToTString(d->ReadPropName()).c_str(), *(std::uint16_t*)d->ReadPropValue());
+			if ((error = enumProc((std::uint16_t*)d->ReadPropValue(), FONT_TAB, p1, p2)) != 0)
+			{
+				MsgBox::Error(_T("EnumElts"), _T("Adding font property %s, font ID %hu failed! Error %d.\n"),
+					UTF8ToTString(d->ReadPropName()).c_str(), *(std::uint16_t*)d->ReadPropValue(), error);
+				goto postLoop;
+			}
+			IdAndType.emplace_back(std::make_pair((std::uint16_t*)d->ReadPropValue(), FONT_TAB));
+		}
+		else if (d->propTypeID == Edif::Properties::IDs::PROPTYPE_IMAGELIST)
+		{
+			ImgListProperty* imgProp = (ImgListProperty*)d->ReadPropValue();
+			LOGV(_T("Adding images of property %s, num IDs %hu...\n"),
+				UTF8ToTString(d->ReadPropName()).c_str(), imgProp->numImages);
+			for (std::size_t i = 0; i < imgProp->numImages; ++i)
+			{
+				if ((error = enumProc(&imgProp->imageIDs[i], IMG_TAB, p1, p2)) != 0)
+				{
+					MsgBox::Error(_T("EnumElts"), _T("Adding image of property %s, ID %hu failed! Error %d.\n"),
+						UTF8ToTString(d->ReadPropName()).c_str(), imgProp->imageIDs[i], error);
+					goto postLoop;
+				}
+				IdAndType.emplace_back(std::make_pair(&imgProp->imageIDs[i], IMG_TAB));
+			}
+		}
+		d = d->Next();
+	}
+postLoop:
+	// In case of error, undo it
+	if (error != 0)
+	{
+		for (int i = IdAndType.size() - 1; i >= 0; --i)
+			undoProc(std::get<0>(IdAndType[i]), std::get<1>(IdAndType[i]), p1, p2);
+	}
+	return error;
+}
+#endif // _WIN32
 
 static bool didLateInit = false;
 void DarkEdif::LateInit(Extension* ext)
@@ -7756,6 +7856,11 @@ DWORD WINAPI DarkEdifUpdateThread(void * pIsUniVer)
 				reportError = false;
 				updateLog << "The DNS provider couldn't find the update server; is your computer offline?\n"sv;
 			}
+			// This machine had internet, but doesn't anymore
+			else if (lastWSAError == WSAENETUNREACH) {
+				reportError = false;
+				updateLog << "The network is unreachable; is your computer offline?\n"sv;
+			}
 			// Server machine is online, but refusing connection - e.g. http service is offline
 			else if (lastWSAError == WSAECONNREFUSED) {
 				reportError = false;
@@ -7809,12 +7914,12 @@ DWORD WINAPI DarkEdifUpdateThread(void * pIsUniVer)
 #pragma warning (push)
 #pragma warning (disable: 4996)
 		struct hostent * host = gethostbyname(domain);
-#pragma warning (pop)
 
 		// Port 80, default of Darkwire hardcode IP: 80.229.219.2, network byte order
 		// We'll look it up on DNS in case Darkwire migrates, although we'll make every effort not to!
 		SOCKADDR_IN SockAddr = { AF_INET, htons(80), { (UCHAR)80, (UCHAR)229, (UCHAR)219, (UCHAR)2 } };
 		assert(SockAddr.sin_family == AF_INET && SockAddr.sin_port == htons(80) && SockAddr.sin_addr.s_addr == inet_addr("80.229.219.2"));
+#pragma warning (pop)
 
 		// DNS found, switch over; guaranteed IPv4 as we specified AF_INET
 		if (host != NULL)

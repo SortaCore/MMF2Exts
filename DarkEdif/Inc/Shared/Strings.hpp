@@ -122,3 +122,5 @@ namespace DarkEdif
 	[[nodiscard]] bool SVComparePrefix(const std::string_view& text, const std::string_view& prefix);
 }
 
+// VS 2017 won't define std::tolower without a manual include; later VS does
+#include <cctype>

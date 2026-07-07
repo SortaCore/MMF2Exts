@@ -204,8 +204,6 @@ namespace DarkEdif
 		}
 		Holder(C* clazz, T ptr, void (deleter)(C*,T)) :
 			clazz(clazz), ptr(ptr), deleter(deleter) { }
-		Holder(Holder&&) = delete;
-		Holder(Holder&) = delete;
 		Holder(const Holder&&) = delete;
 		Holder(const Holder&) = delete;
 		~Holder() {
@@ -371,11 +369,13 @@ namespace DarkEdif
 		//global<jobject> paint;
 		//global<jclass> paintClass;
 	public:
-	#else // apple
+	#elif defined(__APPLE__)
 		// Raw pixels, size and clip rectangle
 		CRenderToTexture* bmp = nullptr;
 		// Data around an image, can wrap a bmp and collision masks
 		//CImage* img;
+	#else
+		#error Unexpected platform
 	#endif
 		/** Updates screen display manually. Runtime does not auto-redraw in some display modes.
 		 * @param zone If NULL or not specified, the whole surface. */
@@ -475,10 +475,8 @@ namespace DarkEdif
 		// Copying and moving surfaces is explicitly disallowed, as it's unclear
 		// if you want to copy the entire underlying memory, and allows edge cases
 		// of copying when a buffer is locked.
-		Surface(Surface&) = delete;
 		Surface(const Surface&) = delete;
 		Surface(Surface&&) = delete;
-		Surface(const Surface&&) = delete;
 		~Surface();
 
 		bool wasaltered = false;

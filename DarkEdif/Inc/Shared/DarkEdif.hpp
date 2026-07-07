@@ -173,7 +173,6 @@ namespace DarkEdif {
 			}
 		public:
 			// Explicitly not copiable
-			DebugItem(DebugItem&) = delete;
 			DebugItem(const DebugItem&) = delete;
 			// Explicitly moveable - moves are done by std::vector adding
 			DebugItem(DebugItem&&) = default;
@@ -686,12 +685,14 @@ namespace DarkEdif {
 		FontInfoMultiPlat(jobject nativeFont);
 		// Creates a copy of font settings of this native font
 		void SetFont(const jobject nativeFont);
-#else // Apple
+#elif defined(__APPLE__)
 		CFontInfo* cfontinfo = nullptr;
 		// Creates a font info pointing to a native font
 		FontInfoMultiPlat(CFontInfo* nativeFont);
 		// Creates a copy of font settings of this native font
 		void SetFont(const void* const nativeFont);
+#else
+	#error Unexpected platform
 #endif
 #if TEXT_OEFLAG_EXTENSION
 		// Creates a runtime-usable font from a EDITDATA font, tying it to an ext

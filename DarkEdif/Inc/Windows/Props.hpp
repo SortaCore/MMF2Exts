@@ -63,7 +63,7 @@ public:
 	virtual void Delete() = 0;
 	virtual Prop * CreateCopy() = 0;
 	virtual BOOL IsEqual(Prop * P) = 0;
-	virtual unsigned int GetClassID() = 0;
+	virtual DWORD GetClassID() = 0;
 };
 
 // Integer
@@ -86,7 +86,7 @@ public:
 	{
 		return (this->Value == ((Prop_SInt *)P)->Value);
 	}
-	virtual unsigned int GetClassID()
+	virtual DWORD GetClassID()
 	{
 		return 'INT ';
 	}
@@ -124,7 +124,7 @@ public:
 	{
 		return (this->Value == ((Prop_UInt *)P)->Value);
 	}
-	virtual unsigned int GetClassID()
+	virtual DWORD GetClassID()
 	{
 		return 'DWRD';
 	}
@@ -159,7 +159,7 @@ public:
 	{
 		return (this->Value == ((Prop_Float *)P)->Value);
 	}
-	virtual unsigned int GetClassID()
+	virtual DWORD GetClassID()
 	{
 		return 'FLOT';
 	}
@@ -193,7 +193,7 @@ public:
 	{
 		return (this->Value == ((Prop_Double *)P)->Value);
 	}
-	virtual unsigned int GetClassID()
+	virtual DWORD GetClassID()
 	{
 		return 'DBLE';
 	}
@@ -228,7 +228,7 @@ public:
 		return	(this->X == ((Prop_Size *)P)->X) &&
 				(this->Y == ((Prop_Size *)P)->Y);
 	}
-	virtual unsigned int GetClassID()
+	virtual DWORD GetClassID()
 	{
 		return 'SIZE';
 	}
@@ -264,7 +264,7 @@ public:
 	{
 		return (this->Value == ((Prop_Int64 *)P)->Value);
 	}
-	virtual unsigned int GetClassID()
+	virtual DWORD GetClassID()
 	{
 		return 'INT2';
 	}
@@ -298,7 +298,7 @@ public:
 	{
 		return (this->Address == ((Prop_Ptr *)P)->Address);
 	}
-	virtual unsigned int GetClassID()
+	virtual DWORD GetClassID()
 	{
 		return 'LPTR';
 	}
@@ -353,7 +353,7 @@ public:
 		return ((this->Address == ((Prop_Buff *)P)->Address && this->Size == ((Prop_Buff *)P)->Size) ||	// Same address AND size means equiv.
 					!memcmp(this->Address, ((Prop_Buff *)P)->Address, this->Size));		// Otherwise compare buffers
 	}
-	virtual unsigned int GetClassID()
+	virtual DWORD GetClassID()
 	{
 		return 'DATA';
 	}
@@ -407,7 +407,7 @@ public:
 				!strcmp(this->String, ((Prop_AStr *)P)->String);
 	}
 	char * GetString() {return String;}
-	virtual unsigned int GetClassID()
+	virtual DWORD GetClassID()
 	{
 		return 'STRA';
 	}
@@ -476,7 +476,7 @@ public:
 				((Prop_WStr *)P)->String == NULL			||
 				!wcscmp(this->String, ((Prop_WStr *)P)->String); // Otherwise compare buffers
 	}
-	virtual unsigned int GetClassID()
+	virtual DWORD GetClassID()
 	{
 		return 'STRW';
 	}
@@ -763,7 +763,7 @@ typedef struct {
 
 // Initialization structure for file selector property
 typedef struct {
-	const char *	extFilter;	// Filter string for GetOpenFilename dialog (for example "All Files (*.*)|*.*|")
+	const TCHAR *	extFilter;	// Filter string for GetOpenFilename dialog (for example "All Files (*.*)|*.*|")
 	unsigned int	options;	// Options for GetOpenFilename dialog (OFN_FILEMUSTEXIST, OFN_PATHMUSTEXIST, OFN_HIDEREADONLY, etc.)
 } FilenameCreateParam;
 

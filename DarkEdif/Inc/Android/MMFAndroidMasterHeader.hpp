@@ -15,7 +15,7 @@
 #include "../Shared/AllPlatformDefines.hpp"
 #include "../Shared/NonWindowsDefines.hpp"
 
-#include <asm-generic\posix_types.h>
+#include <asm-generic/posix_types.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
@@ -212,16 +212,19 @@ std::string ThreadIDToStr(std::thread::id);
 std::string GetJavaExceptionStr();
 
 // JNI global ref wrapper for Java objects. You risk your jobject/jclass expiring without use of this.
-extern const char* globalToMonitor[1];
+extern const char* const globalToMonitor[1];
 template<class T>
 struct global {
 	static_assert(std::is_pointer<T>::value, "Must be a pointer!");
+	static_assert(std::is_base_of_v<_jobject, std::remove_pointer_t<T>>, "Must be jobject or a derived lass!");
 	T ref;
 	const char * name;
 	bool monitor = false;
-	global(global<T> &p) = delete;
+	global(const global<T>& p) = delete;
+	global<T>& operator=(const global<T>& p) = delete;
 
-	global<T> swap_out() noexcept {
+	// Releases this object, returning the ref for storing in the caller's global
+	[[nodiscard]] global<T> swap_out() noexcept {
 #if _DEBUG
 		if (std::is_same_v<jobject, T> && ref && threadEnv->GetObjectRefType(ref) == 0)
 		{
@@ -229,18 +232,14 @@ struct global {
 			raise(SIGTRAP);
 		}
 #endif
-		if (ref == nullptr)
-		{
-			global<T> newO2;
-			newO2.name = this->name;
-			newO2.monitor = this->monitor;
-			return std::move(newO2);
-		}
-		global<T> newO(this->ref, this->name);
-		newO.monitor = this->monitor;
+		// Don't call global(jobject, name) ctor, as that will pass ref to NewGlobalRef again
+		global<T> newObj;
+		newObj.name = this->name;
+		newObj.monitor = this->monitor;
+		newObj.ref = this->ref;
 		this->ref = nullptr;
 		this->name = "unset [swapped out]";
-		return std::move(newO);
+		return std::move(newObj);
 	}
 	global<T> & operator= (global<T> && p) noexcept {
 		if (std::is_same_v<jobject, T> && p.ref && threadEnv->GetObjectRefType(p.ref) == 0)
@@ -248,6 +247,20 @@ struct global {
 			LOGE("Invalid global ref at %p \"%s\" was moved!\n", this, name);
 			raise(SIGTRAP);
 		}
+
+		// Phi note: We're not expecting to overwrite a ref with another.
+		// Generally a JNI ref expires, then later is re-assigned, as two separate ops.
+		// Combining them with one op, discarding a ref for another,
+		// suggests the expiry already happened and wasn't marked at the time,
+		// or that we're treating a set of refs (e.g. an array) as global when local refs would be a better fit.
+		// I've made this non-fatal as we can cleanly free the original, but it's likely a design error.
+		if (ref)
+		{
+			LOGE("Overwriting a global ref! Holder %p \"%s\" ref %p was moved into and overwrote holder %p \"%s\" ref %p! The overwritten one will be freed.\n",
+				&p, p.name, p.ref, this, name, ref);
+			threadEnv->DeleteGlobalRef(ref);
+		}
+
 		this->ref = p.ref;
 		this->name = p.name;
 		this->monitor = p.monitor;
@@ -262,7 +275,7 @@ struct global {
 
 	global(T p, const char * name) {
 		this->name = name;
-#if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_VERBOSE)
+#if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_DEBUG)
 		// Check ref names to monitor
 		for (std::size_t i = 0; i < std::size(globalToMonitor); ++i) {
 			if (globalToMonitor[i] && !strcmp(globalToMonitor[i], name)) {
@@ -300,12 +313,12 @@ struct global {
 	}
 	operator const T() const {
 		if (ref == NULL) {
-			LOGE("null global ref at %p \"%s\" was copied!\n", this, name);
+			LOGE("null global ref at %p \"%s\" was used!\n", this, name);
 			raise(SIGTRAP);
 		}
-#if _DEBUG
 		if (monitor)
 			LOGD("Monitored global ref at %p \"%s\" was used.\n", this, name);
+#if _DEBUG
 		if (std::is_same_v<jobject, T> && ref && threadEnv->GetObjectRefType(ref) == 0)
 		{
 			LOGE("Invalid global ref at %p \"%s\" was used!\n", this, name);
@@ -334,6 +347,7 @@ struct global {
 		}
 	}
 private:
+	// Only called in swap_out()
 	global(global<T>&& p) noexcept {
 #if _DEBUG
 		if (std::is_same_v<jobject, T> && p.ref && threadEnv->GetObjectRefType(p.ref) == 0)
@@ -623,34 +637,45 @@ protected:
 	global<jclass> meClass;
 	Edif::Runtime* runtime;
 };
-struct CRunFrame {
-	NO_DEFAULT_CTORS(CRunFrame);
+struct CRunFrameMultiPlat {
+	NO_DEFAULT_CTORS(CRunFrameMultiPlat);
 
 	CEventProgram* get_eventProgram();
+	const TCHAR * get_name();
 
+	CRunFrameMultiPlat(jobject app, Edif::Runtime* runtime);
 protected:
 	friend class Edif::Runtime;
 	friend struct RunHeader;
+	std::string frameName;
+
+	global<jobject> me;
+	global<jclass> meClass;
 	Edif::Runtime* runtime;
-	jobject me;
 };
 
 
 struct CRunAppMultiPlat {
 	NO_DEFAULT_CTORS(CRunAppMultiPlat);
 	int get_nCurrentFrame();
-	CRunFrame* get_Frame();
+	CRunFrameMultiPlat * get_Frame();
 	CRunAppMultiPlat * get_ParentApp();
 	std::size_t GetNumFusionFrames();
+	const TCHAR * get_name();
+	const TCHAR * get_appFileName();
+	const TCHAR * get_editorFileName();
+	const TCHAR * get_targetFileName();
 
 	CRunAppMultiPlat(jobject app, Edif::Runtime * runtime);
 protected:
 	friend class Edif::Runtime;
 	friend struct RunHeader;
 	friend DarkEdif::Surface;
-	std::unique_ptr<CRunFrame> frame;
+	std::unique_ptr<CRunFrameMultiPlat> frame;
 	std::optional<int> nCurrentFrame;
 	std::size_t numTotalFrames = 0; // 0 if unset
+	std::uint16_t currentFrame = 0; // 0 if unset, 1+ if set
+	std::string appName; // Blank if unset
 	std::unique_ptr<CRunAppMultiPlat> parentApp;
 	bool parentAppIsNull = false;
 	global<jobject> me;

@@ -1,3 +1,5 @@
+// Suppress warnings for popping up for DE's own internal usage
+#define DARKEDIF_INTERNAL_INCLUDE
 #include "Common.hpp"
 #include "Edif.hpp"
 #include "DarkEdif.hpp"
@@ -9,6 +11,7 @@
 #include "MMF2Lib/CRunApp.h"
 #include "MMF2Lib/CRCom.h"
 #include "MMF2Lib/CRSpr.h"
+#include "MMF2Lib/CRunFrame.h"
 #endif
 
 struct EdifGlobal
@@ -99,10 +102,12 @@ std::vector<short> qualToOi::HalfVector(std::size_t first)
 		get_OiList(0);
 	for (std::size_t i = first; i < OiAndOiListLength; i += 2)
 		list.push_back(OiAndOiList[i]);
-#else // apple
+#elif defined(__APPLE__)
 	const short* const qoiList = ((CQualToOiList*)this)->qoiList;
 	for (std::size_t i = first; qoiList[i] != -1; i += 2)
 		list.push_back(qoiList[i]);
+#else
+	#error Unexpected platform
 #endif
 	return list;
 }
@@ -113,12 +118,53 @@ std::vector<short> qualToOi::GetAllOi() {
 	return HalfVector(0);
 }
 
+const TCHAR * CRunFrameMultiPlat::get_name()
+{
+#ifdef _WIN32
+	return name;
+#elif defined(__APPLE__)
+	return [((CRunFrame*)this)->frameName UTF8String];
+#elif defined(__ANDROID__)
+	if (frameName.empty())
+	{
+		const jfieldID fieldID = threadEnv->GetFieldID(meClass, "frameName", "Ljava/lang/String;");
+		JNIExceptionCheck();
+		JavaAndCString javaFrameName((jstring)threadEnv->GetObjectField(me, fieldID));
+		frameName = std::string(javaFrameName.str());
+	}
+	return frameName.c_str();
+#else
+#error Unexpected platform
+#endif
+}
+
+int CRunAppMultiPlat::get_nCurrentFrame()
+{
+#ifdef _WIN32
+	return nCurrentFrame;
+#elif defined(__APPLE__)
+	return (std::size_t)((CRunApp*)this)->currentFrame;
+#elif defined(__ANDROID__)
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
+	if (!nCurrentFrame.has_value())
+	{
+		static jfieldID fieldID = threadEnv->GetFieldID(meClass, "currentFrame", "I");
+		JNIExceptionCheck();
+		nCurrentFrame = threadEnv->GetIntField(me, fieldID);
+		JNIExceptionCheck();
+	}
+	return nCurrentFrame.value();
+#else
+#error Unexpected platform
+#endif
+}
+
 CRunAppMultiPlat* CRunAppMultiPlat::get_ParentApp() {
 #ifdef _WIN32
 	return ParentApp;
 #elif defined(__APPLE__)
 	return (CRunAppMultiPlat*)((CRunApp*)this)->parentApp;
-#else // Android
+#elif defined(__ANDROID__)
 	if (!parentApp && !parentAppIsNull)
 	{
 		// Application/CRunApp parentApp
@@ -132,15 +178,18 @@ CRunAppMultiPlat* CRunAppMultiPlat::get_ParentApp() {
 			parentAppIsNull = true;
 	}
 	return parentApp.get();
+#else
+	#error Unexpected platform
 #endif
 }
 
+// Gets current Fusion frame number (1+)
 std::size_t CRunAppMultiPlat::GetNumFusionFrames() {
 #ifdef _WIN32
 	return hdr.NbFrames;
 #elif defined(__APPLE__)
 	return (std::size_t)((CRunApp*)this)->gaNbFrames;
-#else // Android
+#elif defined(__ANDROID__)
 	if (numTotalFrames == 0)
 	{
 		jfieldID fieldID = threadEnv->GetFieldID(meClass, "gaNbFrames", "I");
@@ -150,8 +199,107 @@ std::size_t CRunAppMultiPlat::GetNumFusionFrames() {
 		numTotalFrames = (std::size_t)totalFrames;
 	}
 	return numTotalFrames;
+#else
+	#error Unexpected platform
 #endif
 }
+
+// Gets frame pointer
+CRunFrameMultiPlat* CRunAppMultiPlat::get_Frame()
+{
+#ifdef _WIN32
+	return Frame;
+#elif defined(__APPLE__)
+	return (CRunFrameMultiPlat *)((CRunApp*)this)->frame;
+#elif defined(__ANDROID__)
+	if (!frame)
+	{
+		const jfieldID fieldID = threadEnv->GetFieldID(meClass, "frame", "LApplication/CRunFrame;");
+		JNIExceptionCheck();
+		const jobject javaCurrentFrame = threadEnv->GetObjectField(me, fieldID);
+		JNIExceptionCheck();
+		assert(javaCurrentFrame); // should never be null
+		frame = std::make_unique<CRunFrameMultiPlat>(javaCurrentFrame, runtime);
+	}
+	return frame.get();
+#else
+#error Unexpected platform
+#endif
+}
+
+// Gets application name
+const TCHAR * CRunAppMultiPlat::get_name()
+{
+#ifdef _WIN32
+	// TODO: Is this ANSI or Unicode?
+	return name;
+#elif defined(__APPLE__)
+	// NSString to C++ string
+	return [((CRunApp*)this)->appName UTF8String];
+#elif defined(__ANDROID__)
+	if (appName.empty())
+	{
+		const jfieldID fieldID = threadEnv->GetFieldID(meClass, "appName", "Ljava/lang/String;");
+		JNIExceptionCheck();
+		JavaAndCString javaAppName((jstring)threadEnv->GetObjectField(me, fieldID));
+		JNIExceptionCheck();
+		appName = std::tstring(javaAppName.str());
+	}
+	return appName.c_str();
+#else
+#error Unexpected platform
+#endif
+}
+
+// Gets application filepath
+const TCHAR * CRunAppMultiPlat::get_appFileName()
+{
+#ifdef _WIN32
+	// TODO: Is this ANSI or Unicode?
+	return appFileName;
+#elif defined(__ANDROID__) || defined(__APPLE__)
+	LOGV("Reading CRunAppMultiPlat::appFileName variable, not available in non-Windows\n");
+	return "<Not available in non-Windows>";
+#else
+#error Unexpected platform
+#endif
+}
+// Gets editor filepath
+const TCHAR * CRunAppMultiPlat::get_editorFileName()
+{
+#ifdef _WIN32
+	// TODO: Is this ANSI or Unicode?
+	return editorFileName;
+#elif defined(__APPLE__)
+	// NSString to C++ string
+	return [((CRunApp*)this)->appEditorPathname UTF8String];
+#elif defined(__ANDROID__)
+	// available in chunk CHUNK_APPEDITORFILENAME 0x222E, but high effort
+	LOGV("Reading CRunAppMultiPlat::editorFileName variable, not available in Android\n");
+	return "<Not available in Android>";
+#else
+#error Unexpected platform
+#endif
+}
+
+// Gets original MFA filepath
+const TCHAR * CRunAppMultiPlat::get_targetFileName()
+{
+#ifdef _WIN32
+	// TODO: Is this ANSI or Unicode?
+	return targetFileName;
+#elif defined(__APPLE__)
+	// NSString to C++ string
+	return [((CRunApp*)this)->appTargetPathname UTF8String];
+#elif defined(__ANDROID__)
+	// available in chunk CHUNK_APPTARGETFILENAME 0x222F, but high effort
+	LOGV("Reading CRunAppMultiPlat::targetFileName variable, not available in Android\n");
+	return "<Not available in Android>";
+#else
+#error Unexpected platform
+#endif
+}
+
 
 // Static definition
 int Edif::Runtime::actionLoopIncrement = 0;
@@ -1581,11 +1729,10 @@ void Edif::Runtime::AttachJVMAccessForThisThread(const char* threadName, bool as
 
 	pthread_setname_np(pthread_self(), threadName);
 
-	JavaVMAttachArgs args = {
-		.name = threadName,
-		.group = NULL,
-		.version = JNI_VERSION_1_6
-	};
+	JavaVMAttachArgs args = {};
+	args.name = threadName;
+	args.group = NULL;
+	args.version = JNI_VERSION_1_6;
 	// Daemon means the JVM won't keep the app running if this thread is still alive.
 	// Do you want main thread exiting to choose whether the app is running or not?
 	jint error;
@@ -1894,7 +2041,7 @@ ProjectFunc void setRunObjectTextColor(JNIEnv*, jobject, jlong ext, int rgb) {
 
 
 // Edit this to monitor specific jobject/jclass references. End with null.
-const char * globalToMonitor[] = { NULL };
+const char * const globalToMonitor[] = { NULL };
 
 // Gets the RH2 event count, used in object selection
 int RunHeader::GetRH2EventCount()
@@ -3091,18 +3238,12 @@ AltVals::AltVals(RunObject * ro) : ro(ro)
 	}
 }
 
-int CRunAppMultiPlat::get_nCurrentFrame()
+CRunFrameMultiPlat::CRunFrameMultiPlat(jobject me, Edif::Runtime* runtime) :
+	me(me, "CRunFrame"), meClass(threadEnv->GetObjectClass(me), "CRunFrame class"), runtime(runtime)
 {
-	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
-	if (!nCurrentFrame.has_value())
-	{
-		static jfieldID fieldID = threadEnv->GetFieldID(meClass, "currentFrame", "I");
-		JNIExceptionCheck();
-		nCurrentFrame = threadEnv->GetIntField(me, fieldID);
-		JNIExceptionCheck();
-	}
-	return nCurrentFrame.value();
+
 }
+
 CRunAppMultiPlat::CRunAppMultiPlat(jobject me, Edif::Runtime* runtime) :
 	me(me, "CRunApp"), meClass(threadEnv->GetObjectClass(me), "CRunApp class"), runtime(runtime)
 {
@@ -3800,7 +3941,7 @@ EventGroupMP::EventGroupMP(jobject me, Edif::Runtime * runtime) :
 	}
 }
 
-#else // iOS
+#elif defined(__APPLE__)
 #include "MMF2Lib/CRunExtension.h"
 #include "MMF2Lib/CRun.h"
 #include "MMF2Lib/CObject.h"
@@ -4384,6 +4525,10 @@ std::uint16_t EventGroupMP::get_evgIdentifier() const {
 std::uint16_t EventGroupMP::get_evgInhibit() const {
 	return *(std::uint16_t*)&((tagEVG*)this)->evgInhibit;
 }
+EventGroupFlags EventGroupMP::get_evgFlags() const {
+	return *(EventGroupFlags*)&((tagEVG*)this)->evgFlags;
+}
+
 
 event2* EventGroupMP::GetCAByIndex(size_t index)
 {
@@ -4398,6 +4543,8 @@ event2* EventGroupMP::GetCAByIndex(size_t index)
 	return ret;
 }
 
-#endif // APPLE
+#else // not APPLE
+	#error Unexpected platform
+#endif // not APPLE
 
 #endif // Apple or Android

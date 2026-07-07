@@ -80,7 +80,9 @@
 					[ 25, "Get app root folder" ]
 				],
 				[ "CPU",
-					[ 20, "Get CPU temperature (C)", true ]
+					[ 20, "Get CPU temperature (C)", true ],
+					[ 27, "Get CPU processor count", true ],
+					[ 28, "Get CPU core count", true ]
 				],
 				[ "Discrete ACL loop entry",
 					[ 21, "Account name" ],
@@ -386,6 +388,14 @@
 			{
 				"Title": "NetworkType$(",
 				"Returns": "Text"
+			},
+			{
+				"Title": "GetCPUProcessorCount(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "GetCPUCoreCount(",
+				"Returns": "Integer"
 			}
 		]
 	}

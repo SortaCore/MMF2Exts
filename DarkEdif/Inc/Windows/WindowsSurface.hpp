@@ -435,7 +435,7 @@ struct FusionD3DSurfDriverInfo final
 {
 	// Size of this struct in bytes, varies per D3D level.
 	// It is recommended you set this to whatever GetDriverInfo(NULL) returns.
-	DWORD surfInfoSize;
+	std::uint32_t surfInfoSize;
 
 	// Set to 8, 9, 11.
 	int D3DVersion;
@@ -509,7 +509,7 @@ enum class LockImageSurfaceMode : int
 	HWACompatible
 };
 // Call to populate a cSurface from an image bank ID. Warning: invalid ID will cause a crash.
-FusionAPIImport BOOL FusionAPI LockImageSurface(void* idApp, DWORD hImage, cSurface& cs, int flags = (int)LockImageSurfaceMode::ReadBlitOnly);
+FusionAPIImport BOOL FusionAPI LockImageSurface(void* idApp, ULONG hImage, cSurface& cs, int flags = (int)LockImageSurfaceMode::ReadBlitOnly);
 FusionAPIImport void FusionAPI UnlockImageSurface(cSurface& cs);
 
 // Allocate/Free surface
@@ -655,12 +655,13 @@ public:
 
 	// Sets this cSurface as the current one in a double-buffer... in what context? How are surfaces paired, and how do we know what the pairs target?
 	void SetCurrentDevice();
-	// TODO: YQ: Rendering to GetRenderTargetSurface()? Where and why do we need to call BeginRendering()?
 	// Implemented in Direct3D 9 and 11 on CF2.5+. Not available in Direct3D 8.
+	// Use if you plan to do your own HWA rendering (i.e, doing rendering with DirectX driver info) onto the surface; if the surface is an HWA render target this function binds the render target as the current one in Fusion's D3D device state.
 	int  BeginRendering(BOOL clear, RGBAREF rgba);
-	// TODO: YQ: Rendering to GetRenderTargetSurface()?
+	// Call after you've finished rendering after a previous BeginRendering() call.
 	int  EndRendering();
-	// TODO: YQ: update how?
+	// Only works on frame surface; redraws Fusion's window.
+	// Note that on D3D9 this usually can't be called in a Display/DisplayRunObject() routine, probably because it is within a BeginScene()/EndScene() pair, which prevents screen updates.
 	BOOL UpdateScreen();
 
 	#ifdef HWABETA
@@ -671,6 +672,7 @@ public:
 		// TODO: YQ: What does this do, how does Max affect it ?
 		void	  Flush(BOOL bMax);
 		// TODO: YQ: I would guess this is the Z position of the buffer, but a float makes no sense here.
+		// Frame-surface only. In D3D9, this enables Z-buffering similar to how you can also enable it in shaders, but I still have no idea what the z2D parameter does..
 		void	  SetZBuffer(float z2D);
 	#endif
 
@@ -1054,10 +1056,17 @@ public:
 	// Transparent monochrome mask
 	ULONG		CreateMask(sMask * pMask, UINT dwFlags);
 
-	// Lost device callback
 #ifdef HWABETA
+	// In the LostDeviceCallback, you must call OnLostDevice() to free resources.
+	// Do not call this function otherwise.
 	void 	OnLostDevice();
+	// Adds a lost device callback to the surface.
+	// Such callback is executed right when the D3D device is lost, and you must free
+	// all D3D resources and unmanaged textures you had associated with this surface.
+	// You must call OnLostDevice() on this surface in the callback!
+	// This is not called after a new device is available, so do not re-create those resources.
 	void 	AddLostDeviceCallBack(LOSTDEVICECALLBACKPROC pCallback, LPARAM lUserParam);
+	// Removes a lost device callback added with AddLostDeviceCallBack().
 	void 	RemoveLostDeviceCallBack(LOSTDEVICECALLBACKPROC pCallback, LPARAM lUserParam);
 
 	// CF2.5+'s Direct3D11 surfaces: Set premultiplied alpha flag
@@ -1114,15 +1123,21 @@ protected:
 
 extern "C" FusionAPIImport BOOL	WINAPI BuildRemapTable	(LPBYTE, LOGPALETTE *, LOGPALETTE *, WORD);
 
-// Used by EditorDisplay of most Fusion exts
-FusionAPIImport cSurface* FusionAPI WinGetSurface(int idWin, int surfID = 0);
+// Grabs a window's cSurface ptr. Used by EditorDisplay of most Fusion exts.
+// @param idWin a Win ID, from mV->mvIdEditWin or rhIdEditWin
+// @param surfID 0 for screen surface, 1 for background save buffer
+// @remarks Relates to WSURF_LOGSCREEN, WSURF_BACKSAVE. Background saving is a
+//			standard display tech; see OEFLAGS::BACK_SAVE etc.
+//			Not sure if D3D back buffers are 2+, or unrelated.
+// TODO: What happens if bad ptr? null? crash? Are back buffers unrelated?
+FusionAPIImport _Ret_maybenull_ cSurface* FusionAPI WinGetSurface(_In_ int idWin, _In_range_(0,1) int surfID = 0);
 
 // Required struct name due to Cnpdll.h GetImageInfos() func
 // Corresponds to image bank entry?
 struct Img final
 {
 	// Img struct flags; bitmask
-	enum class Flags : BYTE {
+	enum class Flags : std::uint8_t {
 		// For bit ops
 		None	= 0,
 		// Lossless image compression using Run-Length Encoding
@@ -1149,25 +1164,24 @@ struct Img final
 	};
 
 	// Checksum algorithm; not sure what is used or what it's run on
-	DWORD		imgCheckSum;
+	std::uint32_t imgCheckSum;
 	// Probably ref count
-	DWORD		imgCount;
+	std::uint32_t imgCount;
 	// Byte count, including both color and alpha, not including this header
-	DWORD		imgSize;
+	std::uint32_t imgSize;
 	// Why is this signed?
-	short		imgWidth;
+	std::int16_t imgWidth;
 	// Why is this signed?
-	short		imgHeight;
+	std::int16_t imgHeight;
 	// Format, may affect flags
-	BYTE		imgFormat;
+	std::uint8_t imgFormat;
 	// Flags, including alpha and compression
 	Flags		imgFlags;
-	WORD		imgNotUsed;
+	std::uint16_t imgNotUsed;
 	// XY coord of this image hot spot (display offset relative to object's hoX/hoY)
-	short		imgXSpot, imgYSpot;
-	// X coord of this image hot spot (display offset relative to object's hoX/hoY)
-	short		imgXAction;
-	short		imgYAction;
+	std::int16_t imgXSpot, imgYSpot;
+	// XY coord of this image action point (used for Launching by default?)
+	std::int16_t imgXAction, mgYAction;
 	// Image transparent color (ignored if imgFlags say it's alpha)
 	COLORREF	imgTrspColor;
 };
@@ -1175,15 +1189,17 @@ enum_class_is_a_bitmask(Img::Flags);
 
 extern "C" {
 	/** Returns number of elements in the Fusion bank. Returns 0+.
+	 * @remarks There are 0 images in a fresh Fusion application.
+	 *			The standard lightning-bolt app icon won't make an entry.
 	 * @param appli mv->mvAppli or rhPtr->rhAppli.
 	 * @param bkNum Bank number: see BK_XX enum.
 	 * @return Number of elements in bank, 0+. */
-	FusionAPIImport int FusionAPI Bank_GetEltCount(void * appli, UINT bkNum);
+	FusionAPIImport int FusionAPI Bank_GetEltCount(void * appli, UINT bkNum) EXDEF;
 
 	/** Returns the image ID's info to the given struct.
 	 * @param appli mv->mvAppli or rhPtr->rhAppli.
 	 * @param imgID Image ID number (1-65535).
 	 * @param imgPtr Output image info struct.
 	 * @return 1 if successful. 0 if failed. */
-	FusionAPIImport int FusionAPI GetImageInfos(void* appli, DWORD imgID, Img* imgPtr);
+	FusionAPIImport int FusionAPI GetImageInfos(void* appli, ULONG imgID, Img* imgPtr) EXDEF;
 }
