@@ -2124,8 +2124,10 @@ DarkEdifInternalAccessProtected:
 	short 				rhObListNext,		// Branch label
 
 						rhDestroyPos;
-	long				rhFree5,
-						rhFree6;
+	// Re-used in CF2.5 build 295.2+ in place of rhFree5 variable
+	// @remarks Latest orig CF2.5 SDK still has it as long rhFree5
+	int rhLastCreatedObjectFixedValue;
+	long				rhFree6;
 
 	RunHeader2			rh2;				// Sub-structure #1
 	RunHeader3			rh3;				// Sub-structure #2
