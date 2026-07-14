@@ -807,8 +807,6 @@ void DarkEdif::Properties::Internal_PropChange(mv* mV, EDITDATA*& edPtr, unsigne
 		memcpy(oldPropDataPtr->ReadPropValue(), newPropValue, newPropValueSize);
 		if (nameListToRefresh != -1)
 			mvRefreshProp(mV, edPtr, nameListToRefresh + PROPID_EXTITEM_CUSTOM_FIRST, TRUE);
-		else if (strcmp(curTypeStr, "Editbox Float") == 0)
-			mvRefreshProp(mV, edPtr, PropID, FALSE);
 		return;
 	}
 
