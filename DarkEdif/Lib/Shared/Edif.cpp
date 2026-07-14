@@ -699,6 +699,53 @@ Edif::SDKClass::SDKClass(mv * mV, json_value &_json) : json (_json)
 					DarkEdif::MsgBox::Error(_T("DarkEdif error"), _T("Blitting to ext icon surface failed. Last error: %i."), tempIcon->GetLastError());
 			}
 			ExtIcon = new DarkEdif::Surface(nullptr, Icon);
+
+			#ifdef DARKEDIF_MULTIPLE_ICONS
+			Image = new cSurface();
+			char * ImageData;
+			size_t ImageSize;
+
+			int resultTwo = Edif::GetDependency (ImageData, ImageSize, _T("png"), IDR_EDIF_IMAGE);
+			if (resultTwo != Edif::DependencyNotFound)
+			{
+				CInputMemFile * File = CInputMemFile::NewInstance();
+				File->Create((LPBYTE)ImageData, ImageSize);
+
+				const std::unique_ptr<cSurface> tempImage = std::make_unique<cSurface>();
+				const bool loadedOK = ImportImageFromInputFile(mV->ImgFilterMgr, File, tempImage.get(), NULL, 0);
+				if (!loadedOK)
+				{
+					// Read PNG bit depth: Skip 8 byte PNG header, IHDR 4 byte chunk length/type, img width/height,
+					// and then get bit depth byte.
+					// 4 bit or less bit depth is not loadable by Fusion's PNG filter.
+					const std::uint8_t bitDepth = File->GetMemBuffer()[8 + 4 + 4 + 4 + 4];
+
+					if (bitDepth <= 4)
+						DarkEdif::MsgBox::Error(_T("Failed to load ext image"), _T("" PROJECT_NAME "'s Image.png uses a bit depth of %hhu, which is too small."), bitDepth);
+					else
+						DarkEdif::MsgBox::Error(_T("Failed to load ext image"), _T("" PROJECT_NAME "'s Image.png failed to load."));
+				}
+
+				File->Delete();
+
+				if (!tempImage->HasAlpha())
+					tempImage->SetTransparentColor(RGB(255, 0, 255));
+
+				if (resultTwo != Edif::DependencyWasResource)
+					free(ImageData);
+
+				Image->Create(tempImage->GetWidth(), tempImage->GetHeight(), proto);
+
+				if (!tempImage->HasAlpha())
+					Image->SetTransparentColor(RGB(255, 0, 255));
+				else
+					Image->CreateAlpha();
+
+				if (loadedOK && tempImage->Blit(*Image) == FALSE)
+					DarkEdif::MsgBox::Error(_T("DarkEdif error"), _T("Blitting to ext image surface failed. Last error: %i."), tempImage->GetLastError());
+			}
+			ExtImage = new DarkEdif::Surface(nullptr, Image);
+			#endif
 		}
 
 		#if USE_DARKEDIF_UPDATE_CHECKER
