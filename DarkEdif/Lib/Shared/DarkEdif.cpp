@@ -807,6 +807,8 @@ void DarkEdif::Properties::Internal_PropChange(mv* mV, EDITDATA*& edPtr, unsigne
 		memcpy(oldPropDataPtr->ReadPropValue(), newPropValue, newPropValueSize);
 		if (nameListToRefresh != -1)
 			mvRefreshProp(mV, edPtr, nameListToRefresh + PROPID_EXTITEM_CUSTOM_FIRST, TRUE);
+		else if (strcmp(curTypeStr, "Editbox Float") == 0)
+			mvRefreshProp(mV, edPtr, PropID, FALSE);
 		return;
 	}
 
@@ -1255,6 +1257,7 @@ void * DarkEdif::DLL::DLL_GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int P
 void DarkEdif::DLL::DLL_SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID, void * Param)
 {
 	LOGV(_T("Call to %s with edPtr %p.\n"), _T(__FUNCTION__), edPtr);
+	unsigned int fusionPropID = PropID;
 	if (!GetPropRealID(PropID))
 		return;
 
@@ -1301,31 +1304,106 @@ void DarkEdif::DLL::DLL_SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int Pro
 		case 'INT ': // 4-byte signed int
 		{
 			Prop_SInt * prop2 = (Prop_SInt *)prop;
+			const json_value& propjson = CurLang["Properties"sv][PropID];
+
+			if (propjson["Minimum"sv].type != json_none)
+			{
+				int minimum = (int)(json_int_t)propjson["Minimum"sv];
+				if (prop2->Value < minimum)
+					prop2->Value = minimum;
+			}
+			if (propjson["Minimum"sv].type != json_none)
+			{
+				int maximum = (int)(json_int_t)propjson["Maximum"sv];
+				if (prop2->Value > maximum)
+					prop2->Value = maximum;
+			}
 			Props.Internal_PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(int));
+			mvRefreshProp(mV, edPtr, fusionPropID, TRUE);
 			break;
 		}
 		case 'DWRD': // 4-byte unsigned int
 		{
 			Prop_UInt * prop2 = (Prop_UInt *)prop;
+			const json_value& propjson = CurLang["Properties"sv][PropID];
+
+			if (propjson["Minimum"sv].type != json_none)
+			{
+				uint32_t minimum = (uint32_t)(json_int_t)propjson["Minimum"sv];
+				if (prop2->Value < minimum)
+					prop2->Value = minimum;
+			}
+			if (propjson["Minimum"sv].type != json_none)
+			{
+				uint32_t maximum = (uint32_t)(json_int_t)propjson["Maximum"sv];
+				if (prop2->Value > maximum)
+					prop2->Value = maximum;
+			}
 			Props.Internal_PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(unsigned int));
+			mvRefreshProp(mV, edPtr, fusionPropID, TRUE);
 			break;
 		}
 		case 'INT2': // 8-byte signed int
 		{
 			Prop_Int64 * prop2 = (Prop_Int64 *)prop;
+			const json_value& propjson = CurLang["Properties"sv][PropID];
+
+			if (propjson["Minimum"sv].type != json_none)
+			{
+				int64_t minimum = (json_int_t)propjson["Minimum"sv];
+				if (prop2->Value < minimum)
+					prop2->Value = minimum;
+			}
+			if (propjson["Minimum"sv].type != json_none)
+			{
+				int64_t maximum = (json_int_t)propjson["Maximum"sv];
+				if (prop2->Value > maximum)
+					prop2->Value = maximum;
+			}
 			Props.Internal_PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(std::int64_t));
+			mvRefreshProp(mV, edPtr, fusionPropID, TRUE);
 			break;
 		}
 		case 'DBLE': // 8-byte floating point var
 		{
 			Prop_Double * prop2 = (Prop_Double *)prop;
+			const json_value& propjson = CurLang["Properties"sv][PropID];
+
+			if (propjson["Minimum"sv].type != json_none)
+			{
+				double minimum = propjson["Minimum"sv];
+				if (prop2->Value < minimum)
+					prop2->Value = minimum;
+			}
+			if (propjson["Minimum"sv].type != json_none)
+			{
+				double maximum = propjson["Maximum"sv];
+				if (prop2->Value > maximum)
+					prop2->Value = maximum;
+			}
 			Props.Internal_PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(double));
+			mvRefreshProp(mV, edPtr, fusionPropID, TRUE);
 			break;
 		}
 		case 'FLOT': // 4-byte floating point var
 		{
 			Prop_Float * prop2 = (Prop_Float *)prop;
+			const json_value& propjson = CurLang["Properties"sv][PropID];
+
+			if (propjson["Minimum"sv].type != json_none)
+			{
+				float minimum = (float)(double)propjson["Minimum"sv];
+				if (prop2->Value < minimum)
+					prop2->Value = minimum;
+			}
+			if (propjson["Minimum"sv].type != json_none)
+			{
+				float maximum = (float)(double)propjson["Maximum"sv];
+				if (prop2->Value > maximum)
+					prop2->Value = maximum;
+			}
 			Props.Internal_PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(float));
+			mvRefreshProp(mV, edPtr, fusionPropID, TRUE);
 			break;
 		}
 		case 'SIZE': // Two ints depicting a size
@@ -4760,8 +4838,66 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 				}
 			}
 
-			// Edit box for numbers (does not support min/max)
+			// Edit box for numbers (does not support min/max natively, but we implement that ourselves)
 			case PROPTYPE_EDIT_NUMBER:
+			{
+				const std::tstring& propName = DarkEdif::UTF8ToTString(Property["Title"sv]);
+				const json_type& propMinimumType = Property["Minimum"sv].type;
+				const json_type& propMaximumType = Property["Minimum"sv].type;
+				const json_type& propDefaultType = Property["DefaultState"sv].type;
+
+				if (propDefaultType != json_double && propDefaultType != json_integer)
+				{
+					DarkEdif::MsgBox::Error(_T("Invalid DefaultState for editbox float"), _T("JSON field \"DefaultState\" for prop \"%s\" is either not specified or isn't a number."), propName.c_str());
+				}
+
+				if (propMaximumType != json_none && propMaximumType != json_double && propMaximumType != json_integer)
+				{
+					DarkEdif::MsgBox::Error(_T("Invalid Maximum prop for editbox float"), _T("JSON field \"Maximum\" for prop \"%s\" must be a number."), propName.c_str());
+				}
+				if (propMinimumType != json_none && propMinimumType != json_double && propMinimumType != json_integer)
+				{
+					DarkEdif::MsgBox::Error(_T("Invalid Minimum prop for editbox float"), _T("JSON field \"Minimum\" for prop \"%s\" must be a number."), propName.c_str());
+				}
+
+				if (propMinimumType != json_none && propMaximumType != json_none)
+				{
+					int defaultState = Property["DefaultState"sv];
+					int minimum = Property["Minimum"sv];
+					int maximum = Property["Maximum"sv];
+					if (minimum > maximum)
+					{
+						DarkEdif::MsgBox::Error(_T("Invalid Minimum prop for editbox float"), _T("JSON field \"Minimum\" for prop \"%s\" must not be greater than it's maximum.\nMinimum was %d, maximum was %d."), propName.c_str(), minimum, maximum);
+					}
+					if (defaultState < minimum)
+					{
+						DarkEdif::MsgBox::Error(_T("Invalid DefaultState for editbox float"), _T("JSON field \"DefaultState\" for prop \"%s\" is lower than it's minimum value, %d.\nDefaultState was %d."), propName.c_str(), minimum, defaultState);
+					}
+					if (defaultState > maximum)
+					{
+						DarkEdif::MsgBox::Error(_T("Invalid DefaultState for editbox float"), _T("JSON field \"DefaultState\" for prop \"%s\" is greater than it's maximum value, %d.\nDefaultState was %d."), propName.c_str(), maximum, defaultState);
+					}
+				}
+				else if (propMinimumType != json_none)
+				{
+					int defaultState = Property["DefaultState"sv];
+					int minimum = Property["Minimum"sv];
+					if (defaultState < minimum)
+					{
+						DarkEdif::MsgBox::Error(_T("Invalid DefaultState for editbox float"), _T("JSON field \"DefaultState\" for prop \"%s\" must not be lower than it's minimum, %d.\nDefaultState was %d."), propName.c_str(), minimum, defaultState);
+					}
+				}
+				else if (propMaximumType != json_none)
+				{
+					int defaultState = Property["DefaultState"sv];
+					int maximum = Property["Maximum"sv];
+					if (defaultState > maximum)
+					{
+						DarkEdif::MsgBox::Error(_T("Invalid DefaultState for editbox float"), _T("JSON field \"DefaultState\" for prop \"%s\" must not be greater than it's maximum, %d.\nDefaultState was %d."), propName.c_str(), maximum, defaultState);
+					}
+				}
+				SetAllProps(0, NULL);
+			}
 			case PROPTYPE_COLOR:
 				SetAllProps(0, NULL);
 
@@ -4958,9 +5094,66 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 			case PROPTYPE_FONT:
 				SetAllProps(0, NULL);
 
-			// Edit box for floating point numbers (does not support min/max)
+			// Edit box for floating point numbers (does not natively support min/max, but we implement that ourselves)
 			case PROPTYPE_EDIT_FLOAT:
+			{
+				const std::tstring& propName = DarkEdif::UTF8ToTString(Property["Title"sv]);
+				const json_type& propMinimumType = Property["Minimum"sv].type;
+				const json_type& propMaximumType = Property["Minimum"sv].type;
+				const json_type& propDefaultType = Property["DefaultState"sv].type;
+
+				if (propDefaultType != json_double && propDefaultType != json_integer)
+				{
+					DarkEdif::MsgBox::Error(_T("Invalid DefaultState for editbox float"), _T("JSON field \"DefaultState\" for prop \"%s\" is either not specified or isn't a number."), propName.c_str());
+				}
+
+				if (propMaximumType != json_none && propMaximumType != json_double && propMaximumType != json_integer)
+				{
+					DarkEdif::MsgBox::Error(_T("Invalid Maximum prop for editbox float"), _T("JSON field \"Maximum\" for prop \"%s\" must be a number."), propName.c_str());
+				}
+				if (propMinimumType != json_none && propMinimumType != json_double && propMinimumType != json_integer)
+				{
+					DarkEdif::MsgBox::Error(_T("Invalid Minimum prop for editbox float"), _T("JSON field \"Minimum\" for prop \"%s\" must be a number."), propName.c_str());
+				}
+
+				if (propMinimumType != json_none && propMaximumType != json_none)
+				{
+					float defaultState = (float)(double)Property["DefaultState"sv];
+					float minimum = (float)(double)Property["Minimum"sv];
+					float maximum = (float)(double)Property["Maximum"sv];
+					if (minimum > maximum)
+					{
+						DarkEdif::MsgBox::Error(_T("Invalid Minimum prop for editbox float"), _T("JSON field \"Minimum\" for prop \"%s\" must not be greater than it's maximum.\nMinimum was %f, maximum was %f."), propName.c_str(), minimum, maximum);
+					}
+					if (defaultState < minimum)
+					{
+						DarkEdif::MsgBox::Error(_T("Invalid DefaultState for editbox float"), _T("JSON field \"DefaultState\" for prop \"%s\" is lower than it's minimum value, %f.\nDefaultState was %f."), propName.c_str(), minimum, defaultState);
+					}
+					if (defaultState > maximum)
+					{
+						DarkEdif::MsgBox::Error(_T("Invalid DefaultState for editbox float"), _T("JSON field \"DefaultState\" for prop \"%s\" is greater than it's maximum value, %f.\nDefaultState was %f."), propName.c_str(), maximum, defaultState);
+					}
+				}
+				else if (propMinimumType != json_none)
+				{
+					float defaultState = (float)(double)Property["DefaultState"sv];
+					float minimum = (float)(double)Property["Minimum"sv];
+					if (defaultState < minimum)
+					{
+						DarkEdif::MsgBox::Error(_T("Invalid DefaultState for editbox float"), _T("JSON field \"DefaultState\" for prop \"%s\" must not be lower than it's minimum, %f.\nDefaultState was %f."), propName.c_str(), minimum, defaultState);
+					}
+				}
+				else if (propMaximumType != json_none)
+				{
+					float defaultState = (float)(double)Property["DefaultState"sv];
+					float maximum = (float)(double)Property["Maximum"sv];
+					if (defaultState > maximum)
+					{
+						DarkEdif::MsgBox::Error(_T("Invalid DefaultState for editbox float"), _T("JSON field \"DefaultState\" for prop \"%s\" must not be greater than it's maximum, %f.\nDefaultState was %f."), propName.c_str(), maximum, defaultState);
+					}
+				}
 				SetAllProps(0, NULL);
+			}
 
 			// Image list
 			case PROPTYPE_IMAGELIST:
