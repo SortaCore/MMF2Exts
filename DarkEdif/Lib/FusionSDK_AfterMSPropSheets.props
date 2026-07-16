@@ -79,7 +79,7 @@
 			<XCodeBuildScript>$(XCodeBuildScript) xcodebuild build -configuration $(Configuration) -sdk macosx$(AppleSDKDeployVersion)</XCodeBuildScript>
 			<XCodeBuildScript>$(XCodeBuildScript) -arch $(TargetArch) -project "$(ExtName.Replace(' ', '\ ')).Mac.xcodeproj" </XCodeBuildScript>
 			<XCodeBuildScript>$(XCodeBuildScript) "CONFIGURATION_BUILD_DIR=$(DarkEdif_RemoteOutputFolder.Replace(' ', '\ '))/$(ExtName.Replace(' ', '\ '))/Mac/$(Configuration)/$(TargetArch)/"</XCodeBuildScript>
-			<XCodeBuildScript>$(XCodeBuildScript) "CONFIGURATION_TEMP_DIR=$(DarkEdif_RemoteOutputFolder.Replace(' ', '\ '))/$(ExtName.Replace(' ', '\ '))/Mac/$(Configuration)/$(TargetArch)/tmp/$(Configuration)/$(TargetArch)</XCodeBuildScript>
+			<XCodeBuildScript>$(XCodeBuildScript) "CONFIGURATION_TEMP_DIR=$(DarkEdif_RemoteOutputFolder.Replace(' ', '\ '))/$(ExtName.Replace(' ', '\ '))/Mac/$(Configuration)/$(TargetArch)/tmp/$(Configuration)/$(TargetArch)"</XCodeBuildScript>
 		</PropertyGroup>
 		<Message Text="Running XCodeBuild for Mac $(ProjectName), $(Configuration) build, $(TargetArch) arch..." Importance="High" />
 		<Exec Command="&quot;$(DarkEdif_PLinkPath)&quot; $(DarkEdif_PLinkArgs.Replace(&quot;'&quot;, '&quot;')) $(XCodeBuildScript)" />

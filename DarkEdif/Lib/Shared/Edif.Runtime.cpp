@@ -143,7 +143,7 @@ int CRunAppMultiPlat::get_nCurrentFrame()
 #ifdef _WIN32
 	return nCurrentFrame;
 #elif defined(__APPLE__)
-	return (std::size_t)((CRunApp*)this)->currentFrame;
+	return ((CRunApp*)this)->currentFrame;
 #elif defined(__ANDROID__)
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!nCurrentFrame.has_value())
@@ -4537,7 +4537,7 @@ event2* EventGroupMP::GetCAByIndex(size_t index)
 		return nullptr;
 
 	event2* ret = (event2*)(&((event2*)this)[1]);
-	for (size_t i = 0; i < index && ret; i++) {
+	for (size_t i = 0; i < index && ret; ++i) {
 		ret = ret->Next();
 	}
 	return ret;

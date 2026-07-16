@@ -434,7 +434,7 @@ const TCHAR* Extension::GetAltStringsFromObjName(const TCHAR* objectName, int al
 		MakeError(_T("Delimiter cannot be blank. Use Newline$, \" \", etc."));
 		return Runtime.CopyString(_T("<ERROR>"));
 	}
-#ifdef _WIN32
+#if defined(_WIN32) && RuntimeBuild
 	bool isUnicode = mvIsUnicodeApp(Edif::SDK->mV, Edif::SDK->mV->RunApp);
 #else
 	constexpr bool isUnicode = true;
