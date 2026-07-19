@@ -1080,7 +1080,8 @@ https://forums.developer.apple.com/forums/thread/113746?answerId=349757022#34975
 			]]></Code>
 		</Task>
 	</UsingTask>
-	<Target Name="Android API check" Condition="'$(_TargetPlat)'=='Android'" BeforeTargets="BeforeBuild;ClCompile">
+	<!-- Requires RoslynCodeTaskFactory, added in MSBuild 15.8 (VS 2017 v15.8+) -->
+	<Target Name="Android API check" Condition="'$(MSBuildVersion)' &gt;= '15.8.0.0' and '$(_TargetPlat)'=='Android'" BeforeTargets="BeforeBuild;ClCompile">
 		<PropertyGroup>
 			<MinNDKAPI>0</MinNDKAPI>
 			<MaxNDKAPI>50</MaxNDKAPI>
