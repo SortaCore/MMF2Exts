@@ -1255,7 +1255,6 @@ void * DarkEdif::DLL::DLL_GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int P
 void DarkEdif::DLL::DLL_SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID, void * Param)
 {
 	LOGV(_T("Call to %s with edPtr %p.\n"), _T(__FUNCTION__), edPtr);
-	unsigned int fusionPropID = PropID;
 	if (!GetPropRealID(PropID))
 		return;
 
@@ -1310,14 +1309,14 @@ void DarkEdif::DLL::DLL_SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int Pro
 				if (prop2->Value < minimum)
 					prop2->Value = minimum;
 			}
-			if (propjson["Minimum"sv].type != json_none)
+			if (propjson["Maximum"sv].type != json_none)
 			{
 				int maximum = (int)(json_int_t)propjson["Maximum"sv];
 				if (prop2->Value > maximum)
 					prop2->Value = maximum;
 			}
 			Props.Internal_PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(int));
-			mvRefreshProp(mV, edPtr, fusionPropID, TRUE);
+			mvRefreshProp(mV, edPtr, PROPID_EXTITEM_CUSTOM_FIRST + PropID, TRUE);
 			break;
 		}
 		case 'DWRD': // 4-byte unsigned int
@@ -1331,14 +1330,14 @@ void DarkEdif::DLL::DLL_SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int Pro
 				if (prop2->Value < minimum)
 					prop2->Value = minimum;
 			}
-			if (propjson["Minimum"sv].type != json_none)
+			if (propjson["Maximum"sv].type != json_none)
 			{
 				uint32_t maximum = (uint32_t)(json_int_t)propjson["Maximum"sv];
 				if (prop2->Value > maximum)
 					prop2->Value = maximum;
 			}
 			Props.Internal_PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(unsigned int));
-			mvRefreshProp(mV, edPtr, fusionPropID, TRUE);
+			mvRefreshProp(mV, edPtr, PROPID_EXTITEM_CUSTOM_FIRST + PropID, TRUE);
 			break;
 		}
 		case 'INT2': // 8-byte signed int
@@ -1352,14 +1351,14 @@ void DarkEdif::DLL::DLL_SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int Pro
 				if (prop2->Value < minimum)
 					prop2->Value = minimum;
 			}
-			if (propjson["Minimum"sv].type != json_none)
+			if (propjson["Maximum"sv].type != json_none)
 			{
 				int64_t maximum = (json_int_t)propjson["Maximum"sv];
 				if (prop2->Value > maximum)
 					prop2->Value = maximum;
 			}
 			Props.Internal_PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(std::int64_t));
-			mvRefreshProp(mV, edPtr, fusionPropID, TRUE);
+			mvRefreshProp(mV, edPtr, PROPID_EXTITEM_CUSTOM_FIRST + PropID, TRUE);
 			break;
 		}
 		case 'DBLE': // 8-byte floating point var
@@ -1373,14 +1372,14 @@ void DarkEdif::DLL::DLL_SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int Pro
 				if (prop2->Value < minimum)
 					prop2->Value = minimum;
 			}
-			if (propjson["Minimum"sv].type != json_none)
+			if (propjson["Maximum"sv].type != json_none)
 			{
 				double maximum = propjson["Maximum"sv];
 				if (prop2->Value > maximum)
 					prop2->Value = maximum;
 			}
 			Props.Internal_PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(double));
-			mvRefreshProp(mV, edPtr, fusionPropID, TRUE);
+			mvRefreshProp(mV, edPtr, PROPID_EXTITEM_CUSTOM_FIRST + PropID, TRUE);
 			break;
 		}
 		case 'FLOT': // 4-byte floating point var
@@ -1394,14 +1393,14 @@ void DarkEdif::DLL::DLL_SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int Pro
 				if (prop2->Value < minimum)
 					prop2->Value = minimum;
 			}
-			if (propjson["Minimum"sv].type != json_none)
+			if (propjson["Maximum"sv].type != json_none)
 			{
 				float maximum = (float)(double)propjson["Maximum"sv];
 				if (prop2->Value > maximum)
 					prop2->Value = maximum;
 			}
 			Props.Internal_PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(float));
-			mvRefreshProp(mV, edPtr, fusionPropID, TRUE);
+			mvRefreshProp(mV, edPtr, PROPID_EXTITEM_CUSTOM_FIRST + PropID, TRUE);
 			break;
 		}
 		case 'SIZE': // Two ints depicting a size
