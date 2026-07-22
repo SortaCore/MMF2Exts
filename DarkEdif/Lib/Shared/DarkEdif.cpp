@@ -1305,15 +1305,11 @@ void DarkEdif::DLL::DLL_SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int Pro
 
 			if (propjson["Minimum"sv].type != json_none)
 			{
-				int minimum = (int)(json_int_t)propjson["Minimum"sv];
-				if (prop2->Value < minimum)
-					prop2->Value = minimum;
+				prop2->Value = std::max((int)(json_int_t)propjson["Minimum"sv], prop2->Value);
 			}
 			if (propjson["Maximum"sv].type != json_none)
 			{
-				int maximum = (int)(json_int_t)propjson["Maximum"sv];
-				if (prop2->Value > maximum)
-					prop2->Value = maximum;
+				prop2->Value = std::min((int)(json_int_t)propjson["Maximum"sv], prop2->Value);
 			}
 			Props.Internal_PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(int));
 			mvRefreshProp(mV, edPtr, PROPID_EXTITEM_CUSTOM_FIRST + PropID, TRUE);
@@ -1326,15 +1322,11 @@ void DarkEdif::DLL::DLL_SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int Pro
 
 			if (propjson["Minimum"sv].type != json_none)
 			{
-				uint32_t minimum = (uint32_t)(json_int_t)propjson["Minimum"sv];
-				if (prop2->Value < minimum)
-					prop2->Value = minimum;
+				prop2->Value = std::max((uint32_t)(json_int_t)propjson["Minimum"sv], prop2->Value);
 			}
 			if (propjson["Maximum"sv].type != json_none)
 			{
-				uint32_t maximum = (uint32_t)(json_int_t)propjson["Maximum"sv];
-				if (prop2->Value > maximum)
-					prop2->Value = maximum;
+				prop2->Value = std::min((uint32_t)(json_int_t)propjson["Maximum"sv], prop2->Value);
 			}
 			Props.Internal_PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(unsigned int));
 			mvRefreshProp(mV, edPtr, PROPID_EXTITEM_CUSTOM_FIRST + PropID, TRUE);
@@ -1347,15 +1339,11 @@ void DarkEdif::DLL::DLL_SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int Pro
 
 			if (propjson["Minimum"sv].type != json_none)
 			{
-				int64_t minimum = (json_int_t)propjson["Minimum"sv];
-				if (prop2->Value < minimum)
-					prop2->Value = minimum;
+				prop2->Value = std::max((json_int_t)propjson["Minimum"sv], prop2->Value);
 			}
 			if (propjson["Maximum"sv].type != json_none)
 			{
-				int64_t maximum = (json_int_t)propjson["Maximum"sv];
-				if (prop2->Value > maximum)
-					prop2->Value = maximum;
+				prop2->Value = std::min((json_int_t)propjson["Maximum"sv], prop2->Value);
 			}
 			Props.Internal_PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(std::int64_t));
 			mvRefreshProp(mV, edPtr, PROPID_EXTITEM_CUSTOM_FIRST + PropID, TRUE);
@@ -1368,15 +1356,11 @@ void DarkEdif::DLL::DLL_SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int Pro
 
 			if (propjson["Minimum"sv].type != json_none)
 			{
-				double minimum = propjson["Minimum"sv];
-				if (prop2->Value < minimum)
-					prop2->Value = minimum;
+				prop2->Value = std::max((double)propjson["Minimum"sv], prop2->Value);
 			}
 			if (propjson["Maximum"sv].type != json_none)
 			{
-				double maximum = propjson["Maximum"sv];
-				if (prop2->Value > maximum)
-					prop2->Value = maximum;
+				prop2->Value = std::min((double)propjson["Maximum"sv], prop2->Value);
 			}
 			Props.Internal_PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(double));
 			mvRefreshProp(mV, edPtr, PROPID_EXTITEM_CUSTOM_FIRST + PropID, TRUE);
@@ -1389,15 +1373,11 @@ void DarkEdif::DLL::DLL_SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int Pro
 
 			if (propjson["Minimum"sv].type != json_none)
 			{
-				float minimum = (float)(double)propjson["Minimum"sv];
-				if (prop2->Value < minimum)
-					prop2->Value = minimum;
+				prop2->Value = std::max((float)(double)propjson["Minimum"sv], prop2->Value);
 			}
 			if (propjson["Maximum"sv].type != json_none)
 			{
-				float maximum = (float)(double)propjson["Maximum"sv];
-				if (prop2->Value > maximum)
-					prop2->Value = maximum;
+				prop2->Value = std::min((float)(double)propjson["Maximum"sv], prop2->Value);
 			}
 			Props.Internal_PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(float));
 			mvRefreshProp(mV, edPtr, PROPID_EXTITEM_CUSTOM_FIRST + PropID, TRUE);
@@ -5115,9 +5095,9 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 
 				if (propMinimumType != json_none && propMaximumType != json_none)
 				{
-					float defaultState = (float)(double)Property["DefaultState"sv];
-					float minimum = (float)(double)Property["Minimum"sv];
-					float maximum = (float)(double)Property["Maximum"sv];
+					double defaultState = Property["DefaultState"sv];
+					double minimum = Property["Minimum"sv];
+					double maximum = Property["Maximum"sv];
 					if (minimum > maximum)
 					{
 						DarkEdif::MsgBox::Error(_T("Invalid Minimum prop for editbox float"), _T("JSON field \"Minimum\" for prop \"%s\" must not be greater than it's maximum.\nMinimum was %f, maximum was %f."), propName.c_str(), minimum, maximum);
@@ -5133,8 +5113,8 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 				}
 				else if (propMinimumType != json_none)
 				{
-					float defaultState = (float)(double)Property["DefaultState"sv];
-					float minimum = (float)(double)Property["Minimum"sv];
+					double defaultState = Property["DefaultState"sv];
+					double minimum = Property["Minimum"sv];
 					if (defaultState < minimum)
 					{
 						DarkEdif::MsgBox::Error(_T("Invalid DefaultState for editbox float"), _T("JSON field \"DefaultState\" for prop \"%s\" must not be lower than it's minimum, %f.\nDefaultState was %f."), propName.c_str(), minimum, defaultState);
@@ -5142,8 +5122,8 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 				}
 				else if (propMaximumType != json_none)
 				{
-					float defaultState = (float)(double)Property["DefaultState"sv];
-					float maximum = (float)(double)Property["Maximum"sv];
+					double defaultState = Property["DefaultState"sv];
+					double maximum = Property["Maximum"sv];
 					if (defaultState > maximum)
 					{
 						DarkEdif::MsgBox::Error(_T("Invalid DefaultState for editbox float"), _T("JSON field \"DefaultState\" for prop \"%s\" must not be greater than it's maximum, %f.\nDefaultState was %f."), propName.c_str(), maximum, defaultState);
