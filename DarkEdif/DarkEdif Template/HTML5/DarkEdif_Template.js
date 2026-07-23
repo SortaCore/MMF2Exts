@@ -597,23 +597,11 @@ CRunDarkEdif_Template.prototype = CServices.extend(new CRunExtension(), {
 		// DarkEdif properties are accessible as on other platforms: IsPropChecked(), GetPropertyStr(), GetPropertyNum()
 		let props = new darkEdif['Properties'](this, file, version);
 
-		let str = "";
-		str += "Looping set Fred:\n";
-		for (let it of props.LoopPropSet("Fred")) {
-			str += "Set entry \"" + props.GetPropertyStr("Set name")
-				+ "\" has fruit \"" + props.GetPropertyStr("This set's fruit") + "\".\n";
-		}
-		str += "And agaiN!\n";
-		for (let it2 of props.LoopPropSet("Fred")) {
-			str += "Set entry \"" + props.GetPropertyStr("Set name")
-				+ "\" has fruit \"" + props.GetPropertyStr("This set's fruit") + "\".\n";
-		}
-		darkEdif.consoleLog(this, "DarkEdif prop notif:\n" + str + "========\n");
-
 		this.checkboxWithinFolder = props['IsPropChecked']("Checkbox within folder");
-		//this.editable6Text = props['GetPropertyStr']("Editable 6");
+		/* If a display ext:
 		this.surf = new darkEdif['Surface'](this.rh, true, true, 32, 32, true);
 		this.surf['SetAsExtensionDisplay'](this);
+		*/
 
 		// The return value is not used in this version of the runtime: always return false.
 		return false;
