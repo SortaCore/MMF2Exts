@@ -388,8 +388,8 @@ window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 20)
 		const dataDV = new DataView(new Uint8Array(data).buffer);
 
 		this.textDecoder = null;
-		if (globalThis['TextDecoder'] != null) {
-			this.textDecoder = new globalThis['TextDecoder']();
+		if (window['TextDecoder'] != null) {
+			this.textDecoder = new window['TextDecoder']();
 		}
 		else {
 			// one byte = one char - should suffice for basic ASCII property names
