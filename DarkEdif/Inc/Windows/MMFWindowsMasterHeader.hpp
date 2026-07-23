@@ -4956,6 +4956,8 @@ struct RunFrameLayer
 		unsigned int	dwEffect;
 		LPARAM			dwEffectParam;	// CEffectEx si extended
 	#endif // HWABETA
+	// CPArray, not sure when it was added in CF2.5
+    void *			m_loZones;
 
 	// Backup for restart
 	unsigned int	backUp_dwOptions;
@@ -4963,12 +4965,6 @@ struct RunFrameLayer
 					backUp_yCoef;
 	unsigned int	backUp_nBkdLOs,
 					backUp_nFirstLOIndex;
-
-	#ifdef HWABETA
-	//	unsigned int		backUp_dwEffect;		// A voir
-	//	LPARAM		backUp_dwEffectParam;
-	#endif // HWABETA
-
 };
 
 // Object transition data
