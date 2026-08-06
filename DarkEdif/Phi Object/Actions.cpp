@@ -1417,7 +1417,7 @@ void Extension::CopyAltStrings(RunObject *, int startIndex, int numVals, int des
 		return;
 	}
 
-	bool isUnicode = mvIsUnicodeApp(Edif::SDK->mV, Edif::SDK->mV->RunApp);
+	bool isUnicode = mvIsUnicodeApp(Edif::SDK->mV, Edif::SDK->mV->mvRunApp);
 #if _UNICODE
 	// Unicode exts can only load in Unicode
 	if (!isUnicode)

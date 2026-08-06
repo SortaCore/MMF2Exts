@@ -718,7 +718,7 @@ void Extension::AutoGenerateExpressions()
 	if (numFuncVariantsToGenerate == 0)
 	{
 #ifdef _WIN32
-		const int build = (Edif::SDK->mV->GetVersion() & MMFBUILD_MASK);
+		const int build = (Edif::SDK->mV->mvGetVersion() & MMFBUILD_MASK);
 		const bool useMoreExpressions = DarkEdif::IsFusion25 &&
 			(build >= 295 || (build == 294 && getFusionSubBuild() >= 8));
 #else

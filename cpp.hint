@@ -21,6 +21,8 @@
 #define FusionAPI /* no op */
 #define PrintFHintAfter(formatParamIndex, dotsParamIndex) /* no op */
 #define EXDEF { __assume(0); }
+#define MMF2_ORD(mmf2) /* no op */
+#define MMF_ORD(mmf1,mmf2) /* no op */
 #define ProjectFunc /* no op */
 #define DLLExport32 /* no op */
 #define npWin void *
@@ -31,3 +33,13 @@
 #define NO_DEFAULT_CTORS_OR_DTORS(x) /* no op */
 #define NO_DEFAULT_CTORS(x) /* no op */
 #define DarkEdifInternalAccessProtected protected
+#define MMF2_UNICODE_OR_CF25_REQUIRED(ord /* Only in MMF2 HWA display mode and CF2.5 */
+#define CF25_REQUIRED(ord) /* Only in CF2.5, not MMF2 */
+#define CF25_292_02_REQUIRED(ord) /* Only in CF2.5 build 292.2+ */
+#define CF25_292_27_REQUIRED(ord) /* Only in CF2.5 build 292.27+ */
+#define MMF2_HWA_OR_CF25_REQUIRED(ord) /* Only in MMF2 HWA display mode and CF2.5 */
+#define PreferFusionFunc_HWA(ord, func) /* Suggest a replacement func that requires HWA */
+#define PreferFusionFunc_Unicode(ord, func) /* Suggest a replacement func that requires Unicode */
+#define PreferFusionFunc_CF25(ord, func) /* Suggest a replacement func that requires CF2.5 */
+#define PreferFusionFunc_CF25_296_02(ord, func) /* Suggest a replacement func that requires CF2.5 292.2 */
+#define PreferFusionFunc_CF25_296_27(ord, func) /* Suggest a replacement func that requires CF2.5 292.27 */

@@ -41,14 +41,14 @@
 #import <Foundation/Foundation.h>
 #import <AppKit/AppKit.h>
 
-#import "MMF2Lib/CObjInfo.h"
-#import "MMF2Lib/CQualToOiList.h"
-#import "MMF2Lib/CRunExtension.h"
-#import "MMF2Lib/CActExtension.h"
-#import "MMF2Lib/CCndExtension.h"
-#import "MMF2Lib/CCreateObjectInfo.h"
-#import "MMF2Lib/CFontInfo.h"
-#import "MMF2Lib/CRCom.h"
+#import <MMF2Lib/CObjInfo.h>
+#import <MMF2Lib/CQualToOiList.h>
+#import <MMF2Lib/CRunExtension.h>
+#import <MMF2Lib/CActExtension.h>
+#import <MMF2Lib/CCndExtension.h>
+#import <MMF2Lib/CCreateObjectInfo.h>
+#import <MMF2Lib/CFontInfo.h>
+#import <MMF2Lib/CRCom.h>
 @class CRunApp;
 #elif defined(__INTELLISENSE__)
 // These are dummies so the VS IntelliSense is happy; the actual compiler won't read this,

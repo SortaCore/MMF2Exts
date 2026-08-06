@@ -1,3 +1,4 @@
+#define DARKEDIF_INTERNAL_INCLUDE
 #include "DarkEdif.hpp" // Should include SurfaceMultiPlat.hpp
 #include "Extension.hpp"
 #ifdef _WIN32
@@ -39,10 +40,10 @@
 			int shaderIndex, int inkEffect, int inkEffectParam);
 	#elif defined(__APPLE__)
 		#ifndef __INTELLISENSE__
-			#import "MMF2Lib/CBitmap.h"
-			#import "MMF2Lib/CImage.h"
-			#import "MMF2Lib/CRenderToTexture.h"
-			#import "MMF2Lib/CRenderer.h"
+			#import <MMF2Lib/CBitmap.h>
+			#import <MMF2Lib/CImage.h>
+			#import <MMF2Lib/CRenderToTexture.h>
+			#import <MMF2Lib/CRenderer.h>
 		#else // IntelliSense
 			class CImage {};
 			class CBitmap {};
@@ -492,7 +493,7 @@ bool DarkEdif::Surface::Windows_LoadImageFromHINSTANCE(const HINSTANCE hInst, co
 static bool FindFilter(CImageFilterMgr* pImgMgr, DWORD& filter, const std::tstring& fileName,
 	DarkEdif::Surface::ImageFileFormat fmt)
 {
-	std::tstring ext;
+	std::string ext;
 	if (fmt == DarkEdif::Surface::ImageFileFormat::Unset)
 	{
 		fmt = FileExtensionToImageFormat(fileName);
@@ -502,50 +503,29 @@ static bool FindFilter(CImageFilterMgr* pImgMgr, DWORD& filter, const std::tstri
 
 	// Get filter by extension
 	if (fmt == DarkEdif::Surface::ImageFileFormat::PNG)
-		ext = _T("png"sv);
+		ext = "png"sv;
 	else if (fmt == DarkEdif::Surface::ImageFileFormat::BMP)
-		ext = _T("bmp"sv);
+		ext = "bmp"sv;
 	else if (fmt == DarkEdif::Surface::ImageFileFormat::GIF)
-		ext = _T("gif"sv);
+		ext = "gif"sv;
 	else if (fmt == DarkEdif::Surface::ImageFileFormat::TGA)
-		ext = _T("tga"sv);
+		ext = "tga"sv;
 	else if (fmt == DarkEdif::Surface::ImageFileFormat::JPEG)
-		ext = _T("jpg"sv);
+		ext = "jpg"sv;
 	else
 		LOGF(_T("Invalid format ID %d passed to Surface::FindFilter.\n"), (int)fmt);
 
 	// It should be a real image ext, but did the user not include the image filter?
 	filter = 0;
 
-#if defined(_WIN32) && !defined(_UNICODE)
-	if (!mvIsUnicodeVersion(Edif::SDK->mV))
-	{
-		CImageFilterMgrANSI20* pImgMgrEvil20 = (CImageFilterMgrANSI20*)Edif::SDK->mV->ImgFilterMgr;
-		for (int i = 0; i < pImgMgrEvil20->GetFilterCount(); ++i)
-		{
-			const TCHAR** exts = pImgMgrEvil20->GetFilterExts(i);
-			if (exts == 0)
-				break; // at end
-			for (int j = 0; exts[j]; ++j)
-			{
-				if (!_tcsicmp(exts[j], ext.c_str()))
-				{
-					filter = pImgMgrEvil20->GetFilterID(i);
-					return true;
-				}
-			}
-		}
-	}
-	else
-#endif
 	for (int i = 0; i < pImgMgr->GetFilterCount(); ++i)
 	{
-		const TCHAR** exts = pImgMgr->GetFilterExts(i);
+		const char ** exts = pImgMgr->GetFilterExtsA(i);
 		if (exts == 0)
 			break; // at end
 		for (int j = 0; exts[j]; ++j)
 		{
-			if (!_tcsicmp(exts[j], ext.c_str()))
+			if (DarkEdif::SVICompare(ext, exts[j]))
 			{
 				filter = pImgMgr->GetFilterID(i);
 				return true;
@@ -647,7 +627,7 @@ bool DarkEdif::Surface::InternalImageSave(void* userPtr,
 
 #ifdef _WIN32
 	DWORD filter;
-	if (!FindFilter(Edif::SDK->mV->ImgFilterMgr, filter, _T(""s), fmt)) {
+	if (!FindFilter(Edif::SDK->mV->mvImgFilterMgr, filter, _T(""s), fmt)) {
 		return LOGE(_T("%sFailed to save image to %s %p with format %d; image filter not included in app.\n"),
 			debugID, WrittenToDesc(userPtr).c_str(), format), false;
 	}
@@ -817,8 +797,8 @@ bool DarkEdif::Surface::SaveImageToFilePath(const std::tstring& file, ImageFileF
 
 #ifdef _WIN32
 	DWORD filter = -1;
-	const auto pImgMgr = Edif::SDK->mV->ImgFilterMgr;
-	if (!FindFilter(Edif::SDK->mV->ImgFilterMgr, filter, file, fmt)) {
+	const auto pImgMgr = Edif::SDK->mV->mvImgFilterMgr;
+	if (!FindFilter(Edif::SDK->mV->mvImgFilterMgr, filter, file, fmt)) {
 		LOGE(_T("%sFailed to save image to file \"%s\" with format %d; image filter %s.\n"),
 			debugID, file.c_str(), (int)fmt,
 			filter == -1 ? _T("not recognised from file format") : _T("not included in app"));
@@ -857,10 +837,9 @@ bool DarkEdif::Surface::SaveImageToFilePath(const std::tstring& file, ImageFileF
 				surf->GetPitch(), (LPLOGPALETTE)surf->GetPalette(),
 				(LPBYTE)*buffAlphaHolder, surf->GetAlphaPitch());
 		}
-		else
+		else 
 		{
 			auto buffHolder = (fake ? &*fake : this)->GetPixelBytes();
-			auto name = pFilter->GetFilterNameW();
 			ifErr = pFilter->Save((UShortTCHAR*)file.c_str(),
 				(LPBYTE)*buffHolder, surf->GetWidth(), surf->GetHeight(), depth,
 				(fake ? &*fake : this)->surf->GetPitch(), (LPLOGPALETTE)surf->GetPalette());
@@ -965,7 +944,7 @@ DarkEdif::Surface::ImageFileFormat DarkEdif::Surface::InternalImageLoad(void* us
 	ImageFileFormat fmt = ImageFileFormat::Unset;
 
 #ifdef _WIN32
-	CImageFilterMgr* pImgMgr = Edif::SDK->mV->ImgFilterMgr;
+	CImageFilterMgr* pImgMgr = Edif::SDK->mV->mvImgFilterMgr;
 	DWORD filter;
 
 	// Note this will replace transparent color and alpha channel
@@ -1161,13 +1140,13 @@ void DarkEdif::Surface::WasAltered(Rect* zone /* = nullptr */)
 	// Software display mode does not redraw on screen automatically.
 	if (ext->Runtime.GetAppDisplayMode() < SurfaceDriver::Direct3D8)
 	{
-	//	WinAddZone(Edif::SDK->mV->IdEditWin, (RECT*)zone);
-	//	WinAddZone(Edif::SDK->mV->IdEditWin, &ext->rdPtr->rHo.Rect);
+	//	WinAddZone(Edif::SDK->mV->mvIdEditWin, (RECT*)zone);
+	//	WinAddZone(Edif::SDK->mV->mvIdEditWin, &ext->rdPtr->rHo.Rect);
 	}
 #endif
 #if DARKEDIF_DISPLAY_TYPE == DARKEDIF_DISPLAY_SIMPLE
 
-	//WinAddZone(Edif::SDK->mV->IdEditWin, &ext->rdPtr->rHo.Rect);
+	//WinAddZone(Edif::SDK->mV->mvIdEditWin, &ext->rdPtr->rHo.Rect);
 	//ext->Runtime.Redisplay();
 
 	// if roc exists, update it
@@ -1178,7 +1157,7 @@ void DarkEdif::Surface::WasAltered(Rect* zone /* = nullptr */)
 		auto pSp = ext->rdPtr->get_ros();
 		if (pSp)
 		{
-		//	ModifSpriteEffect(Edif::SDK->mV->IdEditWin, ext->rdPtr->roc.rcSprite, (DWORD)pSp->Effect, pSp->EffectParam);
+		//	ModifSpriteEffect(Edif::SDK->mV->mvIdEditWin, ext->rdPtr->roc.rcSprite, (DWORD)pSp->Effect, pSp->EffectParam);
 		}
 		//	MsgBox::Info(_T("!!!"), _T("got rcSprite"));
 		//ext->Runtime.Rehandle();
@@ -1207,7 +1186,7 @@ void DarkEdif::Surface::Internal_WinZoneHack()
 	// Software display mode does not redraw on screen automatically.
 	if (ext->Runtime.GetAppDisplayMode() < SurfaceDriver::Direct3D8)
 	{
-		WinAddZone(Edif::SDK->mV->IdEditWin, &ext->rdPtr->rHo.hoRect);
+		WinAddZone(Edif::SDK->mV->mvIdEditWin, &ext->rdPtr->rHo.hoRect);
 #if 0
 		// If scroll dependent, account for scroll offset in WindowX/Y
 		const bool scrollDependent = (ext->rdPtr->rHo.hoOEFlags & OEFLAGS::SCROLLING_INDEPENDENT) == OEFLAGS::NONE;
@@ -1217,9 +1196,9 @@ void DarkEdif::Surface::Internal_WinZoneHack()
 				ext->rdPtr->rHo.hoY - (scrollDependent ? ext->rhPtr->rhWindowY : 0) - ext->rdPtr->rHo.hoImgYSpot, true),
 			GetSize(), true);
 
-		WinAddZone(Edif::SDK->mV->IdEditWin, (RECT*)&curZone);
+		WinAddZone(Edif::SDK->mV->mvIdEditWin, (RECT*)&curZone);
 		//if (lastZone)
-		//	WinAddZone(Edif::SDK->mV->IdEditWin, (RECT*)lastZone.get());
+		//	WinAddZone(Edif::SDK->mV->mvIdEditWin, (RECT*)lastZone.get());
 		//lastZone = std::make_unique<Rect>(curZone);
 #endif
 	}
@@ -1320,7 +1299,7 @@ void DarkEdif::Surface::BlitToFrameWithExtEffects(Point pt /* = Point {}*/)
 	if (ext->Runtime.GetAppDisplayMode() < SurfaceDriver::Direct3D8)
 	{
 		Rect localZone(pt, srcSize);
-		WinAddZone(Edif::SDK->mV->IdEditWin, (RECT*)&localZone);
+		WinAddZone(Edif::SDK->mV->mvIdEditWin, (RECT*)&localZone);
 		//ext->rdPtr->roc.rcChanged = true;
 	}
 	// If not a HWA-supporting ext SDK, or display mode is non-HWA:
@@ -1472,7 +1451,7 @@ DarkEdif::Surface DarkEdif::Surface::CreateFromFrameEditorWindow()
 #if EditorBuild
 	if (DarkEdif::RunMode == DarkEdif::MFXRunMode::Editor)
 	{
-		cSurface* newSurf = WinGetSurface((int)Edif::SDK->mV->IdEditWin);
+		cSurface* newSurf = WinGetSurface((int)Edif::SDK->mV->mvIdEditWin);
 		if (!newSurf || !newSurf->IsValid())
 			LOGF(_T("Cannot create Surface from main window, unknown error.\n")); // noreturn, save me
 		return Surface(nullptr, newSurf, true);
@@ -1487,7 +1466,7 @@ DarkEdif::Surface& DarkEdif::Surface::CreateFromMainWindow(RunHeader* rhPtr)
 #ifdef _WIN32
 	if (!mainWindow)
 	{
-		cSurface* newSurf = WinGetSurface((int)Edif::SDK->mV->IdEditWin);
+		cSurface* newSurf = WinGetSurface((int)Edif::SDK->mV->mvIdEditWin);
 		if (!newSurf || !newSurf->IsValid())
 			LOGF(_T("Cannot create Surface from main window, unknown error.\n")); // noreturn, save me
 		mainWindow = new Surface(rhPtr, newSurf, true);
@@ -1604,7 +1583,7 @@ DarkEdif::Surface::Surface(RunHeader* const rhPtr, bool needBitmapFuncs, bool ne
 	else
 	{
 		st = SurfaceType::HWA_ManagedTexture;
-		cSurface* main = WinGetSurface((int)Edif::SDK->mV->IdEditWin);
+		cSurface* main = WinGetSurface((int)Edif::SDK->mV->mvIdEditWin);
 		sd = (SurfaceDriver)main->GetDriver();
 
 		// Although Fusion doesn't use the alpha of 32-bit ARGB surfaces,

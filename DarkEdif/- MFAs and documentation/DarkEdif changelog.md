@@ -13,6 +13,12 @@ Also note that commit SHAs are based on time and code differences, so it is impo
 Changes until v20 release
 ----
 *v20 not released yet*
+- GitHub downloads/forks are now tagged with commit hash to allow upgrade detecting
+- PreBuildTool: Now v1.0.1.2; expanded Mac codesign support, fixes newer Xcode compatibility
+- Windows: Added ordinal indexes for MMF1/2 functions for easier runtime linking
+- Windows: Added compile-time warnings when target Fusion runtime is too old to support the MMFS2.lib function, and recommendations to use newer MMFS2 functions when later
+- Windows: Update Fusion runtime structs to include latest Windows SDK details
+- Android: Fix JNI global ref leak
 - Android: Added DarkEdif::Android namespace, with app context, app activity, MMFRuntime inst, app Target SDK API and device API, and permission check
 - All platforms: Added multi-platform display support with DarkEdif::Surface
 - All platforms: Added DarkEdif::Rect, Point, PointF, Size.

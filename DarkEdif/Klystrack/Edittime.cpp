@@ -41,7 +41,7 @@ int FusionAPI CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr)
 void FusionAPI EditorDisplay(mv *mV, ObjectInfo * oiPtr, LevelObject * loPtr, EDITDATA * edPtr, RECT * rc)
 {
 #pragma DllExportHint
-	cSurface * Surface = WinGetSurface((int) mV->IdEditWin);
+	cSurface * Surface = WinGetSurface((int) mV->mvIdEditWin);
 	if (!Surface)
 		return;
 

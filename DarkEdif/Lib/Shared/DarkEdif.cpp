@@ -3141,8 +3141,8 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv* mV, EDITDATA* oldEdPtr)
 			// mv->EditApp contents is opaque, but the pointer changes when a new MFA is loaded
 			// We run a popup only if this is the first time we're seeing this CEditApp address,
 			// to prevent a popup for every Fusion frame that has the object inside
-			const bool isDiffApp = lastCEditApp != mV->EditApp;
-			lastCEditApp = mV->EditApp;
+			const bool isDiffApp = lastCEditApp != mV->mvEditApp;
+			lastCEditApp = mV->mvEditApp;
 
 			// Set to do popup, and if once only, this is a new app and eligible for its one popup
 			if (upgradeBox != "never"sv && (!hasOnce || isDiffApp))
@@ -4020,7 +4020,20 @@ BOOL DarkEdif::DLL::DLL_EditProp(mv* mV, EDITDATA*& edPtr, unsigned int PropID)
 		if (jsonProp["FixedNumOfImages"sv] || maxNumImages == 1)
 			opts |= PictureEditOptions::FixedNumOfImages;
 		if (jsonProp["AllowEmpty"sv])
-			opts |= PictureEditOptions::CanBeEmpty;
+			opts |= PictureEditOptions::CanBeTransparent;
+		// Renamable frames is unusable to exts.
+		// User can rename but the names are stored somewhere the ext cannot reach,
+		// Fusion doesn't modify the eap image titles ptr.
+		// If this is added to DE later, possibly we can extend the image list property
+		// by checking data size against numImages stored in first short; if there's more data,
+		// it's image titles.
+		// Note moving frames was CF2.5, not in MMF2 SDK headers.
+		//if (jsonProp["AllowRename"sv]) 
+		//	opts |= PictureEditOptions::CanRenameFrames | PictureEditOptions::CannotMoveFrames;
+
+		// Don't allow moving objects if image titles are set
+		if (jsonProp["ImageTitles"sv])
+			opts |= PictureEditOptions::CannotMoveFrames;
 
 		BOOL output;
 		// Only one image possible: edit it in solo
@@ -4035,7 +4048,7 @@ BOOL DarkEdif::DLL::DLL_EditProp(mv* mV, EDITDATA*& edPtr, unsigned int PropID)
 			eip.defaultImageHeight = imageSize[1];
 			eip.options = opts;
 
-			output = mV->mvEditImage(edPtr, &eip, mV->HEditWin);
+			output = mV->mvEditImage(edPtr, &eip, mV->mvHEditWin);
 			if (output == TRUE)
 			{
 				// Save image count + image ID, same as we do for multiple images
@@ -4083,7 +4096,7 @@ BOOL DarkEdif::DLL::DLL_EditProp(mv* mV, EDITDATA*& edPtr, unsigned int PropID)
 			eap.defaultImageHeight = imageSize[1];
 			eap.options = opts;
 
-			output = mV->mvEditAnimation(edPtr, &eap, mV->HEditWin);
+			output = mV->mvEditAnimation(edPtr, &eap, mV->mvHEditWin);
 			if (output == TRUE)
 			{
 				prop[0] = eap.numImages;
@@ -5562,7 +5575,7 @@ std::uint16_t DarkEdif::DLL::Internal_GetEDITDATASizeFromJSON()
 		else if (SVICompare(curPropType, "Image list"))
 		{
 			// TODO: Check options are valid
-			std::uint16_t numImages = (std::uint16_t)(json_int_t)propjson["NumImages"sv];
+			std::uint16_t numImages = std::max((std::uint16_t)1, (std::uint16_t)(json_int_t)propjson["NumImages"sv]);
 			assert(numImages > 0);
 			// increment for numImages prefix
 			fullSize += ++numImages * 2;
@@ -5703,9 +5716,9 @@ std::tstring DarkEdif::MakePathUnembeddedIfNeeded(const Extension * ext, const s
 #if _WIN32
 	std::tstring truePath(MAX_PATH + 1, _T(' '));
 #ifdef _UNICODE
-	if (Edif::SDK->mV->GetFileW(std::tstring(filePath).c_str(), truePath.data(), 0) == FALSE)
+	if (Edif::SDK->mV->mvGetFileW(std::tstring(filePath).c_str(), truePath.data(), 0) == FALSE)
 #else
-	if (Edif::SDK->mV->GetFileA(std::tstring(filePath).c_str(), truePath.data(), 0) == FALSE)
+	if (Edif::SDK->mV->mvGetFileA(std::tstring(filePath).c_str(), truePath.data(), 0) == FALSE)
 #endif
 		return _T(">mvGetFile returned false"s);
 	else // trim extra space
@@ -7019,7 +7032,7 @@ void DarkEdif::LateInit(Extension* ext)
 	// Tests JIC
 	assert(Edif::SDK->mV == ext->rhPtr->rh4.rh4Mv);
 	assert(Internal_WindowHandle == ext->rhPtr->rhHMainWin &&
-		Internal_WindowHandle == ext->rhPtr->rh4.rh4Mv->HMainWin);
+		Internal_WindowHandle == ext->rhPtr->rh4.rh4Mv->mvHMainWin);
 
 	// Runtime detection of CF2.5+ DLC.
 	// CF2.5+ uses same RunApp, mmfs2.dll, edrt.exe as CF2.5.

@@ -121,6 +121,8 @@ enum class CallFunctionIDs : int {
 	GETNEXTITEM,			// Get next item - not yet implemented
 	GETNINSTANCES,			// Get number of item instances - not yet implemented
 	GETNEXTINSTANCE,		// Get next item instance - not yet implemented
+	// 24-28 reserved for future use
+	ISGRADLE = 29,		// Editor: Returns TRUE if the Android Gradle runtime is installed
 
 	// Editor & runtime
 	MALLOC = 100,			// Allocate memory
@@ -140,6 +142,7 @@ enum class CallFunctionIDs : int {
 	ISUNICODEAPP,			// Returns TRUE if the application being loaded is a Unicode application
 	GETAPPCODEPAGE,			// Returns the code page of the application
 	CREATEIMAGEFROMFILEW,	// Create image from file (runtime only)
+	HANDLEMODALLOOPMSG,		// Reserved
 };
 
 // @remarks Source: cnpdll.h, not used in any C++ DLL funcs
@@ -1438,12 +1441,15 @@ enum class FUSION_DBTYPE
 	HO,
 	MOVEMENT,
 	ANIMATION,
-	VALUES,
+	CF25_FLAGS,
+	MMF2_VALUES = CF25_FLAGS,
 	COUNTER,
 	SCORE,
 	LIVES,
 	TEXT,
-	EXTENSION
+	EXTENSION,
+	CF25_VALUES,
+	CF25_STRINGS,
 };
 
 // Generic entries in the tree
@@ -1471,12 +1477,16 @@ enum class SYSTEM_DB_TREE
 	DB_GLOBALSTRING,
 	DB_GVALUE,
 	DB_GSTRING,
+	// CF2.5
+	DB_SOUNDCHANNEL,
 };
 // Headerobject tree entries
 enum
 {
 	DB_XY,
-	DB_SIZE
+	DB_SIZE,
+	// CF2.5
+	DB_FIXEDVALUE
 };
 
 // Movements tree entries
@@ -1729,12 +1739,20 @@ enum class RFUNCTION {
 	EDIT_TEXT,				// Edittime only: Opens a dialog box to edit text.
 	CALL_MOVEMENT,
 	SET_POSITION,
-	GET_CALL_TABLES
+	GET_CALL_TABLES,
+	// CF2.5
+	GENERATE_COMMON_EVENT,
+	RANDOM,
+	ADD_CURRENT_OBJECT,
+	// CF2.5 build 292.02
+	GET_PARAM_INT,			// CF2.5 build 292.02: Gets expression param as int explicitly?
 };
 
 // For A/C: interprets parameter by requesting runtime evaluate, based on hoCurrentParam
 #define CNC_GetParameter(rdPtr)							CallRunTimeFunction(rdPtr, RFUNCTION::GET_PARAM, 0xFFFFFFFF, 0)
 #define CNC_GetIntParameter(rdPtr)						CallRunTimeFunction(rdPtr, RFUNCTION::GET_PARAM, 0, 0)
+// CF2.5 292.02+: Gets expression param as int explicitly
+// #define CNC_GetIntParamExpression(rdPtr)				((((long (FusionAPI *)(HeaderObject *))(((RunHeader *)rdPtr->rHo.hoAdRunHeader)->rh4.rh4KpxFunctions[RFUNCTION_GETPARAMINT].routine))((HeaderObject *)rdPtr) )
 #define CNC_GetStringParameter(rdPtr)					CallRunTimeFunction(rdPtr, RFUNCTION::GET_PARAM, 0xFFFFFFFF, 0)
 #define CNC_GetFloatParameter(rdPtr)					CallRunTimeFunction(rdPtr, RFUNCTION::GET_PARAM, 2, 0)
 // For A/C taking <= 2 params only: reads a number param as float, does not re-evaluate
@@ -1841,11 +1859,12 @@ DarkEdifInternalAccessProtected:
 	void * rh4ForEachs;
 	void * rh4CurrentForEach;
 	void * rh4CurrentForEach2;
-	void * rh4TimerEvents;
+	void * rh4TimerEvents; // TODO: is this tagTimerEvent?
 	void * rh4PosOnLoop;
 	std::int16_t rh4ComplexOnLoop;
+	std::uint8_t rh4CreateBodies; // added in a CF2.5 build
 	// Free, unknown usage
-	char rh4QuitString[4];
+	char rh4QuitString[3];
 
 	// Object pick flags 00-31
 	std::uint32_t rh4PickFlags0;
@@ -1863,7 +1882,14 @@ DarkEdifInternalAccessProtected:
 	FusionANSIWarning TCHAR * rh4DroppedFiles;
 
 	FastLoop * rh4FastLoops;
-	FusionANSIWarning TCHAR * rh4CreationErrorMessages;
+	union {
+		// Replaced in CF2.5, possibly earlier
+		// TODO: Confirm build this was switched
+		FusionANSIWarning TCHAR* rh4CreationErrorMessages_Old;
+		// Active in CF2.5, unknown build
+		// TODO: Confirm build this was switched
+		int rh4NumberOfFastLoops;
+	};
 	// New V2
 	CValueMultiPlat	rh4ExpValue1;
 	CValueMultiPlat rh4ExpValue2;
@@ -1883,6 +1909,7 @@ DarkEdifInternalAccessProtected:
 	// Menu handled in an event? - is this bool?
 	char rh4MenuEaten;
 private:
+	// Still unused in latest SDK
 	std::int16_t rh4Free2;
 DarkEdifInternalAccessProtected:
 	// For OnClose event (?)
@@ -1910,12 +1937,12 @@ DarkEdifInternalAccessProtected:
 	std::int16_t rh4LastQuickDisplay;
 	// Correct start of frame with fade in
 	std::uint8_t rh4CheckDoneInStart;
-private:
-	std::uint8_t rh4Free0;
-DarkEdifInternalAccessProtected:
+	// Unused in MMF2, re-used in a CF2.5 build
+	// TODO: Confirm build this was switched
+	std::uint8_t rh4PauseJoystickReady;
 	// A ptr to mV struct
 	mv * rh4Mv;
-	// Old cursor for Show / HideMouse in Vitalize! mode
+	// Old cursor for ShowMouse / HideMouse in Vitalize/editor mode
 	HCURSOR				rh4OldCursor;
 	// Collision object address (?)
 	HeaderObject  *		rh4_2ndObject;
@@ -1953,8 +1980,12 @@ DarkEdifInternalAccessProtected:
 	// Debut zone 256 long ?
 	FusionANSIWarning TCHAR ** rh4PTempStrings;
 	std::int32_t rh4MaxTempStrings;
+
+	// Unused until CF2.5, unknown build
+	FusionANSIWarning TCHAR * rh4CreationErrorMessages;
+
 	// Free buffer ?
-	std::int32_t rh4Free4[256-2];
+	std::int32_t rh4Free4[256-3];
 
 	// Pointer on the current string
 	std::int32_t rh4NCurTempString;
@@ -2062,7 +2093,7 @@ DarkEdifInternalAccessProtected:
 						rhMouseUsed;		// Players using the mouse
 
 	unsigned short		rhGameFlags,		// Game flags
-						rhFree;				// Alignment
+						rhInUpdateScrollPos;
 	unsigned int		rhPlayer;			// Current players entry
 
 	short 				rhQuit,
@@ -2079,10 +2110,15 @@ DarkEdifInternalAccessProtected:
 	int 				rhNumberOi;			// Number of OI in the list
 	objInfoList *		rhOiList;			// ObjectInfo list
 
-	unsigned int *		rhEvents[7+1],		// Events pointers (NUMBER_OF_SYSTEM_TYPES+1)
-				 *		rhEventLists,		// Pointers on pointers list
-				 *		rhFree8,			// Timer pointers
-				 *		rhEventAlways;		// Pointers on events to see at each loop
+	unsigned int *		rhEvents[7+1];		// Events pointers (NUMBER_OF_SYSTEM_TYPES+1)
+	struct eventOffsets
+	{
+		DWORD evgOffset;
+		DWORD evtOffset;
+	};
+	eventOffsets *		rhEventLists; // Pointers on pointers list
+	HeaderObject *		rhEvFree;			// Timer pointers
+	unsigned int *		rhEventAlways;		// Pointers on events to see at each loop
 	EventGroupMP*		rhPrograms;			// Program pointers
 	short *				rhLimitLists;		// Movement limitation list
 	qualToOi *			rhQualToOiList;		// Conversion qualifier->oilist
@@ -2929,10 +2965,8 @@ DarkEdifInternalAccessProtected:
 	// Note rsHidden is also declared in non-Windows Counter ports,
 	// but seems unused.
 	unsigned char	rsHidden;
-private:
-	// Padding
-	unsigned char	rsFree;
-DarkEdifInternalAccessProtected:
+	// A modified flag to avoid useless zone re-calculations. Unused before CF2.5 build 283.9.
+	unsigned char rsModified;
 	// String object: the buffer containing alterable text, or a copy of paragraph text.
 	// May be null indicating blank.
 	FusionANSIWarning TCHAR * rsTextBuffer;
@@ -3256,7 +3290,9 @@ enum_class_is_a_bitmask(CreateObjectInfo::Flags);
 // -------------------------
 #define	COF_NOMOVEMENT		0x1
 #define	COF_HIDDEN			0x2
-#define	COF_FIRSTTEXT		0x4 // String objects aren't destroyed, so first String gets kept via cobFlags
+// String objects aren't destroyed, so first String gets kept via cobFlags
+// This is probably to keep paragraph texts or fonts alive
+#define	COF_FIRSTTEXT		0x4
 #define COF_CREATEDATSTART	0x8
 
 // Qualifier to oilist for machine language
@@ -3583,27 +3619,50 @@ struct AppHeader {
 DarkEdifInternalAccessProtected:
 	friend CRunAppMultiPlat;
 	friend Edif::Runtime;
-	unsigned int	size;					// Structure size
-	unsigned short	Flags,					// Flags (GA_XXX defines)
-					NewFlags,				// New flags (GANF_XXX defines)
-					Mode,					// Graphic mode
-					OtherFlags;				// Other Flags (GAOF_XXX defines?)
-	short			XWinSize,				// Window x-size
-					YWinSize;				// Window y-size
-	unsigned int	ScoreInit,				// Initial score
-					LivesInit;				// Initial number of lives
-	PlayerCtrls		PlayerCtrls[4];			// Player controls
-	unsigned int	BorderColour,			// Border colour
-					NbFrames,				// Number of frames (taking into account pauses?)
-					FrameRate;				// Application FPS
-	unsigned char	MDIWindowMenu,			// Index of Window menu for MDI applications
-					Free[3];				// Padding to a multiple of 4 bytes
+	// Structure size
+	unsigned int gaSize;
+	// Flags (GA_XXX defines)
+	unsigned short gaFlags;
+	// New flags (GANF_XXX defines)
+	unsigned short gaNewFlags;
+	// Graphic mode
+	unsigned short gaMode;
+	// Other Flags (GAOF_XXX defines?)
+	unsigned short gaOtherFlags;
+	// Window x-size
+	short gaXWinSize;
+	// Window y-size
+	short gaYWinSize;
+	// Initial player score
+	unsigned int gaScoreInit;
+	// Initial player number of lives
+	unsigned int gaLivesInit;
+	// Player controls
+	PlayerCtrls gaPlayerCtrls[4];
+	// App border colour
+	unsigned int gaBorderColour;
+	// Number of frames
+	// TODO: taking into account pauses?
+	unsigned int gaNbFrames;
+	// Application FPS
+	// TODO: Intended, current?
+	unsigned int gaFrameRate;
+	// Index of Window menu for MDI applications
+	unsigned char gaMDIWindowMenu;
+	// Since CF2.5 291: number of application back buffers
+	unsigned char gaBackBuffers;
+private:
+	// Padding to a multiple of 4 bytes
+	unsigned char gaFree[2];
 };
 
 // gaFlags
 #define	GA_BORDERMAX				0x1
+#define	GA_HEADINGWHENMAXIMIZED		0x1
 #define	GA_NOHEADING				0x2
 #define	GA_PANIC					0x4
+#define	GA_STRETCHTOFIT				0x4
+#define	GA_STRETCHINSIDE			0x4
 #define	GA_SPEEDINDEPENDANT			0x8
 #define	GA_STRETCH					0x10
 #define	GA_LOADALLIMAGESATSTART		0x20
@@ -3621,18 +3680,31 @@ DarkEdifInternalAccessProtected:
 #define	GANF_RELOCFILES				0x2
 #define	GANF_RUNFRAME				0x4
 #define	GANF_SAMPLESEVENIFNOTFOCUS	0x8
+// Added in MMF1 build 92
 #define	GANF_NOMINIMIZEBOX			0x10
+// Added in MMF1 build 92
 #define	GANF_NOMAXIMIZEBOX			0x20
+// Added in MMF1 build 92
 #define	GANF_NOTHICKFRAME			0x40
+// Added in MMF1 build 92
 #define	GANF_DONOTCENTERFRAME		0x80
+// Added in MMF1.5 initial build 101
 #define	GANF_SCREENSAVER_NOAUTOSTOP	0x100
+// Added in MMF1.5 build 101
 #define	GANF_DISABLE_CLOSE			0x200
+// Added in MMF1.5 build 105
 #define	GANF_HIDDENATSTART			0x400
+// Added in MMF1.5 build 110
 #define	GANF_XPVISUALTHEMESUPPORT	0x800
+// Addded in MMF2
 #define	GANF_VSYNC					0x1000
+// Addded in MMF2
 #define	GANF_RUNWHENMINIMIZED		0x2000
+// Addded in MMF2
 #define	GANF_MDI					0x4000
+// Addded in MMF2
 #define	GANF_RUNWHILERESIZING		0x8000
+
 #define	GAOF_DEBUGGERSHORTCUTS		0x1
 #define	GAOF_DDRAW					0x2
 #define	GAOF_DDRAWVRAM				0x4
@@ -3649,6 +3721,7 @@ DarkEdifInternalAccessProtected:
 #define	GAOF_JAVAAPPLET				0x2000
 #define	GAOF_D3D9					0x4000
 #define	GAOF_D3D8					0x8000
+// GAOF_D3D11 would be D3D8 + 9 together.
 
 enum class AH2OPT : std::uint32_t {
 	KEEPSCREENRATIO = 0x1,
@@ -3735,13 +3808,18 @@ enum class BUILDTYPE {
 	XNA_PHONE,
 	XNA_XBOX_APP,
 	XNA_PHONE_APP,
-	HTML5,
+	HTML5, // no longer used, see HTML5DEVEL/HTML5FINAL
 	VITA,
 	VITADEVEL,
-	VITAFINAL,		// no longer used
+	VITAFINAL, // no longer used
 	HTML5DEVEL,
 	HTML5FINAL,
 	OUYA,
+	MACAPP,
+	MACPROJECT,
+	W81JS,
+	W10JS,
+	ANDROID_AAB,
 	STDMAX,			// end of standard build types
 };
 
@@ -3811,21 +3889,28 @@ DarkEdifInternalAccessProtected:
 };
 
 // leFlags
-#define	LDISPLAYNAME		0x1
-#define	LGRABDESKTOP		0x2
-#define	LKEEPDISPLAY		0x4
-// #define LFADEIN			0x8
-// #define LFADEOUT			0x10
-#define	LTOTALCOLMASK		0x20
-#define	LPASSWORD			0x40
-#define	LRESIZEATSTART		0x100
-#define	LDONOTCENTER		0x200
-#define	LFORCE_LOADONCALL	0x400
-#define	LNOSURFACE			0x800
-#define	LRESERVED_1			0x1000
-#define	LRESERVED_2			0x2000
-#define	LRECORDDEMO			0x4000
-#define	LTIMEDMVTS			0x8000
+#define	LEF_DISPLAYNAME			0x00000001
+#define	LEF_GRABDESKTOP			0x00000002
+#define	LEF_KEEPDISPLAY			0x00000004
+// #define LEF_FADEIN			0x00000008
+// #define LEF_FADEOUT			0x00000010
+#define	LEF_TOTALCOLMASK		0x00000020
+#define	LEF_PASSWORD			0x00000040
+#define	LEF_RESIZEATSTART		0x00000100
+#define	LEF_DONOTCENTER			0x00000200
+#define	LEF_FORCE_LOADONCALL	0x00000400
+#define	LEF_NOSURFACE			0x00000800
+#define	LEF_RESERVED_1			0x00001000
+#define	LEF_RESERVED_2			0x00002000
+#define	LEF_RECORDDEMO			0x00004000
+#define	LEF_TIMEDMVTS			0x00008000
+#define LEF_HASPHYSICS			0x00010000
+#define	LEF_TRANSPARENTBKD		0x00020000		// Html5
+#define LEF_FAKEFRAME			0x00040000
+#define	LEF_DONTERASED3D		0x00080000
+#define	LEF_IGNORE_LOADONCALL	0x00100000
+//#define LEF_ZBUFFER			0x00100000
+
 
 //////////////////////////////////////////////////////////////////////////////
 // Layers
@@ -3876,6 +3961,8 @@ DarkEdifInternalAccessProtected:
 };
 
 #define EFFECTOPT_BKDTEXTUREMASK	0x000F
+#define EFFECTOPT_ZBUFFER			0x0100
+#define EFFECTOPT_WANTSPIXELSIZE	0x0200
 
 struct EffectParamsHdr {
 	NO_DEFAULT_CTORS_OR_DTORS(EffectParamsHdr);
@@ -3925,6 +4012,8 @@ enum class OIFlags : short
 	RESERVED_1 = 0x8,
 	GLOBAL_EDITOR_NO_SYNC = 0x10,
 	GLOBAL_EDITOR_FORCE_SYNC = 0x20,
+	// Added in CF2.5+ 292.02?
+	DONT_CREATE_AT_START = 0x40,
 };
 
 
@@ -4431,25 +4520,35 @@ enum	{
 
 // Options for EditSurfaceParams, EditImageParams, EditAnimationParams
 enum class PictureEditOptions : std::uint32_t {
-	None				= 0x00,
+	None				= 0x0000,
 	// User cannot change the image size
-	FixedImageSize		= 0x01,
+	FixedImageSize		= 0x0001,
 	// User can edit the hot spot
-	EditableHotSpot		= 0x02,
+	EditableHotSpot		= 0x0002,
 	// User can edit the action point
-	EditableActionPoint = 0x04,
+	EditableActionPoint = 0x0004,
 	// 16 colors image, Windows palette
-	SixteenColors		= 0x08,
+	SixteenColors		= 0x0008,
 	// User cannot add / remove frames
-	FixedNumOfImages	= 0x10,
+	FixedNumOfImages	= 0x0010,
+	// Internal only - Numbers
+	Numbers				= 0x0020,
 	// No transparent color
-	NoTransparentColor	= 0x20,
+	NoTransparentColor	= 0x0040,
 	// No alpha channel
-	NoAlphaChannel		= 0x40,
+	NoAlphaChannel		= 0x0080,
+	// Internal only
+	AppIcon				= 0x0100,
+	// Internal only
+	IconPalette			= 0x0200,
 	// The animation can be empty (only transparent images)
 	// If this option is not specified, Fusion refuses to close the picture editor
 	// if the animation is empty.
-	CanBeEmpty			= 0x80
+	CanBeTransparent	= 0x0400,
+	// Frames cannot be moved
+	CannotMoveFrames	= 0x0800,
+	// CF2.5 only? Frames can be renamed
+	CanRenameFrames		= 0x1000
 };
 enum_class_is_a_bitmask(PictureEditOptions);
 
@@ -4505,126 +4604,131 @@ using EditAnimationParamsA = EditAnimationParams<char>;
 struct mv {
 	NO_DEFAULT_CTORS_OR_DTORS(mv);
 	// Common to editor and runtime
-	HINSTANCE			HInst;				// Application HINSTANCE
-	void *				IdAppli;			// Application object in DLL
-	void *				IdMainWin;			// Main window object in DLL
-	void *				IdEditWin;			// Child window object in DLL
-	HWND				HMainWin,			// Main window handle
-						HEditWin;			// Child window handle
-	HPALETTE			HPal256;			// 256 color palette
-	unsigned short		AppMode,			// Screen mode with flags
-						ScrMode;			// Screen mode (SM_8=256, SM_15=32768, SM_16=65536, SM_32=16 million colors)
+	HINSTANCE			mvHInst;				// Application HINSTANCE
+	void *				mvIdAppli;			// Application object in DLL
+	void *				mvIdMainWin;			// Main window object in DLL
+	void *				mvIdEditWin;			// Child window object in DLL
+	HWND				mvHMainWin,			// Main window handle
+						mvHEditWin;			// Child window handle
+	HPALETTE			mvHPal256;			// 256 color palette
+	unsigned short		mvAppMode,			// Screen mode with flags
+						mvScrMode;			// Screen mode (SM_8=256, SM_15=32768, SM_16=65536, SM_32=16 million colors)
 	// Edit time only: top-left coordinates
-	DWORD EditDXDocToClient, EditDYDocToClient;
+	DWORD mvEditDXDocToClient, mvEditDYDocToClient;
 
 	// Image filter manager
-	CImageFilterMgr * ImgFilterMgr;
+	CImageFilterMgr * mvImgFilterMgr;
 	// Sound filter manager
-	CSoundFilterMgr * SndFilterMgr;
+	CSoundFilterMgr * mvSndFilterMgr;
 	// Sound manager
-	CSoundManager *	SndMgr;
+	CSoundManager * mvSndMgr;
 
 #if EditorBuild
 	// Opaque struct for Fusion. Only known detail is it is a different address between MFAs loaded in Fusion.
-	CEditApp *		EditApp;
-	CEditFrame *	EditFrame;
+	CEditApp *		mvEditApp;
+	CEditFrame *	mvEditFrame;
 #else
 	// Current application, runtime - not usable in frame editor and co, just runtime
-	CRunApp *		RunApp;
-	CRunFrame *		RunFrame;
+	CRunApp *		mvRunApp;
+	CRunFrame *		mvRunFrame;
 #endif
 
 	// Current RunHeader, containing most main details as rhPtr
-	RunHeader *			RunHdr;
-	DWORD PextsHoldingGlobals;
+	RunHeader *			mvRunHdr;
+	DWORD mvPextsHoldingGlobals;
 	// Preferences (sound on/off)
 	FusionANSIWarning TCHAR * subType;
 	// Full screen mode
-	BOOL FullScreen;
+	BOOL mvFullScreen;
 	// App filename
-	FusionANSIWarning TCHAR * MainAppFileName;
-	int					AppListCount;
-	int					AppListSize;
-	CRunApp**			AppList;
-	int					ExtListCount;
-	int					ExtListSize;
-	FusionANSIWarning TCHAR ** ExtList;
-	int					NbDllTrans;
-	dllTrans*			DllTransList;
-	DWORD				JoyCaps[32];
-	HHOOK				HMsgHook;
-	int					ModalLoop;
-	int					ModalSubAppCount;
-	void *				Free[5];
+	FusionANSIWarning TCHAR * mvMainAppFileName;
+	int					mvAppListCount;
+	int					mvAppListSize;
+	CRunApp**			mvAppList;
+	int					mvExtListCount;
+	int					mvExtListSize;
+	FusionANSIWarning TCHAR ** mvExtList;
+	int					mvNbDllTrans;
+	dllTrans*			mvDllTransList;
+	DWORD				mvJoyCaps[32];
+	HHOOK				mvHMsgHook;
+	int					mvModalLoop;
+	int					mvModalSubAppCount;
+	UINT				mvLanguageID;
+	LPCWSTR				mvModuleTextsPathname;
+	// Implemented in build 296.02+, unused earlier
+	BOOL				mvVSync;
+	UINT				mvReturnCode;
+	LPVOID				mvFree;
 
 	// Functions
 	////////////
 
 	// Editor: Open Help file
-	void (CALLBACK * HelpA) (const char * pHelpFile, DWORD nID, LPARAM lParam);
+	void (CALLBACK * mvHelpA) (const char * pHelpFile, DWORD nID, LPARAM lParam);
 
 	// Editor: Get default font for object creation
 	// pStyle can be NULL to ignore; cbSize is size of pStyle's buffer.
-	BOOL (CALLBACK * GetDefaultFontA) (LOGFONTA * plf, char * pStyle, int cbSize);
+	BOOL (CALLBACK * mvGetDefaultFontA) (LOGFONTA * plf, char * pStyle, int cbSize);
 
 	// Editor: Edit images and animations
-	BOOL (CALLBACK * EditSurfaceA) (void * edPtr, EditSurfaceParamsA* pParams, HWND hParent);
-	BOOL (CALLBACK * EditImageA) (void * edPtr, EditImageParamsA * pParams, HWND hParent);
-	BOOL (CALLBACK * EditAnimationA) (void * edPtr, EditAnimationParamsA * pParams, HWND hParent);
+	BOOL (CALLBACK * mvEditSurfaceA) (void * edPtr, EditSurfaceParamsA* pParams, HWND hParent);
+	BOOL (CALLBACK * mvEditImageA) (void * edPtr, EditImageParamsA * pParams, HWND hParent);
+	BOOL (CALLBACK * mvEditAnimationA) (void * edPtr, EditAnimationParamsA * pParams, HWND hParent);
 
 	// Runtime: Extension User data
 	// @remarks Introduced in MMF1.5, missing in MMF1.2 and below. Runtime only.
-	void * (CALLBACK * GetExtUserData) (CRunApp* pApp, HINSTANCE hInst);
-	void * (CALLBACK * SetExtUserData) (CRunApp* pApp, HINSTANCE hInst, void * pData);
+	void * (CALLBACK * mvGetExtUserData) (CRunApp* pApp, HINSTANCE hInst);
+	void * (CALLBACK * mvSetExtUserData) (CRunApp* pApp, HINSTANCE hInst, void * pData);
 
 	// Runtime: Register dialog box
-	void (CALLBACK * RegisterDialogBox) (HWND hDlg);
-	void (CALLBACK * UnregisterDialogBox) (HWND hDlg);
+	void (CALLBACK * mvRegisterDialogBox) (HWND hDlg);
+	void (CALLBACK * mvUnregisterDialogBox) (HWND hDlg);
 
 	// Runtime: Add surface as backdrop object
-	void (CALLBACK * AddBackdrop) (cSurface * pSf, int x, int y, DWORD dwInkEffect, DWORD dwInkEffectParam, int nObstacleType, int nLayer);
+	void (CALLBACK * mvAddBackdrop) (cSurface * pSf, int x, int y, DWORD dwInkEffect, DWORD dwInkEffectParam, int nObstacleType, int nLayer);
 
 	// Runtime: Binary files
-	BOOL (CALLBACK * GetFileA)(const char * pPath, char * pFilePath, DWORD dwFlags);
-	void (CALLBACK * ReleaseFileA)(const char * pPath);
-	HANDLE (CALLBACK * OpenHFileA)(const char * pPath, DWORD * pDwSize, DWORD dwFlags);
-	void (CALLBACK * CloseHFile)(HANDLE hf);
+	BOOL (CALLBACK * mvGetFileA)(const char * pPath, char * pFilePath, DWORD dwFlags);
+	void (CALLBACK * mvReleaseFileA)(const char * pPath);
+	HANDLE (CALLBACK * mvOpenHFileA)(const char * pPath, DWORD * pDwSize, DWORD dwFlags);
+	void (CALLBACK * mvCloseHFile)(HANDLE hf);
 
 	// Plugin: download file
-	int (CALLBACK * LoadNetFileA) (char * pFilename);
+	int (CALLBACK * mvLoadNetFileA) (char * pFilename);
 
 	// Plugin: send command to Vitalize
-	int (CALLBACK * NetCommandA) (int, void *, DWORD, void *, DWORD);
+	int (CALLBACK * mvNetCommandA) (int, void *, DWORD, void *, DWORD);
 
 	// Editor & Runtime: Returns the version of MMF or of the runtime
 	// Return is a bitmask of three different flag sets; MMFVERSION_MASK, MMFBUILD_MASK, MMFVERFLAG_MASK
-	DWORD (CALLBACK * GetVersion) ();
+	DWORD (CALLBACK * mvGetVersion) ();
 
 	// Editor & Runtime: callback function for properties or other functions
-	LRESULT	(CALLBACK * CallFunction) (EDITDATA * edPtr, CallFunctionIDs nFnc, LPARAM lParam1, LPARAM lParam2, LPARAM lParam3);
+	LRESULT	(CALLBACK * mvCallFunction) (EDITDATA * edPtr, CallFunctionIDs nFnc, LPARAM lParam1, LPARAM lParam2, LPARAM lParam3);
 
 	// Editor: Open Help file (UNICODE)
-	void (CALLBACK * HelpW) (const wchar_t * pHelpFile, DWORD nID, LPARAM lParam);
+	void (CALLBACK * mvHelpW) (const wchar_t * pHelpFile, DWORD nID, LPARAM lParam);
 
 	// Editor: Get default font for object creation (UNICODE)
 	// pStyle can be NULL to ignore; cbSize is size of pStyle's buffer in WCHARs.
-	BOOL (CALLBACK * GetDefaultFontW) (LOGFONTW * plf, wchar_t * pStyle, int cbSize);
+	BOOL (CALLBACK * mvGetDefaultFontW) (LOGFONTW * plf, wchar_t * pStyle, int cbSize);
 
 	// Editor: Edit images and animations (UNICODE)
-	BOOL (CALLBACK * EditSurfaceW) (EDITDATA * edPtr, EditSurfaceParamsW * Params, HWND Parent);
-	BOOL (CALLBACK * EditImageW) (EDITDATA * edPtr, EditImageParamsW * Params, HWND Parent);
-	BOOL (CALLBACK * EditAnimationW) (EDITDATA * edPtr, EditAnimationParamsW * Params, HWND Parent);
+	BOOL (CALLBACK * mvEditSurfaceW) (EDITDATA * edPtr, EditSurfaceParamsW * Params, HWND Parent);
+	BOOL (CALLBACK * mvEditImageW) (EDITDATA * edPtr, EditImageParamsW * Params, HWND Parent);
+	BOOL (CALLBACK * mvEditAnimationW) (EDITDATA * edPtr, EditAnimationParamsW * Params, HWND Parent);
 
 	// Runtime: Binary files (UNICODE)
-	BOOL (CALLBACK * GetFileW)(const wchar_t * pPath, wchar_t * pFilePath, DWORD dwFlags);
-	void (CALLBACK * ReleaseFileW)(const wchar_t * pPath);
-	HANDLE (CALLBACK * OpenHFileW)(const wchar_t * pPath, DWORD * pDwSize, DWORD dwFlags);
+	BOOL (CALLBACK * mvGetFileW)(const wchar_t * pPath, wchar_t * pFilePath, DWORD dwFlags);
+	void (CALLBACK * mvReleaseFileW)(const wchar_t * pPath);
+	HANDLE (CALLBACK * mvOpenHFileW)(const wchar_t * pPath, DWORD * pDwSize, DWORD dwFlags);
 
 	// Plugin: download file
-	int	(CALLBACK * LoadNetFileW) (wchar_t * pFilename);
+	int	(CALLBACK * mvLoadNetFileW) (wchar_t * pFilename);
 
 	// Plugin: send command to Vitalize
-	int	(CALLBACK * NetCommandW) (int, void *, DWORD, void *, DWORD);
+	int	(CALLBACK * mvNetCommandW) (int, void *, DWORD, void *, DWORD);
 
 	// Place-holder for next versions
 	void * AdditionalFncs[6];
@@ -4633,31 +4737,31 @@ struct mv {
 //typedef mv *LPMV;
 
 #ifdef _UNICODE
-	#define mvHelp				HelpW
-	#define mvGetDefaultFont	GetDefaultFontW
-	#define mvEditSurface		EditSurfaceW
-	#define mvEditImage			EditImageW
-	#define mvEditAnimation		EditAnimationW
-	#define mvGetFile			GetFileW
-	#define mvReleaseFile		ReleaseFileW
-	#define mvLoadNetFile		LoadNetFileW
-	#define mvNetCommand		NetCommandW
-	#define	mvGetFile			GetFileW
-	#define	mvReleaseFile		ReleaseFileW
-	#define mvOpenHFile			OpenHFileW
+	#define mvHelp				mvHelpW
+	#define mvGetDefaultFont	mvGetDefaultFontW
+	#define mvEditSurface		mvEditSurfaceW
+	#define mvEditImage			mvEditImageW
+	#define mvEditAnimation		mvEditAnimationW
+	#define mvGetFile			mvGetFileW
+	#define mvReleaseFile		mvReleaseFileW
+	#define mvLoadNetFile		mvLoadNetFileW
+	#define mvNetCommand		mvNetCommandW
+	#define	mvGetFile			mvGetFileW
+	#define	mvReleaseFile		mvReleaseFileW
+	#define mvOpenHFile			mvOpenHFileW
 #else
-	#define mvHelp				HelpA
-	#define mvGetDefaultFont	GetDefaultFontA
-	#define mvEditSurface		EditSurfaceA
-	#define mvEditImage			EditImageA
-	#define mvEditAnimation		EditAnimationA
-	#define mvGetFile			GetFileA
-	#define mvReleaseFile		ReleaseFileA
-	#define mvLoadNetFile		LoadNetFileA
-	#define mvNetCommand		NetCommandA
-	#define	mvGetFile			GetFileA
-	#define	mvReleaseFile		ReleaseFileA
-	#define mvOpenHFile			OpenHFileA
+	#define mvHelp				mvHelpA
+	#define mvGetDefaultFont	mvGetDefaultFontA
+	#define mvEditSurface		mvEditSurfaceA
+	#define mvEditImage			mvEditImageA
+	#define mvEditAnimation		mvEditAnimationA
+	#define mvGetFile			mvGetFileA
+	#define mvReleaseFile		mvReleaseFileA
+	#define mvLoadNetFile		mvLoadNetFileA
+	#define mvNetCommand		mvNetCommandA
+	#define	mvGetFile			mvGetFileA
+	#define	mvReleaseFile		mvReleaseFileA
+	#define mvOpenHFile			mvOpenHFileA
 #endif
 
 // 3rd parameter of CREATEIMAGEFROMFILE
@@ -4674,128 +4778,147 @@ struct CreateImageFromFileInfo {
 #if EditorBuild
 // Callback function macros for mvCallFunction
 inline void mvInsertProps(mv * mV, EDITDATA * edPtr, PropData* pProperties, unsigned int nInsertPropID, BOOL bAfter) \
-	{ if (!pProperties) return; mV->CallFunction(edPtr, CallFunctionIDs::INSERTPROPS, (LPARAM)pProperties, (LPARAM)nInsertPropID, (LPARAM)bAfter); }
+	{ if (!pProperties) return; mV->mvCallFunction(edPtr, CallFunctionIDs::INSERTPROPS, (LPARAM)pProperties, (LPARAM)nInsertPropID, (LPARAM)bAfter); }
 
 inline void mvRemoveProp(mv * mV, EDITDATA * edPtr, unsigned int nPropID) \
-	{ mV->CallFunction(edPtr, CallFunctionIDs::REMOVEPROP, (LPARAM)nPropID, (LPARAM)0, (LPARAM)0); }
+	{ mV->mvCallFunction(edPtr, CallFunctionIDs::REMOVEPROP, (LPARAM)nPropID, (LPARAM)0, (LPARAM)0); }
 
 inline void mvRemoveProps(mv * mV, EDITDATA * edPtr, PropData* pProperties) \
-	{ mV->CallFunction(edPtr, CallFunctionIDs::REMOVEPROPS, (LPARAM)pProperties, (LPARAM)0, (LPARAM)0); }
+	{ mV->mvCallFunction(edPtr, CallFunctionIDs::REMOVEPROPS, (LPARAM)pProperties, (LPARAM)0, (LPARAM)0); }
 
 inline void mvRefreshProp(mv * mV, EDITDATA * edPtr, unsigned int nPropID, BOOL bReInit) \
-	{ mV->CallFunction(edPtr, CallFunctionIDs::REFRESHPROP, (LPARAM)nPropID, (LPARAM)bReInit, (LPARAM)0); }
+	{ mV->mvCallFunction(edPtr, CallFunctionIDs::REFRESHPROP, (LPARAM)nPropID, (LPARAM)bReInit, (LPARAM)0); }
 
 inline void * mvReAllocEditData(mv * mV, EDITDATA * edPtr, unsigned int dwNewSize) \
-	{ return (void *)mV->CallFunction(edPtr, CallFunctionIDs::REALLOCEDITDATA, (LPARAM)edPtr, dwNewSize, 0); }
+	{ return (void *)mV->mvCallFunction(edPtr, CallFunctionIDs::REALLOCEDITDATA, (LPARAM)edPtr, dwNewSize, 0); }
 
 
 inline Prop * mvGetPropValue(mv * mV, EDITDATA * edPtr, unsigned int nPropID) \
-	{ return (Prop *)mV->CallFunction(edPtr, CallFunctionIDs::GETPROPVALUE, (LPARAM)nPropID, (LPARAM)0, (LPARAM)0); }
+	{ return (Prop *)mV->mvCallFunction(edPtr, CallFunctionIDs::GETPROPVALUE, (LPARAM)nPropID, (LPARAM)0, (LPARAM)0); }
 
 inline Prop * mvGetAppPropValue(mv * mV, EDITDATA * edPtr, unsigned int nPropID) \
-	{ return (Prop *)mV->CallFunction(edPtr, CallFunctionIDs::GETAPPPROPVALUE, (LPARAM)nPropID, (LPARAM)0, (LPARAM)0); }
+	{ return (Prop *)mV->mvCallFunction(edPtr, CallFunctionIDs::GETAPPPROPVALUE, (LPARAM)nPropID, (LPARAM)0, (LPARAM)0); }
 
 inline Prop * mvGetFramePropValue(mv * mV, EDITDATA * edPtr, unsigned int nPropID) \
-	{ return (Prop *)mV->CallFunction(edPtr, CallFunctionIDs::GETFRAMEPROPVALUE, (LPARAM)nPropID, (LPARAM)0, (LPARAM)0); }
+	{ return (Prop *)mV->mvCallFunction(edPtr, CallFunctionIDs::GETFRAMEPROPVALUE, (LPARAM)nPropID, (LPARAM)0, (LPARAM)0); }
 
 inline void mvSetPropValue(mv * mV, EDITDATA * edPtr, unsigned int nPropID, Prop * pValue) \
-	{ mV->CallFunction(edPtr, CallFunctionIDs::SETPROPVALUE, (LPARAM)nPropID, (LPARAM)pValue, (LPARAM)0); }
+	{ mV->mvCallFunction(edPtr, CallFunctionIDs::SETPROPVALUE, (LPARAM)nPropID, (LPARAM)pValue, (LPARAM)0); }
 
 inline void mvSetAppPropValue(mv * mV, EDITDATA * edPtr, unsigned int nPropID, Prop * pValue) \
-	{ mV->CallFunction(edPtr, CallFunctionIDs::SETAPPPROPVALUE, (LPARAM)nPropID, (LPARAM)pValue, (LPARAM)0); }
+	{ mV->mvCallFunction(edPtr, CallFunctionIDs::SETAPPPROPVALUE, (LPARAM)nPropID, (LPARAM)pValue, (LPARAM)0); }
 
 inline void mvSetFramePropValue(mv * mV, EDITDATA * edPtr, unsigned int nPropID, Prop * pValue) \
-	{ mV->CallFunction(edPtr, CallFunctionIDs::SETFRAMEPROPVALUE, (LPARAM)nPropID, (LPARAM)pValue, (LPARAM)0); }
+	{ mV->mvCallFunction(edPtr, CallFunctionIDs::SETFRAMEPROPVALUE, (LPARAM)nPropID, (LPARAM)pValue, (LPARAM)0); }
 
 inline bool mvGetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int nPropID) \
-	{ return mV->CallFunction(edPtr, CallFunctionIDs::GETPROPCHECK, (LPARAM)nPropID, (LPARAM)0, (LPARAM)0) != 0; }
+	{ return mV->mvCallFunction(edPtr, CallFunctionIDs::GETPROPCHECK, (LPARAM)nPropID, (LPARAM)0, (LPARAM)0) != 0; }
 
 inline bool mvGetAppPropCheck(mv * mV, EDITDATA * edPtr, unsigned int nPropID) \
-	{ return mV->CallFunction(edPtr, CallFunctionIDs::GETAPPPROPCHECK, (LPARAM)nPropID, (LPARAM)0, (LPARAM)0) != 0; }
+	{ return mV->mvCallFunction(edPtr, CallFunctionIDs::GETAPPPROPCHECK, (LPARAM)nPropID, (LPARAM)0, (LPARAM)0) != 0; }
 
 inline bool mvGetFramePropCheck(mv * mV, EDITDATA * edPtr, unsigned int nPropID) \
-	{ return mV->CallFunction(edPtr, CallFunctionIDs::GETFRAMEPROPCHECK, (LPARAM)nPropID, (LPARAM)0, (LPARAM)0) != 0; }
+	{ return mV->mvCallFunction(edPtr, CallFunctionIDs::GETFRAMEPROPCHECK, (LPARAM)nPropID, (LPARAM)0, (LPARAM)0) != 0; }
 
 inline void mvSetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int nPropID, bool nCheck) \
-	{ mV->CallFunction(edPtr, CallFunctionIDs::SETPROPCHECK, (LPARAM)nPropID, (LPARAM)nCheck, (LPARAM)0); }
+	{ mV->mvCallFunction(edPtr, CallFunctionIDs::SETPROPCHECK, (LPARAM)nPropID, (LPARAM)nCheck, (LPARAM)0); }
 
 inline void mvSetAppPropCheck(mv * mV, EDITDATA * edPtr, unsigned int nPropID, bool nCheck) \
-	{ mV->CallFunction(edPtr, CallFunctionIDs::SETAPPPROPCHECK, (LPARAM)nPropID, (LPARAM)nCheck, (LPARAM)0); }
+	{ mV->mvCallFunction(edPtr, CallFunctionIDs::SETAPPPROPCHECK, (LPARAM)nPropID, (LPARAM)nCheck, (LPARAM)0); }
 
 inline void mvSetFramePropCheck(mv * mV, EDITDATA * edPtr, unsigned int nPropID, bool nCheck) \
-	{ mV->CallFunction(edPtr, CallFunctionIDs::SETFRAMEPROPCHECK, (LPARAM)nPropID, (LPARAM)nCheck, (LPARAM)0); }
+	{ mV->mvCallFunction(edPtr, CallFunctionIDs::SETFRAMEPROPCHECK, (LPARAM)nPropID, (LPARAM)nCheck, (LPARAM)0); }
 
 // Forces a redraw of the object in the frame editor and updates its icon
 inline void mvInvalidateObject(mv * mV, EDITDATA * edPtr) \
-	{ mV->CallFunction(edPtr, CallFunctionIDs::INVALIDATEOBJECT, (LPARAM)0, (LPARAM)0, (LPARAM)0); }
+	{ mV->mvCallFunction(edPtr, CallFunctionIDs::INVALIDATEOBJECT, (LPARAM)0, (LPARAM)0, (LPARAM)0); }
 
 #endif // EditorBuild
 
 inline void * mvMalloc(mv * mV, int nSize) \
-	{ return (void *)mV->CallFunction(NULL, CallFunctionIDs::MALLOC, (LPARAM)nSize, (LPARAM)0, (LPARAM)0); }
+	{ return (void *)mV->mvCallFunction(NULL, CallFunctionIDs::MALLOC, (LPARAM)nSize, (LPARAM)0, (LPARAM)0); }
 
 inline void * mvCalloc(mv * mV, int nSize) \
-	{ return (void *)mV->CallFunction(NULL, CallFunctionIDs::CALLOC, (LPARAM)nSize, (LPARAM)0, (LPARAM)0); }
+	{ return (void *)mV->mvCallFunction(NULL, CallFunctionIDs::CALLOC, (LPARAM)nSize, (LPARAM)0, (LPARAM)0); }
 
 inline void * mvReAlloc(mv * mV, void * ptr, int nNewSize) \
-	{ return (void *)mV->CallFunction(NULL, CallFunctionIDs::REALLOC, (LPARAM)ptr, (LPARAM)nNewSize, (LPARAM)0); }
+	{ return (void *)mV->mvCallFunction(NULL, CallFunctionIDs::REALLOC, (LPARAM)ptr, (LPARAM)nNewSize, (LPARAM)0); }
 
 inline void mvFree(mv * mV, void * ptr) \
-	{ mV->CallFunction(NULL, CallFunctionIDs::FREE, (LPARAM)ptr, (LPARAM)0, (LPARAM)0); }
+	{ mV->mvCallFunction(NULL, CallFunctionIDs::FREE, (LPARAM)ptr, (LPARAM)0, (LPARAM)0); }
 
 inline void mvRecalcLayout(mv * mV) \
-	{ mV->CallFunction(NULL, CallFunctionIDs::RECALCLAYOUT, (LPARAM)0, (LPARAM)0, (LPARAM)0); }
+	{ mV->mvCallFunction(NULL, CallFunctionIDs::RECALCLAYOUT, (LPARAM)0, (LPARAM)0, (LPARAM)0); }
 
 inline CSoundManager* mvGetSoundMgr(mv * mV) \
-	{ mV->CallFunction(NULL, CallFunctionIDs::GETSOUNDMGR, (LPARAM)0, (LPARAM)0, (LPARAM)0); }
+	{ mV->mvCallFunction(NULL, CallFunctionIDs::GETSOUNDMGR, (LPARAM)0, (LPARAM)0, (LPARAM)0); }
 
 inline void mvCloseSoundMgr(mv * mV) \
-	{ mV->CallFunction(NULL, CallFunctionIDs::CLOSESOUNDMGR, (LPARAM)0, (LPARAM)0, (LPARAM)0); }
+	{ mV->mvCallFunction(NULL, CallFunctionIDs::CLOSESOUNDMGR, (LPARAM)0, (LPARAM)0, (LPARAM)0); }
 
 inline int mvGetNItems(mv * mV, EDITDATA * edPtr, const char * extName) \
-	{ return mV->CallFunction(edPtr, CallFunctionIDs::GETNITEMS, (LPARAM)extName, (LPARAM)0, (LPARAM)0); }
+	{ return mV->mvCallFunction(edPtr, CallFunctionIDs::GETNITEMS, (LPARAM)extName, (LPARAM)0, (LPARAM)0); }
 
 inline void * mvGetFirstItem(mv * mV, EDITDATA * edPtr, const char * extName) \
-	{ return (void *)mV->CallFunction(edPtr, CallFunctionIDs::GETNEXTITEM, (LPARAM)extName, (LPARAM)0, (LPARAM)0); }
+	{ return (void *)mV->mvCallFunction(edPtr, CallFunctionIDs::GETNEXTITEM, (LPARAM)extName, (LPARAM)0, (LPARAM)0); }
 
 inline void * mvGetNextItem(mv * mV, EDITDATA * edPtr, void * edPtr1, const char * extName) \
-	{ return (void *)mV->CallFunction(edPtr, CallFunctionIDs::GETNEXTITEM, (LPARAM)edPtr1, (LPARAM)extName, (LPARAM)0); }
+	{ return (void *)mV->mvCallFunction(edPtr, CallFunctionIDs::GETNEXTITEM, (LPARAM)edPtr1, (LPARAM)extName, (LPARAM)0); }
+
+inline BOOL mvIsAndroidGradle(mv * mV, EDITDATA * edPtr) \
+	{ return mV->mvCallFunction(edPtr, CallFunctionIDs::ISGRADLE, (LPARAM)0, (LPARAM)0, (LPARAM)0); }
 
 #ifdef HWABETA
 
 inline BOOL mvCreateEffect(mv * mV, const char * pEffectName, LPINT pEffect, LPARAM* pEffectParam) \
-	{ return (BOOL)mV->CallFunction(NULL, CallFunctionIDs::CREATEEFFECT, (LPARAM)pEffectName, (LPARAM)pEffect, (LPARAM)pEffectParam); }
+	{ return (BOOL)mV->mvCallFunction(NULL, CallFunctionIDs::CREATEEFFECT, (LPARAM)pEffectName, (LPARAM)pEffect, (LPARAM)pEffectParam); }
 
 inline void mvDeleteEffect(mv * mV, int nEffect, LPARAM lEffectParam) \
-	{ mV->CallFunction(NULL, CallFunctionIDs::DELETEEFFECT, (LPARAM)nEffect, (LPARAM)lEffectParam, (LPARAM)0); }
+	{ mV->mvCallFunction(NULL, CallFunctionIDs::DELETEEFFECT, (LPARAM)nEffect, (LPARAM)lEffectParam, (LPARAM)0); }
 
 #endif // HWABETA
 
 inline BOOL mvCreateImageFromFileA(mv * mV, LPWORD pwImg, const char * pFilename, CreateImageFromFileInfo* pInfo) \
-	{ return (BOOL)mV->CallFunction(NULL, CallFunctionIDs::CREATEIMAGEFROMFILEA, (LPARAM)pwImg, (LPARAM)pFilename, (LPARAM)pInfo); }
+	{ return (BOOL)mV->mvCallFunction(NULL, CallFunctionIDs::CREATEIMAGEFROMFILEA, (LPARAM)pwImg, (LPARAM)pFilename, (LPARAM)pInfo); }
 
 inline BOOL mvCreateImageFromFileW(mv * mV, LPWORD pwImg, const wchar_t * pFilename, CreateImageFromFileInfo* pInfo) \
-	{ return (BOOL)mV->CallFunction(NULL, CallFunctionIDs::CREATEIMAGEFROMFILEW, (LPARAM)pwImg, (LPARAM)pFilename, (LPARAM)pInfo); }
+	{ return (BOOL)mV->mvCallFunction(NULL, CallFunctionIDs::CREATEIMAGEFROMFILEW, (LPARAM)pwImg, (LPARAM)pFilename, (LPARAM)pInfo); }
 
 inline void * mvNeedBackgroundAccess(mv * mV, CRunFrame* pFrame, BOOL bNeedAccess) \
-	{ return (void *)mV->CallFunction(NULL, CallFunctionIDs::NEEDBACKGROUNDACCESS, (LPARAM)pFrame, (LPARAM)bNeedAccess, (LPARAM)0); }
+	{ return (void *)mV->mvCallFunction(NULL, CallFunctionIDs::NEEDBACKGROUNDACCESS, (LPARAM)pFrame, (LPARAM)bNeedAccess, (LPARAM)0); }
 
 inline BOOL mvIsHWAVersion(mv * mV) \
-	{ return mV->CallFunction(NULL, CallFunctionIDs::ISHWA, (LPARAM)0, (LPARAM)0, (LPARAM)0); }
+	{ return mV->mvCallFunction(NULL, CallFunctionIDs::ISHWA, (LPARAM)0, (LPARAM)0, (LPARAM)0); }
 
 // Returns true if the runtime is Unicode. Will return true for ANSI extensions used by the Unicode runtime.
 inline BOOL mvIsUnicodeVersion(mv * mV) \
-	{ return mV->CallFunction(NULL, CallFunctionIDs::ISUNICODE, (LPARAM)0, (LPARAM)0, (LPARAM)0); }
+	{ return mV->mvCallFunction(NULL, CallFunctionIDs::ISUNICODE, (LPARAM)0, (LPARAM)0, (LPARAM)0); }
 
 // Expects parameter of mV->mVEditApp
 // see https://github.com/clickteam-plugin/Surface/blob/master/General.cpp#L204
 inline BOOL mvIsUnicodeApp(mv * mV, void * pApp) \
-	{ return mV->CallFunction(NULL, CallFunctionIDs::ISUNICODEAPP, (LPARAM)pApp, (LPARAM)0, (LPARAM)0); }
+	{ return mV->mvCallFunction(NULL, CallFunctionIDs::ISUNICODEAPP, (LPARAM)pApp, (LPARAM)0, (LPARAM)0); }
 
 // Expects parameter of mV->mvEditApp
 // see https://github.com/clickteam-plugin/Surface/blob/master/General.cpp#L204
 inline int mvGetAppCodePage(mv * mV, void * pApp) \
-	{ return mV->CallFunction(NULL, CallFunctionIDs::GETAPPCODEPAGE, (LPARAM)pApp, (LPARAM)0, (LPARAM)0); }
+	{ return mV->mvCallFunction(NULL, CallFunctionIDs::GETAPPCODEPAGE, (LPARAM)pApp, (LPARAM)0, (LPARAM)0); }
+inline int mvEnterModalLoop(mv * mV) \
+	{ return (int)mV->mvCallFunction(NULL, CallFunctionIDs::ENTERMODALLOOP, 0, 0, 0); }
+
+inline int mvExitModalLoop(mv * mV) \
+	{ return (int)mV->mvCallFunction(NULL, CallFunctionIDs::EXITMODALLOOP, 0, 0, 0); }
+
+typedef struct CFMSG {
+	HWND    hwnd;
+	UINT    message;
+	WPARAM  wParam;
+	LPARAM  lParam;
+	UINT	options;
+} CFMSG;
+
+inline int mvHandleModalLoopMsg(mv * mV, CFMSG* pMsg) \
+	{ return (int)mV->mvCallFunction(NULL, CallFunctionIDs::HANDLEMODALLOOPMSG, (LPARAM)pMsg, 0, 0); }
 
 #ifdef _UNICODE
 	#define mvCreateImageFromFile	mvCreateImageFromFileW
@@ -4838,8 +4961,19 @@ struct kpxFunc {
 	short(FusionAPI * kpxGetRunObjectInfos) (mv *, unsigned char * );
 	short(FusionAPI * kpxWindowProc) (unsigned char * , HWND, unsigned int, WPARAM, LPARAM);
 	int	 (FusionAPI * kpxEnumElts) (mv *, unsigned char * , ENUMELTPROC, ENUMELTPROC, LPARAM, LPARAM);
-	int  (FusionAPI * kpxLoadData) (mv *, ObjectInfo *, unsigned char * , HFILE, unsigned int);		// Not used
-	int  (FusionAPI * kpxUnloadData) (mv *, ObjectInfo *, unsigned char *);					// Not used
+	union {
+		// Old struct, pre-MMF2
+		struct {
+			int  (FusionAPI* kpxLoadData) (mv*, ObjectInfo*, unsigned char*, HFILE, unsigned int);
+			int  (FusionAPI* kpxUnloadData) (mv*, ObjectInfo*, unsigned char*);
+		} old;
+
+		// New struct, re-used in CF2.5 296.9+
+		struct {
+			int  (FusionAPI* kpxInitialize) (void*, int);
+			int  (FusionAPI* kpxFree) (void *);
+		} current;
+	};
 	void (FusionAPI * kpxStartApp) (mv *, CRunApp *);
 	void (FusionAPI * kpxEndApp) (mv *, CRunApp *);
 	void (FusionAPI * kpxStartFrame) (mv *, CRunApp *, int);
@@ -4913,10 +5047,11 @@ struct bkd2 {
 	CSprite*		pSpr[4];
 	unsigned int	inkEffect,
 					inkEffectParam;
+	void *			body;
 };
 // typedef bkd2 *LPBKD2;
 
-#define MAX_BKD2	(curFrame.m_maxObjects)
+#define MAX_BKD2	(pCurFrame->m_maxObjects)
 
 ///////////////////////////////////////////////
 //
@@ -4966,11 +5101,12 @@ struct RunFrameLayer
 	unsigned int	backUp_nBkdLOs,
 					backUp_nFirstLOIndex;
 };
+struct CTransition;
 
 // Object transition data
 struct objTransInfo {
 	NO_DEFAULT_CTORS_OR_DTORS(objTransInfo);
-	struct CTransition *	m_pTrans;				// Transition object
+	CTransition *	m_pTrans;				// Transition object
 	cSurface *		m_SfSave,				// Background surface
 			 *		m_SfDisplay,			// Working surface
 			 *		m_Sf1,					// Source surface
@@ -5000,6 +5136,7 @@ struct objTransInfo {
 #define	IPHONEFOPT_MULTITOUCH			0x8
 #define	IPHONEFOPT_SCREENLOCKING		0x10
 #define	IPHONEFOPT_IPHONEFRAMEIAD		0x20
+#define	IPHONEFOPT_JOYSTICK_DPAD		0x40
 #define JOYSTICK_NONE 0x0000
 #define JOYSTICK_TOUCH 0x1
 #define JOYSTICK_ACCELEROMETER 0x2
@@ -5145,11 +5282,26 @@ struct CBinaryFile {
 	FusionANSIWarning TCHAR * TempPath;
 
 	// file size
+	// @remarks Still 32-bit in latest CF2.5 stock SDK
 	std::uint32_t FileSize;
-	// file offset in EXE/CCN file
-	std::uint32_t FileOffset;
-	// usage count
-	int TempCount;
+	union {
+		// MMF2 and early CF2.5
+		struct {
+			// file offset in EXE/CCN file
+			std::uint64_t FileOffset;
+			// usage count
+			int TempCount;
+		} MMF2;
+
+		// Likely added in CF2.5 build 292.02+, where CFile _Ex functions were added,
+		// but not confirmed.
+		struct {
+			// file offset in EXE/CCN file
+			std::uint64_t FileOffset;
+			// usage count
+			int TempCount;
+		} CF25_292_02;
+	};
 
 	// While this struct was defined with C++ ctors/dtors in original Fusion SDK, it is not used in any MMFS2 function,
 	// and creating new CBinaryFile isn't expected.
@@ -5207,8 +5359,8 @@ DarkEdifInternalAccessProtected:
 
 	// Filename of original CCN/EXE file
 	FusionANSIWarning TCHAR * targetFileName;
-	// Temporary directory for external files
-	FusionANSIWarning TCHAR * tempPath;
+	// Temporary directory for external files; edited to music files
+	FusionANSIWarning TCHAR * m_musTempPath;
 	// File handle - Yves confirmed it was opened with CreateFile, not fopen
 	HFILE file;
 	unsigned int startOffset;
@@ -5254,9 +5406,13 @@ DarkEdifInternalAccessProtected:
 	// Element bank handles
 	HFILE hfElt[MAX_TABREF];
 
+	// Not used in latest CF2.5
 	unsigned int	eltBaseOff;
 	unsigned short	nbEltOff[MAX_TABREF];		// Sizes of file offset tables
-	unsigned int * adTabEltOff[MAX_TABREF];	// File offsets of bank elements
+	union {
+		std::uint32_t* adTabEltOff_MMF2[MAX_TABREF];	// File offsets of bank elements
+		std::uint64_t* adTabEltOff_CF25_292_02[MAX_TABREF];	// File offsets of bank elements
+	};
 
 	unsigned short	 nbEltMemToDisk[MAX_TABREF];	// Size of elt cross-ref tables
 	unsigned short * EltMemToDisk[MAX_TABREF],		// Element memory index -> element disk index
@@ -5361,64 +5517,95 @@ DarkEdifInternalAccessProtected:
 
 	// External sound files
 	FusionANSIWarning TCHAR * pExtMusicFile;
-	// External sample file per channel
-	FusionANSIWarning TCHAR * pExtSampleFile[32];
 
-	int				nInModalLoopCount;
-	FusionANSIWarning TCHAR * pPlayerNames;
-	unsigned int	dwColorCache;
+	// Due to channel count changing, member offsets became questionable
+	struct Always {
+		// Added in MMF2 build 243
+		int	nInModalLoopCount;
+		// Added in MMF2 build 243
+		FusionANSIWarning TCHAR* pPlayerNames;
+		// Added in MMF2 build 243
+		unsigned int dwColorCache;
 
-	unsigned char * pVtz4Opt;					// not used
-	unsigned int	dwFree;						// not used
+		// Added in MMF2 build 245
+		unsigned char* pVtz4Opt; // not used
+		unsigned int runFrameEditor; // Editor: set to current frame index when Run Frame
 
-	// Application load
-	FusionANSIWarning TCHAR * pLoadFilename;
-	unsigned int	saveVersion;
-	BOOL			bLoading;
+		// Application load
+		FusionANSIWarning TCHAR* pLoadFilename;
+		unsigned int	saveVersion;
+		BOOL			bLoading;
 
-	// Bluray
-	void *			pBROpt;
+		// Bluray
+		void* pBROpt;
 
-	// Build info
-	AppHeader2 *	pHdr2;
+		// Build info
+		AppHeader2* pHdr2;
 
-	// Code page
-	struct CRunApp_Unicode {
-		unsigned int	dwCodePage;
-		bool			bUnicodeAppFile;
+		// Code page
+		unsigned int dwCodePage;
+		bool bUnicodeAppFile;
+
+		// Effects used in the application
+		unsigned char* HWA_Effects;
+		// Secondary surface of the last frame, used in transitions
+		cSurface* HWA_OldSecondarySurface;
+		// At least one frame has a transition => always use a secondary surface in all the frames
+		bool HWA_AlwaysUseSecondarySurface;
+		// To show menu after switch from full screen to windowed mode
+		bool HWA_ShowWindowedMenu;
+		// To show the child window, otherwise it's not displayed...
+		int HWA_SubAppShowCount;
+
+		// Character encoding
+		DWORD charEncodingInput;
+		DWORD charEncodingOutput;
+
+		// List of temporary images (used by AddBackdrop)
+		UINT			nBkdImagesTemp;
+		LPBYTE			pBkdImagesTemp;
+
+		// Language ID
+		DWORD			dwLangID;
+		bool			bLocale;
+#if _MSC_VER >= 1300
+		_locale_t		locale;
+#else
+		LPVOID			locale;
+#endif
+
+		// Build 286: callback address for D3D OnLostDevice
+		LPVOID			pOnFrameLostDevice;
+
+		// Build 287: original editwin size for handling of GA_STRETCH from parent in sub-apps
+		//int m_parentInitEditWinWidth;
+		//int m_parentInitEditWinHeight;
+
+		// Build 289
+		bool m_bZBuffer;
 	};
 
-	#ifdef _UNICODE
-		CRunApp_Unicode codePage;
-	#endif
+	union {
+		struct
+		{
+			// External sample file per channel
+			// 48 since CF2.5 build 292.02, including in non-CF2.5+ runtime
+			FusionANSIWarning TCHAR* pExtSampleFile[48];
+			Always Members;
+		} CF25_292_02;
 
-	// Effects
-	#ifdef HWABETA
-		unsigned char * HWA_Effects;					// Effects used in the application
-		cSurface *		HWA_OldSecondarySurface;		// Secondary surface of the last frame, used in transitions
-		bool			HWA_AlwaysUseSecondarySurface,	// At least one frame has a transition => always use a secondary surface in all the frames
-						HWA_ShowWindowedMenu;			// To show menu after switch from full screen to windowed mode
-		int				HWA_SubAppShowCount;			// To show the child window, otherwise it's not displayed...
-	#endif // HWABETA
+		struct {
+			// External sample file per channel; 32 until CF2.5 build 292.02
+			FusionANSIWarning TCHAR* pExtSampleFile[32];
+			// Due to channel count changing, all the following member offsets are questionable.
+			Always Members;
+		} Earlier;
+	};
 };
 // typedef CRunApp*	fpRunApp;
 //#endif // mmf_master_header
 
 #define	KPX_MAGICNUMBER		200			// Magic number, used in Ext.rc
-
-#if 0
-// Dibs
-// ----
-typedef void Appli;
-extern "C" {
-	DWORD	FusionAPI InitDibHeader(_Notnull_ Appli*, int, int, int, BITMAPINFO*) EXDEF;
-	void	FusionAPI FillDib(_Notnull_ BITMAPINFO *, COLORREF) EXDEF;
-	DWORD	FusionAPI ImageToDib(_Notnull_ Appli *, DWORD, DWORD, _Notnull_ LPBYTE) EXDEF;
-	DWORD	FusionAPI DibToImage(_Notnull_ Appli *, _Notnull_ Img *, _Notnull_ BITMAPINFOHEADER *) EXDEF;
-	DWORD	FusionAPI DibToImageEx(_Notnull_ Appli *, _Notnull_ Img *, _Notnull_ BITMAPINFOHEADER *, COLORREF, DWORD) EXDEF;
-	void	FusionAPI RemapDib(_Notnull_ BITMAPINFO *, _Notnull_ Appli *, _Notnull_ LPBYTE) EXDEF;
-}
-#endif
 
 //#include "StockSDKDefines.hpp"
 

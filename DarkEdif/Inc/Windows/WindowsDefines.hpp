@@ -12,6 +12,124 @@
 #define EXDEF { __assume(0); }
 #endif
 
+// EXORD indicates this is implemented by MMFS2 lib by ordinal number.
+// In MMF2 base, some ANSI functions were implemented with no suffix, then in Unicode add-on implemented with A suffix.
+// This creates no link-time errors, as ordinal indexes are used instead, so ANSI exts will call the suffixed function.
+// However, if you want compatibility, it's best to call by ordinal number, e.g. GetProcAddress(_T("mmfs2.dll"), MAKEINTRESOURCEA(ord)).
+// For this case, EXORD2 provides MMF1 and MMF2 ordinal indexes.
+// EXORD provides MMF2 ordinal index.
+// EXORDs are also provided for functions that are present in all MMF2 versions,
+// for the crazies who want to try creating a MMF1+ extension.
+//
+// When ordinals are limited to requiring HWA, Unicode, CF2.5 or a specific build,
+// then XXX_REQUIRED(ord) is used instead of EXORD, e.g. MMF2_UNICODE_OR_CF25_REQUIRED(123)
+// means if you build for MMF2 Unicode/CF2.5, it's safe as-is.
+// MMF2 base will not find that ordinal and have a link time error, so the editor won't show the object in Create New Object window.
+// If you wanted both - fallback behaviours - then you target the base one, and you will get warnings for using the function directly,
+// with an ordinal number to call instead.
+#define MMF2_ORD(mmf2) /* no op */
+#define MMF_ORD(mmf1, mmf2) /* no op */
+
+// MMF2 CD Release was build 239.0f, and had ordinals 1-825.
+// MMF2 CD -> latest beta build 258.2 adds ordinals 826-830, ordinals related to sound channels:
+// GetSndChannelFreq, LockSndChannel, SetSndChannelFreq, SetSndFreq, GetSndFreq
+//
+// In MMF2 HWA, during standard display mode, angles are ints; during HWA mode they are floats;
+// whereas in CF2.5, they're always floats even in Standard.
+// HWA and Unicode are separate in MMF2.
+// MMF2 HWA DLC adds ordinals 831-1018.
+// MMF2 Unicode DLC adds 1019-1082, and the HWA range 831-1018 is not available in Unicode.
+// A lot of ANSI text-based functions are renamed to have an A suffix and a W counterpart,
+// but the LIB always uses ordinal index, so this doesn't matter.
+// Vitalize! 4 is basically MMF2 Unicode, as its dll defines and skips the same ordinal ranges.
+// 
+// * CF2.5 has HWA and Unicode always available.
+// CF2.5 starts with build 280.27 (Dec 2013), containing ordinals 1-1096.
+// CF2.5 build 292.2 (Apr 2019) adds 1097-1138 ordinals: fxFill added to cSurface, cSurfaceImplementation and CFillData;
+// MappedFont functions, sprite functions, zip and unzip,
+// cSurface premultiplied alpha, cSurfaceImplementation parts and fxFill,
+// CImageFilterMgr get/set autopremultiplied, CEffectEx_ExInitialize.
+// CF2.5 build 292.27 (Oct 2020) adds ords 1139-1153:
+// CFile, CInputFile, and one function to cSurface.
+
+// This section gates functions, asking the ext dev to upgrade to a better suited func when using older ones,
+// and warning when using too-new ones.
+// For example, using 32-bit file size functions when 64-bit are available, non-HWA drawing when HWA is available,
+// ANSI when Unicode is available.
+// It also creates compiler warning when using a function introduced too late for the target version.
+// Note some function declarations are hidden by preprocessor gates anyway.
+
+#ifndef FUSION_TARGET_BUILD
+#if defined(_UNICODE) && defined(HWABETA)
+// Latest CF2.5
+#define FUSION_TARGET_BUILD 292026
+#else
+// Last MMF2 beta
+#define FUSION_TARGET_BUILD 258002
+#endif
+#endif
+// Sanity check
+#if FUSION_TARGET_BUILD > 280027 && (!defined(HWABETA) || (!defined(_UNICODE) && !defined(ALLOW_ANSI_EXT_IN_UNICODE_RUNTIME)))
+#error Incorrect Fusion target build or project configuration; if targeting CF2.5, _UNICODE and HWABETA defines are expected.
+#endif
+
+#define FUSION_FUNC_NOT_AVAILABLE(ord, x) [[deprecated("The function is not available in your target build, requires " x ". Use runtime linking to ordinal " ord " instead.")]]
+#ifndef DARKEDIF_INTERNAL_INCLUDE
+#define FusionAPISwitch(ord, func, build) [[deprecated("This function is better suited by " #func ", which is " #build ". Ordinal " #ord ".")]]
+#else
+#define FusionAPISwitch(ord, func, build) /* no op */
+#endif
+
+// Target ANSI: best we can use here is MMF2 base or MMF2 HWA
+#ifndef _UNICODE
+	#define MMF2_UNICODE_OR_CF25_REQUIRED(ord) FUSION_FUNC_NOT_AVAILABLE(#ord, "MMF2 Unicode or CF2.5")
+	#define CF25_REQUIRED(ord) FUSION_FUNC_NOT_AVAILABLE(#ord, "CF2.5")
+	#define CF25_292_02_REQUIRED(ord) FUSION_FUNC_NOT_AVAILABLE(#ord, "CF2.5 build 292.2 or later")
+	#define CF25_292_27_REQUIRED(ord) FUSION_FUNC_NOT_AVAILABLE(#ord, "CF2.5 build 292.27 or later")
+	#define PreferFusionFunc_Unicode(ord, func) /* Replacement func requires Unicode */
+	#define PreferFusionFunc_CF25(ord, func) /* Replacement func requires CF2.5 */
+	#define PreferFusionFunc_CF25_296_02(ord, func) /* Replacement func requires CF2.5 292.2 */
+	#define PreferFusionFunc_CF25_296_27(ord, func) /* Replacement func requires CF2.5 292.27 */
+	// MMF2 HWA, no Unicode
+	#ifdef HWABETA
+		#define MMF2_HWA_OR_CF25_REQUIRED(ord) /* OK */
+		#define PreferFusionFunc_HWA(ord, func) FusionAPISwitch(ord, func, "MMF2 HWA and CF2.5")
+	#else // Base MMF2
+		#define MMF2_HWA_OR_CF25_REQUIRED(ord) FUSION_FUNC_NOT_AVAILABLE(#ord, "MMF2 HWA or CF2.5")
+		#define PreferFusionFunc_HWA(ord, func) /* Replacement func requires HWA */
+	#endif
+#else // Unicode defined
+	#define MMF2_UNICODE_OR_CF25_REQUIRED(ord) /* OK */
+	#define PreferFusionFunc_Unicode(ord, func) FusionAPISwitch(ord, func, "MMF2 Unicode and CF2.5")
+	#ifndef HWABETA  // Unicode, no HWA: Unicode MMF2
+		#define MMF2_HWA_OR_CF25_REQUIRED(ord)  FUSION_FUNC_NOT_AVAILABLE(#ord, "MMF2 HWA or CF2.5")
+		#define CF25_REQUIRED(ord) FUSION_FUNC_NOT_AVAILABLE(#ord, "CF2.5")
+		#define CF25_292_02_REQUIRED(ord) FUSION_FUNC_NOT_AVAILABLE(#ord, "CF2.5 build 292.2 or later")
+		#define CF25_292_27_REQUIRED(ord) FUSION_FUNC_NOT_AVAILABLE(#ord, "CF2.5 build 292.27 or later")
+	#else // HWA + Unicode: MMF2 is now incompatible, CF2.5 required
+		#define MMF2_HWA_OR_CF25_REQUIRED(ord) /* OK */
+		#define CF25_REQUIRED(ord) /* OK */
+		#define PreferFusionFunc_HWA(ord, func) FusionAPISwitch(ord, func, "MMF2 HWA and CF2.5")
+		#define PreferFusionFunc_CF25(ord, func) FusionAPISwitch(ord, func, "CF2.5")
+		#if FUSION_TARGET_BUILD >= 296027
+			#define CF25_292_27_REQUIRED(ord) /* OK */
+			#define CF25_292_02_REQUIRED(ord) /* OK */
+			#define PreferFusionFunc_CF25_296_02(ord, func) FusionAPISwitch(ord, func, "CF2.5 build 292.2+")
+			#define PreferFusionFunc_CF25_296_27(ord, func) FusionAPISwitch(ord, func, "CF2.5 build 292.27+")
+		#else
+			#define CF25_292_27_REQUIRED(ord) FUSION_FUNC_NOT_AVAILABLE(#ord, "CF2.5 build 292.27 or later")
+			#define PreferFusionFunc_CF25_296_27(ord, func) /* Replacement func requires CF2.5 292.27+ */
+			#if FUSION_TARGET_BUILD >= 296002
+				#define CF25_292_02_REQUIRED(ord) /* OK */
+				#define PreferFusionFunc_CF25_296_02(ord, func) FusionAPISwitch(ord, func, "CF2.5 build 292.2+")
+			#else // Fusion target build is after MMF2, prior to CF 296.2, assume CF2.5 initial release
+				#define CF25_292_02_REQUIRED(ord) FUSION_FUNC_NOT_AVAILABLE(#ord, "CF2.5 build 292.2 or later")
+				#define PreferFusionFunc_CF25_296_02(ord, func) /* Replacement func requires CF2.5 292.2+ */
+			#endif
+		#endif
+	#endif
+#endif
+
 // Windows 64-bit exporter is surely soon(tm)
 #if !defined(FusionSDKWin64Compat) && defined(_WIN64)
 #define FusionSDKWin64Compat
@@ -120,6 +238,32 @@ using UShortTCHAR = unsigned short;
 #define PATH_MAX MAX_PATH
 
 using WindowHandleType = HWND;
+
+template<auto MemFn> struct OrdinalCall;
+
+template<typename R, typename C, typename... Args, R(__thiscall C::* MemFn)(Args...)>
+struct OrdinalCall<MemFn>
+{
+	using Fn = R(__thiscall*)(C*, Args...);
+
+	static R Call(C* self, uint16_t ordinal, Args... args)
+	{
+		auto fn = reinterpret_cast<Fn>(
+			GetProcAddress(
+				GetModuleHandle(TEXT("mmfs2.dll")),
+				MAKEINTRESOURCEA(ordinal)));
+		assert(fn);
+		return fn(self, std::forward<Args>(args)...);
+	}
+};
+
+#define WRAP_METHOD(origClassName, returnType, funcName, ordinalNum, paramTypesAndNames, paramTypes, ...) \
+inline returnType funcName paramTypesAndNames \
+{ \
+	return (returnType)OrdinalCall<static_cast<returnType (origClassName::*) paramTypes>(&origClassName::funcName)>::Call( \
+		reinterpret_cast<origClassName*>(this), ordinalNum, __VA_ARGS__); \
+}
+
 
 // We hide compiler warning 4200, caused by zero-length arrays causing perhaps
 // unexpected default ctor behaviour. However, despite being a warning that claims

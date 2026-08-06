@@ -435,7 +435,7 @@ const TCHAR* Extension::GetAltStringsFromObjName(const TCHAR* objectName, int al
 		return Runtime.CopyString(_T("<ERROR>"));
 	}
 #if defined(_WIN32) && RuntimeBuild
-	bool isUnicode = mvIsUnicodeApp(Edif::SDK->mV, Edif::SDK->mV->RunApp);
+	bool isUnicode = mvIsUnicodeApp(Edif::SDK->mV, Edif::SDK->mV->mvRunApp);
 #else
 	constexpr bool isUnicode = true;
 #endif

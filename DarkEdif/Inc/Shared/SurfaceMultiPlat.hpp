@@ -27,7 +27,7 @@ namespace DarkEdif
 #endif
 
 #ifdef __APPLE__
-#import "MMF2Lib/CRenderToTexture.h"
+#import <MMF2Lib/CRenderToTexture.h>
 #endif
 
 struct ForbiddenInternals;

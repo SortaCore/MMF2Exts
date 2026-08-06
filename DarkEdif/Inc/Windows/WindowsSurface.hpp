@@ -233,7 +233,7 @@ enum class SurfaceDriver : int
 
 
 // SetAutoVSync() function flags.
-// @remarks This is a series of defines in original SDK
+// @remarks This is a series of defines in original SDK, SAVS_XX
 enum class _Enum_is_bitflag_ SetAutoVSyncFlags : int
 {
 	VSync = 0x0001,
@@ -540,43 +540,43 @@ public:
 	// TODO: YQ: Are copy and move constructors defined?
 
 	// Creates a cSurface container, without creating its internal surface - see Create, Delete
-	cSurface();
-	~cSurface();
+	MMF_ORD(308, 264) cSurface() EXDEF;
+	MMF_ORD(313, 286) ~cSurface() EXDEF;
 
 	// Operators
-	cSurface& operator=(const cSurface& source);
+	MMF2_ORD(308) cSurface& operator=(const cSurface& source) EXDEF;
 
 	// TODO: YQ: Init what, exactly?
-	static void InitializeSurfaces();
-	static void FreeSurfaces();
+	static MMF2_ORD(594) void InitializeSurfaces() EXDEF;
+	static MMF2_ORD(461) void FreeSurfaces() EXDEF;
 #if HWABETA
 	// TODO: YQ: What is being freed?
 	// HWA only
-	static void FreeExternalModules();
+	static MMF2_ORD(984) void FreeExternalModules() EXDEF;
 #endif
 
 	// Create surface implementation from surface prototype
-	void Create(int width, int height, cSurface * prototype);
+	MMF_ORD(340, 372) void Create(int width, int height, cSurface * prototype) EXDEF;
 
 	// Create pure DC surface from DC
-	void Create(HDC hDC);
+	MMF_ORD(341, 373) void Create(HDC hDC) EXDEF;
 
 	// Create pure DC surface from a window
-	void Create(HWND hWnd, BOOL IncludeFrame);
+	MMF_ORD(342, 374) void Create(HWND hWnd, BOOL IncludeFrame) EXDEF;
 
 	// TODO: YQ: What is a screen surface? What does creating one do?
 	// Create screen surface(fullscreen mode)
-	BOOL CreateScreenSurface();
-	BOOL IsScreenSurface();
+	MMF2_ORD(387) BOOL CreateScreenSurface() EXDEF;
+	MMF2_ORD(608) BOOL IsScreenSurface() EXDEF;
 
 	// TODO: YQ: What makes a surface valid or invalid? Create() fail?
 	// Valid?
-	BOOL IsValid();
+	MMF_ORD(390, 610) BOOL IsValid() EXDEF;
 
 	// Returns ST_XX enum, cast to SurfaceType enum
-	int GetType();
+	MMF2_ORD(573) int GetType() EXDEF;
 	// Returns SD_XX enum, cast to SurfaceDriver enum
-	int GetDriver();
+	MMF2_ORD(493) int GetDriver() EXDEF;
 	// Set of driver info data. See struct FusionD3DSurfDriverInfo (Direct3D 8-11 display),
 	// and FusionDDrawSurfDriverInfo (MMF2 DirectX display).
 	// Note some GPU textures are not allocated on surf create, but on first write/blit operation to them.
@@ -585,29 +585,29 @@ public:
 	//			It's better to run this on the frame surface, retrieved from WinGetSurface(mV->mvIdEditWin).
 	//			This is only going to return content if Driver is not DIB, possibly 3DFX+ only.
 	//			3DFX has not been tested, as MMF2 does not expose this display mode.
-	ULONG GetDriverInfo(void * pInfo);
+	MMF2_ORD(494) ULONG GetDriverInfo(void * pInfo) EXDEF;
 
 	// Clone surface(= create with same size + Blit)
-	void Clone(const cSurface & pSrcSurface, int newW = -1, int newH = -1);
+	MMF_ORD(338, 355) void Clone(const cSurface & pSrcSurface, int newW = -1, int newH = -1) EXDEF;
 
 	// TODO: YQ: What is "before to create"? Reusing the cSurface *?
 	// YQ: Does this delete this cSurface? Is it suitable for use with Clone() only? just Create()?
 	// Delete surface implementation(before to create another one)
-	void Delete();
+	MMF_ORD(345, 401) void Delete() EXDEF;
 
 	// ======================
 	// error codes
 	// ======================
 	// This has never returned an error in scenarios where nothing is drawn (e.g. drawing a line 2px in D3D 11)
-	int GetLastError(void);
+	MMF_ORD(377, 523) int GetLastError(void) EXDEF;
 
 	// ======================
 	// Surface info
 	// ======================
 	// TODO: Width in pixels? What if invalid?
-	int GetWidth(void) const;
+	MMF_ORD(387, 585) int GetWidth(void) const EXDEF;
 	// TODO: Height in pixels? What if invalid?
-	int GetHeight(void) const;
+	MMF_ORD(375, 520) int GetHeight(void) const EXDEF;
 
 	// Number of bits per pixel. 8, 15, 16, 24 or 32(BGRA).
 	// 8 bits = 1 byte index in the color table
@@ -616,22 +616,22 @@ public:
 	// 16 = 16 bit per pixel; 5 bits for R/B, 6 for G. Red mask = 0xF800, green mask = 0x07E0, blue mask = 0x001F.
 	// 24 = 8 bits per component, BGR layout.
 	// 32 = 8 bits per component, BGRA layout; A is normally unused, but can be alpha.
-	int GetDepth(void) const;
-	BOOL GetInfo(int & width, int & height, int & depth) const;
+	MMF_ORD(374, 487) int GetDepth(void) const EXDEF;
+	MMF2_ORD(521) BOOL GetInfo(int & width, int & height, int & depth) const EXDEF;
 
 	// ======================
 	// Surface coordinate management
 	// ======================
 
 	// TODO: YQ: What does Origin mean? Something relative to Hot Spot? Relative for blit operations?
-	void SetOrigin(int x, int y);
-	void SetOrigin(POINT c);
+	MMF_ORD(432, 736) void SetOrigin(int x, int y) EXDEF;
+	MMF_ORD(433, 737) void SetOrigin(POINT c) EXDEF;
 
-	void GetOrigin(POINT &pt);
-	void GetOrigin(int & x, int & y);
+	MMF_ORD(380, 542) void GetOrigin(POINT &pt) EXDEF;
+	MMF_ORD(381, 541) void GetOrigin(int & x, int & y) EXDEF;
 
-	void OffsetOrigin(int dx, int dy);
-	void OffsetOrigin(POINT delta);
+	MMF_ORD(400, 639) void OffsetOrigin(int dx, int dy) EXDEF;
+	MMF_ORD(401, 640) void OffsetOrigin(POINT delta) EXDEF;
 
 	// ======================
 	// Raster operations
@@ -639,60 +639,58 @@ public:
 
 	// Locks the raw memory of the Surface, and returns the address to it. When you're done writing, use UnlockBuffer to return it.
 	// Does not work for any HWA surface type; you can only blit into it from another surface.
-	LPBYTE	LockBuffer();
+	MMF2_ORD(620) LPBYTE	LockBuffer() EXDEF;
 
 	// TODO: YQ: Why do you have to unlock with address, won't OOP make that pointless? Can you pass a different address?
-	void UnlockBuffer(LPBYTE spBuffer);
+	MMF2_ORD(762) void UnlockBuffer(LPBYTE spBuffer) EXDEF;
 
 	// Image stride, aka pitch, is the number of bytes for one row of pixels in image, including memory alignment padding.
 	// If image is upside down in RAM compared to memory (usual for BMP format), pitch will be negative.
 	// https://learn.microsoft.com/en-us/windows/win32/medfound/image-stride
-	int GetPitch() const;
+	MMF2_ORD(551) int GetPitch() const EXDEF;
 
 	// ======================
 	// Double-buffer handling
 	// ======================
 
 	// Sets this cSurface as the current one in a double-buffer... in what context? How are surfaces paired, and how do we know what the pairs target?
-	void SetCurrentDevice();
+	MMF2_ORD(450) void SetCurrentDevice() EXDEF;
 	// Implemented in Direct3D 9 and 11 on CF2.5+. Not available in Direct3D 8.
 	// Use if you plan to do your own HWA rendering (i.e, doing rendering with DirectX driver info) onto the surface; if the surface is an HWA render target this function binds the render target as the current one in Fusion's D3D device state.
-	int  BeginRendering(BOOL clear, RGBAREF rgba);
+	MMF2_ORD(341) int  BeginRendering(BOOL clear, RGBAREF rgba) EXDEF;
 	// Call after you've finished rendering after a previous BeginRendering() call.
-	int  EndRendering();
+	MMF2_ORD(417) int  EndRendering() EXDEF;
 	// Only works on frame surface; redraws Fusion's window.
 	// Note that on D3D9 this usually can't be called in a Display/DisplayRunObject() routine, probably because it is within a BeginScene()/EndScene() pair, which prevents screen updates.
-	BOOL UpdateScreen();
+	MMF2_ORD(767) BOOL UpdateScreen() EXDEF;
 
-	#ifdef HWABETA
-		// TODO: YQ: update how?
-		// This seems entirely useless on HWA non-frame surfaces.
-		cSurface* GetRenderTargetSurface();
-		void	  ReleaseRenderTargetSurface(cSurface* psf);
-		// TODO: YQ: What does this do, how does Max affect it ?
-		void	  Flush(BOOL bMax);
-		// TODO: YQ: I would guess this is the Z position of the buffer, but a float makes no sense here.
-		// Frame-surface only. In D3D9, this enables Z-buffering similar to how you can also enable it in shaders, but I still have no idea what the z2D parameter does..
-		void	  SetZBuffer(float z2D);
-	#endif
+	// TODO: YQ: update how?
+	// This seems entirely useless on HWA non-frame surfaces.
+	MMF2_HWA_OR_CF25_REQUIRED(1014) cSurface* GetRenderTargetSurface() EXDEF;
+	MMF2_HWA_OR_CF25_REQUIRED(1016) void ReleaseRenderTargetSurface(cSurface* psf) EXDEF;
+	// TODO: YQ: What does this do, how does Max affect it?
+	MMF2_HWA_OR_CF25_REQUIRED(1012) void Flush(BOOL bMax) EXDEF;
+	// TODO: YQ: I would guess this is the Z position of the buffer, but a float makes no sense here.
+	// Frame-surface only. In D3D9, this enables Z-buffering similar to how you can also enable it in shaders, but I still have no idea what the z2D parameter does..
+	MMF2_HWA_OR_CF25_REQUIRED(1017) void SetZBuffer(float z2D) EXDEF;
 
 	// ======================
 	// Device context for graphic operations
 	// ======================
 
 	// Returns a HDC. Ref-counted, you must release the DC with ReleaseDC() once done.
-	HDC	 GetDC(void);
-	void ReleaseDC(HDC dc);
-	void AttachWindow(HWND hWnd);
+	MMF_ORD(372, 484) HDC GetDC(void) EXDEF;
+	MMF_ORD(412, 682) void ReleaseDC(HDC dc) EXDEF;
+	MMF2_ORD(340) void AttachWindow(HWND hWnd) EXDEF;
 
 	// ======================
 	// Clipping
 	// ======================
 
 	// TODO: YQ: WHat does clipping apply to? Blit?
-	void GetClipRect(int & x, int & y, int & w, int & h);
-	void SetClipRect(int x, int y, int w, int h);
-	void ClearClipRect(void);
+	MMF_ORD(370, 476) void GetClipRect(int & x, int & y, int & w, int & h) EXDEF;
+	MMF_ORD(426, 724) void SetClipRect(int x, int y, int w, int h) EXDEF;
+	MMF_ORD(337, 354) void ClearClipRect(void) EXDEF;
 
 	// ======================
 	// LoadImage (DIB format) / SaveImage (DIB format)
@@ -701,17 +699,23 @@ public:
 	// Defined in Win32 header, will mess with these func names if defined here
 	#undef LoadImage
 
-	BOOL LoadImageA(HFILE hf, ULONG lsize, LIFlags loadFlags = LIFlags::None);
+	MMF_ORD(394, 615) BOOL LoadImageA(
+		_In_valid_hfile_ HFILE hf,
+		_In_range_(1, ULONG_MAX) ULONG lsize,
+		LIFlags loadFlags = LIFlags::None) EXDEF;
 	// See the _FUSIONT macro for filename!
-	BOOL LoadImageA(LPCSTR fileName, LIFlags loadFlags = LIFlags::None);
-	BOOL LoadImageA(HINSTANCE hInst, int bmpID, LIFlags loadFlags = LIFlags::None);
-	BOOL LoadImageA(LPBITMAPINFO pBmi, LPBYTE pBits = NULL, LIFlags loadFlags = LIFlags::None);
+	MMF_ORD(397, 618) PreferFusionFunc_Unicode(1056, "LoadImageW") _Must_inspect_result_
+		BOOL LoadImageA(_In_z_ LPCSTR fileName, LIFlags loadFlags = LIFlags::None) EXDEF;
+	MMF_ORD(395, 616) _Must_inspect_result_
+		BOOL LoadImageA(HINSTANCE hInst, int bmpID, LIFlags loadFlags = LIFlags::None) EXDEF;
+	MMF_ORD(396, 617) _Must_inspect_result_
+		BOOL LoadImageA(__notnull LPBITMAPINFO pBmi, LPBYTE pBits = NULL, LIFlags loadFlags = LIFlags::None) EXDEF;
 
-	BOOL LoadImageW(HFILE hf, ULONG lsize, LIFlags loadFlags = LIFlags::None);
+	MMF2_UNICODE_OR_CF25_REQUIRED(1056) BOOL LoadImageW(HFILE hf, ULONG lsize, LIFlags loadFlags = LIFlags::None) EXDEF;
 	// See the _FUSIONT macro for filename!
-	BOOL LoadImageW(const UShortWCHAR * fileName, LIFlags loadFlags = LIFlags::None);
-	BOOL LoadImageW(HINSTANCE hInst, int bmpID, LIFlags loadFlags = LIFlags::None);
-	BOOL LoadImageW(LPBITMAPINFO pBmi, LPBYTE pBits = NULL, LIFlags loadFlags = LIFlags::None);
+	MMF2_UNICODE_OR_CF25_REQUIRED(1059) BOOL LoadImageW(_In_z_ const UShortWCHAR * fileName, LIFlags loadFlags = LIFlags::None) EXDEF;
+	MMF2_UNICODE_OR_CF25_REQUIRED(1057) BOOL LoadImageW(HINSTANCE hInst, int bmpID, LIFlags loadFlags = LIFlags::None) EXDEF;
+	MMF2_UNICODE_OR_CF25_REQUIRED(1058) BOOL LoadImageW(LPBITMAPINFO pBmi, LPBYTE pBits = NULL, LIFlags loadFlags = LIFlags::None) EXDEF;
 
 	// Redefine it back
 #ifdef _UNICODE
@@ -720,151 +724,193 @@ public:
 	#define LoadImage LoadImageA
 #endif
 
-	BOOL SaveImage(HFILE hf, SIFlags saveFlags = SIFlags::None);
+	MMF_ORD(423, 709) _Must_inspect_result_
+		BOOL SaveImage(_In_valid_hfile_ HFILE hf, SIFlags saveFlags = SIFlags::None) EXDEF;
 	// See the _FUSIONT macro for filename!
-	BOOL SaveImage(LPCSTR fileName, SIFlags saveFlags = SIFlags::None);
+	MMF_ORD(425, 711) PreferFusionFunc_Unicode(1066, "SaveImage") _Must_inspect_result_
+		BOOL SaveImage(_In_z_ LPCSTR fileName, SIFlags saveFlags = SIFlags::None) EXDEF;
 	// See the _FUSIONT macro for filename!
-	BOOL SaveImage(const UShortWCHAR * fileName, SIFlags saveFlags = SIFlags::None);
-	BOOL SaveImage(LPBITMAPINFO pBmi, LPBYTE pBits, SIFlags saveFlags = SIFlags::None);
+	MMF2_UNICODE_OR_CF25_REQUIRED(1066) _Must_inspect_result_ BOOL SaveImage(const UShortWCHAR * fileName, SIFlags saveFlags = SIFlags::None) EXDEF;
+	MMF_ORD(424, 710) _Must_inspect_result_
+		BOOL SaveImage(
+			_Notnull_ LPBITMAPINFO pBmi,
+			LPBYTE pBits,
+			SIFlags saveFlags = SIFlags::None) EXDEF;
 
 	// TODO: YQ: WHat does this mean?
-	ULONG GetDIBSize();
+	MMF_ORD(373, 491) _Success_(return != 0) _Must_inspect_result_ _NODISCARD
+		ULONG GetDIBSize() EXDEF;
 
 	// ======================
 	// Pixel functions
 	// ======================
 	// Set pixel
-	void SetPixel(int x, int y, COLORREF c);
-	void SetPixel(int x, int y, BYTE R, BYTE G, BYTE B);
-	void SetPixel(int x, int y, int index);
+	MMF_ORD(438, 745) void SetPixel(_In_positive_i32_ int x, _In_positive_i32_ int y, COLORREF c) EXDEF;
+	MMF_ORD(436, 743) void SetPixel(_In_positive_i32_ int x, _In_positive_i32_ int y, BYTE R, BYTE G, BYTE B) EXDEF;
+	MMF_ORD(437, 744) void SetPixel(_In_positive_i32_ int x, _In_positive_i32_ int y, _In_range_(0, INT16_MAX) int index) EXDEF;
 
 	// Faster: assume clipping is done, the origin is at(0,0) and the surface is locked
-	void SetPixelFast(int x, int y, COLORREF c);
-	void SetPixelFast8(int x, int y, int index);
+	MMF2_ORD(747) void SetPixelFast(_In_positive_i32_ int x, _In_positive_i32_ int y, COLORREF c) EXDEF;
+	MMF2_ORD(746) void SetPixelFast8(_In_positive_i32_ int x, _In_positive_i32_ int y, int index) EXDEF;
 
 	// Get pixel
-	BOOL GetPixel(int x, int y, COLORREF & c) const;
-	BOOL GetPixel(int x, int y, BYTE & R, BYTE & G, BYTE & B) const;
-	BOOL GetPixel(int x, int y, int & index) const;
+	MMF_ORD(385, 554) _Success_(return != FALSE) _Must_inspect_result_
+		BOOL GetPixel(_In_positive_i32_ int x, _In_positive_i32_ int y, COLORREF & c) const EXDEF;
+	MMF_ORD(383, 552) _Success_(return != FALSE) _Must_inspect_result_
+		BOOL GetPixel(_In_positive_i32_ int x, _In_positive_i32_ int y, BYTE & R, BYTE & G, BYTE & B) const EXDEF;
+	MMF_ORD(384, 553) _Success_(return != FALSE) _Must_inspect_result_
+		BOOL GetPixel(_In_positive_i32_ int x, _In_positive_i32_ int y, int & index) const EXDEF;
 
 	// Faster: assume clipping is done, the origin is at(0,0) and the surface is locked
-	COLORREF GetPixelFast(int x, int y);
-	int 	 GetPixelFast8(int x, int y);
+	MMF2_ORD(556) _Must_inspect_result_ _NODISCARD
+		COLORREF GetPixelFast(_In_positive_i32_ int x, _In_positive_i32_ int y) EXDEF;
+	// Assumes clipping is done, origin is at (0,0), and surface is locked. Pallete version.
+	MMF2_ORD(555) _Must_inspect_result_ _NODISCARD
+		int GetPixelFast8(_In_positive_i32_ int x, _In_positive_i32_ int y) EXDEF;
 
 	// ======================
 	// Blit functions
 	// ======================
 
 	// Blit surface to surface. Works with HWA destination.
-	BOOL Blit(cSurface & dest) const;
+	MMF_ORD(334, 342) _Success_(return != FALSE)
+		BOOL Blit(cSurface & dest) const EXDEF;
 
 	// In CF2.5 : HIBYTE(dwBlitFlags) is alpha blend coefficient
 	// TODO: does it apply to this func?
-	BOOL Blit(cSurface & dest, int destX, int destY,
+	MMF2_ORD(344) _Success_(return != FALSE)
+		BOOL Blit(cSurface & dest, _In_positive_i32_ int destX, _In_positive_i32_ int destY,
 			  BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY, LPARAM effectParam = 0,
-			  /* WinSurf_BlitOptions */ ULONG dwBlitFlags = 0) const;
+			  /* WinSurf_BlitOptions */ ULONG dwBlitFlags = 0) const EXDEF;
 
 	// Blit rectangle to surface
 	// In CF2.5 : HIBYTE(dwBlitFlags) is alpha blend coefficient
 	// TODO: does it apply to this func?
-	BOOL Blit(cSurface & dest, int destX, int destY,
-			  int srcX, int srcY, int srcWidth, int srcHeight,
+	// TODO: Confirm dest X/Y must be positive: possibly by rotating we can intentionally clip,
+	// but we'll need to check that's intentionally allowed
+	MMF2_ORD(343) _Success_(return != FALSE)
+		BOOL Blit(cSurface & dest, int destX, int destY,
+			  _In_positive_i32_ int srcX, _In_positive_i32_ int srcY,
+			  _In_range_(1,INT32_MAX) int srcWidth, _In_range_(1, INT32_MAX) int srcHeight,
 			  BlitMode bm /*= BlitMode::BMODE_OPAQUE*/, BlitOp bo = BlitOp::BOP_COPY, LPARAM effectParam = 0,
-			  /* WinSurf_BlitOptions */ ULONG dwBlitFlags = 0) const;
+			  /* WinSurf_BlitOptions */ ULONG dwBlitFlags = 0) const EXDEF;
 
-#ifdef HWABETA
 	// Extended blit : can do stretch & rotate at the same time
 	// Only implemented in 3D mode
 	// In CF2.5 : HIBYTE(dwBlitFlags) is alpha blend coefficient
 	// TODO: does it apply to this func?
-	BOOL BlitEx(cSurface & dest, float dX, float dY, float fScaleX, float fScaleY,
-				int sX, int sY, int sW, int sH, LPPOINT pCenter, float fAngle,
-				BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY, LPARAM effectParam = 0,
-				/* WinSurf_BlitOptions */ ULONG dwFlags = 0) const;
-#endif
+	MMF2_HWA_OR_CF25_REQUIRED(849) _Success_(return != FALSE)
+		BOOL BlitEx(cSurface & dest, float dX, float dY, float fScaleX, float fScaleY,
+			_In_positive_i32_ int sX, _In_positive_i32_ int sY,
+			_In_range_(1,INT32_MAX) int sW, _In_range_(1, INT32_MAX) int sH, LPPOINT pCenter, float fAngle,
+			BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY, LPARAM effectParam = 0,
+			/* WinSurf_BlitOptions */ ULONG dwFlags = 0) const EXDEF;
+
 	// Scrolling
-	BOOL Scroll(int xDest, int yDest, int xSrc, int ySrc, int width, int height);
+	MMF_ORD(447, 712)  _Success_(return != FALSE)
+		BOOL Scroll(_In_positive_i32_ int xDest, _In_positive_i32_ int yDest,
+			_In_positive_i32_ int xSrc, _In_positive_i32_ int ySrc,
+			_In_range_(1, INT32_MAX) int width, _In_range_(1, INT32_MAX) int height) EXDEF;
 
 	// Blit via callback
-	BOOL FilterBlit(cSurface & dest, int destX, int destY,
-					int srcX, int srcY, int srcWidth, int srcHeight,
-					BlitMode bm, FILTERBLITPROC fbProc, LPARAM lUserParam) const;
+	MMF2_ORD(447) _Success_(return != FALSE)
+		BOOL FilterBlit(cSurface & dest, _In_positive_i32_ int destX, _In_positive_i32_ int destY,
+			_In_positive_i32_ int srcX, _In_positive_i32_ int srcY,
+			_In_range_(1, INT32_MAX) int srcWidth, _In_range_(1, INT32_MAX) int srcHeight,
+			BlitMode bm, _Notnull_ FILTERBLITPROC fbProc, LPARAM lUserParam) const EXDEF;
 
-	BOOL FilterBlit(cSurface & dest, FILTERBLITPROC fbProc,
-					LPARAM lUserParam, BlitMode bm = BlitMode::BMODE_OPAQUE) const;
+	MMF2_ORD(448) _Success_(return != FALSE)
+		BOOL FilterBlit(cSurface & dest, _Notnull_ FILTERBLITPROC fbProc,
+			LPARAM lUserParam, BlitMode bm = BlitMode::BMODE_OPAQUE) const EXDEF;
 
 	// Matrix blit via callback
-	BOOL MatrixFilterBlit(cSurface & dest, int destX, int destY,
-						  int srcX, int srcY, int srcWidth, int srcHeight,
-						  int mWidth, int mHeight, int mDXCenter, int mDYCenter,
-						  MATRIXFILTERBLITPROC fbProc, LPARAM lUserParam) const;
+	MMF2_ORD(631) _Success_(return != FALSE)
+		BOOL MatrixFilterBlit(cSurface & dest, int destX, int destY,
+			_In_positive_i32_ int srcX, _In_positive_i32_ int srcY,
+			_In_range_(1, INT32_MAX) int srcWidth, _In_range_(1, INT32_MAX) int srcHeight,
+			int mWidth, int mHeight, int mDXCenter, int mDYCenter,
+			MATRIXFILTERBLITPROC fbProc, LPARAM lUserParam) const EXDEF;
 
 	// Stretch surface to surface
-	BOOL Stretch(cSurface & dest, ULONG dwFlags = 0) const;
+	MMF2_ORD(758) _Success_(return != FALSE)
+		BOOL Stretch(cSurface & dest, ULONG dwFlags = 0) const EXDEF;
 
 	// Stretch surface to rectangle
-	BOOL Stretch(cSurface & dest, int destX, int destY, int destWidth, int destHeight,
-				 BlitMode bm /*= BlitMode::BMODE_OPAQUE*/, BlitOp bo = BlitOp::BOP_COPY, LPARAM param = 0, ULONG dwFlags = 0) const;
+	MMF2_ORD(757) _Success_(return != FALSE)
+		BOOL Stretch(cSurface & dest, _In_positive_i32_ int destX, _In_positive_i32_ int destY,
+			_In_range_(1, INT32_MAX) int destWidth, _In_range_(1, INT32_MAX) int destHeight,
+			BlitMode bm /*= BlitMode::BMODE_OPAQUE*/, BlitOp bo = BlitOp::BOP_COPY, LPARAM param = 0, ULONG dwFlags = 0) const EXDEF;
 
 	// Stretch rectangle to rectangle
-	BOOL Stretch(cSurface & dest, int destX, int destY, int destWidth, int destHeight,
-				 int srcX, int srcY, int srcWidth, int srcHeight,
-				 BlitMode bm /*= BlitMode::BMODE_OPAQUE*/, BlitOp bo = BlitOp::BOP_COPY, LPARAM param = 0, ULONG dwFlags = 0) const;
+	MMF2_ORD(756)  _Success_(return != FALSE)
+		BOOL Stretch(cSurface & dest, int destX, int destY,
+			_In_range_(1, INT32_MAX) int destWidth, _In_range_(1, INT32_MAX) int destHeight,
+			_In_positive_i32_ int srcX, _In_positive_i32_ int srcY,
+			_In_range_(1, INT32_MAX) int srcWidth, _In_range_(1, INT32_MAX) int srcHeight,
+			BlitMode bm /*= BlitMode::BMODE_OPAQUE*/, BlitOp bo = BlitOp::BOP_COPY, LPARAM param = 0, ULONG dwFlags = 0) const EXDEF;
 
 	// Revert surface horizontally
 	// Note: Slow for HWA, as it implicitly copies to software memory, and flips there
-	BOOL ReverseX();
+	MMF_ORD(416, 698) _Success_(return != FALSE)
+		BOOL ReverseX() EXDEF;
 
 	// Revert rectangle horizontally
 	// Note: Slow for HWA, as it implicitly copies to software memory, and flips there
-	BOOL ReverseX(int x, int y, int width, int height);
+	MMF_ORD(415, 697) _Success_(return != FALSE)
+		BOOL ReverseX(_In_positive_i32_ int x, _In_positive_i32_ int y,
+			_In_range_(1, INT32_MAX) int width, _In_range_(1, INT32_MAX) int height) EXDEF;
 
 	// Revert surface vertically
 	// Note: Slow for HWA, as it implicitly copies to software memory, and flips there
-	BOOL ReverseY();
+	MMF_ORD(418, 700) _Success_(return != FALSE)
+		BOOL ReverseY() EXDEF;
 
 	// Revert rectangle vertically
 	// Note: Slow for HWA, as it implicitly copies to software memory, and flips there
-	BOOL ReverseY(int x, int y, int width, int height);
+	MMF_ORD(417, 699) _Success_(return != FALSE)
+		BOOL ReverseY(_In_positive_i32_ int x, _In_positive_i32_ int y,
+			_In_range_(1, INT32_MAX) int width, _In_range_(1, INT32_MAX) int height) EXDEF;
 
 	// Remove empty borders
-	BOOL GetMinimizeRect(RECT *);
-	BOOL Minimize();
-	BOOL Minimize(RECT * r);
+	MMF2_ORD(534) _Success_(return != FALSE)
+		BOOL GetMinimizeRect(_Notnull_ RECT *) EXDEF;
+	MMF_ORD(399, 633)  _Success_(return != FALSE)
+		BOOL Minimize() EXDEF;
+	MMF_ORD(452, 632) _Success_(return != FALSE)
+		BOOL Minimize(_Notnull_ RECT * r) EXDEF;
 
 	// =============================
 	// Blit from screen or memory DC
 	// =============================
 
-	static BOOL CaptureDC(HDC srcDC, HDC dstDC, LONG srcX, LONG srcY,
-						  LONG dstX, LONG dstY, LONG srcWidth, LONG srcHeight,
-						  LONG dstWidth, LONG dstHeight, BOOL bFlushMessage, BOOL bKeepRatio);
+	static MMF2_ORD(351) BOOL CaptureDC(HDC srcDC, HDC dstDC, LONG srcX, LONG srcY,
+		LONG dstX, LONG dstY, LONG srcWidth, LONG srcHeight,
+		LONG dstWidth, LONG dstHeight, BOOL bFlushMessage, BOOL bKeepRatio) EXDEF;
 
 	// ======================
 	// Fill
 	// ======================
 
 	// Fill surface
-	BOOL Fill(COLORREF c);
-	BOOL Fill(CFillData * fd);
-	BOOL Fill(int index);
-	BOOL Fill(int R, int G, int B);
+	MMF_ORD(363, 445) BOOL Fill(COLORREF c) EXDEF;
+	MMF_ORD(364, 446) BOOL Fill(CFillData * fd) EXDEF;
+	MMF_ORD(357, 439) BOOL Fill(int index) EXDEF;
+	MMF_ORD(358, 440) BOOL Fill(int R, int G, int B) EXDEF;
 
 	// Fill block
-	BOOL Fill(int x, int y, int w, int h, COLORREF c);
-	BOOL Fill(int x, int y, int w, int h, CFillData * fd);
-	BOOL Fill(int x, int y, int w, int h, int index);
-	BOOL Fill(int x, int y, int w, int h, int R, int G, int B);
-#ifdef HWABETA
+	MMF_ORD(361, 443) BOOL Fill(int x, int y, int w, int h, COLORREF c) EXDEF;
+	MMF_ORD(362, 444) BOOL Fill(int x, int y, int w, int h, CFillData * fd) EXDEF;
+	MMF_ORD(359, 441) BOOL Fill(int x, int y, int w, int h, int index) EXDEF;
+	MMF_ORD(360, 442) BOOL Fill(int x, int y, int w, int h, int R, int G, int B) EXDEF;
+
 	// TODO: YQ: dwFlags is made from what enum/flags?
 	// HWA only
-	BOOL Fill(int x, int y, int w, int h, COLORREF* pColors, ULONG dwFlags);
+	MMF2_HWA_OR_CF25_REQUIRED(972) BOOL Fill(int x, int y, int w, int h, COLORREF* pColors, ULONG dwFlags) EXDEF;
 
 	// Fill with blit mode and RGBA coef
 	// TODO: This may be CF2.5+ only, or D3D11 surfaces only
-	BOOL fxFill(int x, int y, int w, int h, COLORREF c, BlitMode bm, COLORREF rgbaCoef);
-	BOOL fxFill(int x, int y, int w, int h, COLORREF* pColors, ULONG dwFlags, BlitMode bm, COLORREF rgbaCoef);
-#endif
+	CF25_292_02_REQUIRED(1118) BOOL fxFill(int x, int y, int w, int h, COLORREF c, BlitMode bm, COLORREF rgbaCoef) EXDEF;
+	CF25_292_02_REQUIRED(1119) BOOL fxFill(int x, int y, int w, int h, COLORREF* pColors, ULONG dwFlags, BlitMode bm, COLORREF rgbaCoef) EXDEF;
 
 	// ======================
 	// Geometric Primitives
@@ -873,84 +919,88 @@ public:
 	// 1. Simple routines : call GDI with Surface DC
 	// =============================================
 
-	BOOL Ellipse(int left, int top, int right, int bottom, int thickness = 1, COLORREF crOutl = 0);
+	MMF_ORD(347, 412) BOOL Ellipse(int left, int top, int right, int bottom, int thickness = 1, COLORREF crOutl = 0) EXDEF;
 
-	BOOL Ellipse(int left, int top, int right, int bottom, COLORREF crFill, int thickness /*= 0*/,
-				 COLORREF crOutl /* = BLACK */, BOOL Fill = TRUE);
+	MMF_ORD(349, 414) BOOL Ellipse(int left, int top, int right, int bottom, COLORREF crFill, int thickness /*= 0*/,
+				 COLORREF crOutl /* = BLACK */, BOOL Fill = TRUE) EXDEF;
 
-	BOOL Rectangle(int left, int top, int right, int bottom, int thickness = 1, COLORREF crOutl = 0);
+	MMF_ORD(407, 677) BOOL Rectangle(int left, int top, int right, int bottom, int thickness = 1, COLORREF crOutl = 0) EXDEF;
 
-	BOOL Rectangle(int left, int top, int right, int bottom, COLORREF crFill, int thickness /*= 0*/,
-				   COLORREF crOutl /* = 0 */, BOOL bFill = TRUE);
+	MMF_ORD(409, 679) BOOL Rectangle(int left, int top, int right, int bottom, COLORREF crFill, int thickness /*= 0*/,
+				   COLORREF crOutl /* = 0 */, BOOL bFill = TRUE) EXDEF;
 
-	BOOL Polygon(LPPOINT pts, int nPts, int thickness = 1, COLORREF crOutl = 0);
+	MMF_ORD(402, 649) BOOL Polygon(LPPOINT pts, int nPts, int thickness = 1, COLORREF crOutl = 0) EXDEF;
 
-	BOOL Polygon(LPPOINT pts, int nPts, COLORREF crFill, int thickness = 0,
-				 COLORREF crOutl = 0, BOOL bFill = TRUE);
+	MMF_ORD(404, 651) BOOL Polygon(LPPOINT pts, int nPts, COLORREF crFill, int thickness = 0,
+				 COLORREF crOutl = 0, BOOL bFill = TRUE) EXDEF;
 
-	BOOL Line(int x1, int y1, int x2, int y2, int thickness = 1, COLORREF crOutl = 0);
+	MMF_ORD(391, 611) BOOL Line(int x1, int y1, int x2, int y2, int thickness = 1, COLORREF crOutl = 0) EXDEF;
 
 	// 2. More complex but slower (variable opacity, anti-alias, custom filling, ...)
 	// ==============================================================================
 
-	BOOL Ellipse(int left, int top, int right, int bottom, int thickness, CFillData * fdOutl,
+	MMF2_ORD(413) BOOL Ellipse(int left, int top, int right, int bottom, int thickness, CFillData * fdOutl,
 				 BOOL AntiA = FALSE, BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY,
-				 LPARAM param = 0);
+				 LPARAM param = 0) EXDEF;
 
-	BOOL Ellipse(int left, int top, int right, int bottom, CFillData * fdFill,
+	MMF2_ORD(416) BOOL Ellipse(int left, int top, int right, int bottom, CFillData * fdFill,
 				 BOOL AntiA = FALSE, BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY,
-				 LPARAM param = 0);
+				 LPARAM param = 0) EXDEF;
 
-	BOOL Ellipse(int left, int top, int right, int bottom, CFillData * fdFill, int thickness, CFillData * fdOutl,
+	MMF2_ORD(415) BOOL Ellipse(int left, int top, int right, int bottom, CFillData * fdFill, int thickness, CFillData * fdOutl,
 				 BOOL AntiA = FALSE, BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY,
-				 LPARAM param = 0, BOOL Fill = TRUE);
+				 LPARAM param = 0, BOOL Fill = TRUE) EXDEF;
 
-	BOOL Rectangle(int left, int top, int right, int bottom, int thickness, CFillData * fdOutl, BOOL AntiA = FALSE,
-				   BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY, LPARAM param = 0);
+	MMF2_ORD(678) BOOL Rectangle(int left, int top, int right, int bottom, int thickness, CFillData * fdOutl, BOOL AntiA = FALSE,
+				   BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY, LPARAM param = 0) EXDEF;
 
-	BOOL Rectangle(int left, int top, int right, int bottom, CFillData * fdFill,
-				   BOOL AntiA = FALSE, BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY, LPARAM param = 0);
+	MMF2_ORD(681) BOOL Rectangle(int left, int top, int right, int bottom, CFillData * fdFill,
+				   BOOL AntiA = FALSE, BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY, LPARAM param = 0) EXDEF;
 
-	BOOL Rectangle(int left, int top, int right, int bottom, CFillData * fdFill, int thickness, CFillData * fdOutl,
-				   BOOL AntiA = FALSE, BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY, LPARAM param = 0, BOOL Fill = TRUE);
+	MMF2_ORD(680) BOOL Rectangle(int left, int top, int right, int bottom, CFillData * fdFill, int thickness, CFillData * fdOutl,
+				   BOOL AntiA = FALSE, BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY, LPARAM param = 0, BOOL Fill = TRUE) EXDEF;
 
-	BOOL Polygon(LPPOINT pts, int nPts, int thickness, CFillData * fdOutl, BOOL AntiA = FALSE,
-				 BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY, LPARAM param = 0);
+	MMF2_ORD(650) BOOL Polygon(LPPOINT pts, int nPts, int thickness, CFillData * fdOutl, BOOL AntiA = FALSE,
+				 BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY, LPARAM param = 0) EXDEF;
 
-	BOOL Polygon(LPPOINT pts, int nPts, CFillData * fdFill, BOOL AntiA = FALSE,
-				 BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY, LPARAM param = 0);
+	MMF2_ORD(653) BOOL Polygon(LPPOINT pts, int nPts, CFillData * fdFill, BOOL AntiA = FALSE,
+				 BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY, LPARAM param = 0) EXDEF;
+	
+	MMF2_ORD(652) BOOL Polygon(LPPOINT pts, int nPts, CFillData * fdFill, int thickness, CFillData * fdOutl,
+				 BOOL AntiA = FALSE, BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY, LPARAM param = 0, BOOL Fill = TRUE) EXDEF;
 
-	BOOL Polygon(LPPOINT pts, int nPts, CFillData * fdFill, int thickness, CFillData * fdOutl,
-				 BOOL AntiA = FALSE, BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY, LPARAM param = 0, BOOL Fill = TRUE);
-
-	// Note: has no effect in HWA, if thickness is greater than 1.
-	BOOL  Line(int x1, int y1, int x2, int y2, int thickness, CFillData * fdOutl, BOOL AntiA,
-			   BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY, LPARAM param = 0);
+	// See thick line note.
+	MMF2_ORD(612) BOOL  Line(int x1, int y1, int x2, int y2, int thickness, CFillData * fdOutl, BOOL AntiA,
+			   BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY, LPARAM param = 0) EXDEF;
 
 	// Filled Primitives
 
-	BOOL FloodFill(int x, int y, int & left, int & top, int & right, int & bottom, COLORREF crFill, BOOL AntiA = FALSE,
-				   int tol = 0, BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY, LPARAM param = 0);
+	MMF2_ORD(451) BOOL FloodFill(int x, int y, int & left, int & top, int & right, int & bottom, COLORREF crFill, BOOL AntiA = FALSE,
+				   int tol = 0, BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY, LPARAM param = 0) EXDEF;
 
-	BOOL FloodFill(int x, int y, COLORREF crFill, BOOL AntiA = FALSE,  int tol = 0,
-				   BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY, LPARAM param = 0);
+	MMF2_ORD(452) BOOL FloodFill(int x, int y, COLORREF crFill, BOOL AntiA = FALSE,  int tol = 0,
+				   BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY, LPARAM param = 0) EXDEF;
 
 	// ======================
 	// Rotation
 	// ======================
 	// Rotate surface in radians
-	BOOL Rotate(cSurface & dest, double a, BOOL bAA, COLORREF clrFill = 0L, BOOL bTransp=TRUE);		// radian
-	BOOL Rotate(cSurface & dest, int a, BOOL bAA, COLORREF clrFill = 0L, BOOL bTransp=TRUE);		// degree
-	BOOL Rotate90(cSurface & dest, BOOL b270);
+	MMF2_ORD(701) BOOL Rotate(cSurface & dest, double a, BOOL bAA, COLORREF clrFill = 0L, BOOL bTransp=TRUE) EXDEF;		// radian
+	MMF2_ORD(702) BOOL Rotate(cSurface & dest, int a, BOOL bAA, COLORREF clrFill = 0L, BOOL bTransp=TRUE) EXDEF;		// degree
+	MMF2_ORD(703) BOOL Rotate90(cSurface & dest, BOOL b270) EXDEF;
 
 	// Create rotated surface
-	BOOL CreateRotatedSurface(cSurface & ps, double a, BOOL bAA, COLORREF clrFill = 0L, BOOL bTransp=TRUE);
-	BOOL CreateRotatedSurface(cSurface & ps, int a, BOOL bAA, COLORREF clrFill = 0L, BOOL bTransp=TRUE);
+	MMF2_ORD(386) BOOL CreateRotatedSurface(cSurface & ps, double a, BOOL bAA, COLORREF clrFill = 0L, BOOL bTransp=TRUE) EXDEF;
+	MMF2_ORD(385) BOOL CreateRotatedSurface(cSurface & ps, int a, BOOL bAA, COLORREF clrFill = 0L, BOOL bTransp=TRUE) EXDEF;
 
 #ifdef HWABETA
-	static void GetSizeOfRotatedRect(int *pWidth, int *pHeight, float angle);
+	// Usable in CF2.5 anywhere, and in MMF2 HWA display mode (HWA runtime or not).
+	// In MMF2 non-HWA, cast the float to int with `*(int *)&flt`
+	static MMF2_ORD(565) void GetSizeOfRotatedRect(int *pWidth, int *pHeight, float angle) EXDEF;
 #else
-	static void GetSizeOfRotatedRect(int *pWidth, int *pHeight, int angle);
+	// Usable only in MMF2 when using non-HWA display mode. This includes Unicode and non-HWA DLC runtimes,
+	// and the HWA runtime with software display mode forced (e.g. by /DIB cmdl, or fallback).
+	static MMF2_ORD(565) void GetSizeOfRotatedRect(int *pWidth, int *pHeight, int angle) EXDEF;
 #endif
 
 	// ======================
@@ -958,15 +1008,17 @@ public:
 	// ======================
 
 	// See the _FUSIONT macro for filename! If failing, check your surface type has a DC.
-	int TextOutA(LPCSTR text, ULONG dwCharCount,int x,int y,ULONG alignMode,
+	MMF2_ORD(759) PreferFusionFunc_Unicode(1082, "TextOutW")
+		int TextOutA(LPCSTR text, ULONG dwCharCount, int x, int y, ULONG alignMode,
 				 LPRECT pClipRc, COLORREF color = 0, HFONT hFnt =(HFONT)NULL,
 				 BlitMode bm = BlitMode::BMODE_TRANSP, BlitOp bop = BlitOp::BOP_COPY,
-				 LPARAM param = 0, int AntiA = 0);
+				 LPARAM param = 0, int AntiA = 0) EXDEF;
 	// See the _FUSIONT macro for filename! If failing, check your surface type has a DC.
-	int TextOutW(const UShortWCHAR * text, ULONG dwCharCount,int x,int y,ULONG alignMode,
+	MMF2_UNICODE_OR_CF25_REQUIRED(1082)
+		int TextOutW(const UShortWCHAR * text, ULONG dwCharCount, int x, int y, ULONG alignMode,
 				 LPRECT pClipRc, COLORREF color = 0, HFONT hFnt =(HFONT)NULL,
 				 BlitMode bm = BlitMode::BMODE_TRANSP, BlitOp bop = BlitOp::BOP_COPY,
-				 LPARAM param = 0, int AntiA = 0);
+				 LPARAM param = 0, int AntiA = 0) EXDEF;
 
 #ifdef _UNICODE
 #define TextOut TextOutW
@@ -974,133 +1026,155 @@ public:
 #define TextOut TextOutA
 #endif
 	// See the _FUSIONT macro for filename! If failing, check your surface type has a DC.
-	int DrawTextA(LPCSTR text, ULONG dwCharCount,LPRECT pRc, ULONG dtflags, COLORREF color=0, HFONT hFnt=(HFONT)NULL,
-				  BlitMode bm=BlitMode::BMODE_TRANSP, BlitOp bo=BlitOp::BOP_COPY, LPARAM param=0, int AntiA=0,ULONG dwLeftMargin=0,ULONG dwRightMargin=0,ULONG dwTabSize=8);
+	MMF2_ORD(411) PreferFusionFunc_Unicode(1082, "DrawTextW")
+		int DrawTextA(LPCSTR text, ULONG dwCharCount,LPRECT pRc, ULONG dtflags, COLORREF color=0, HFONT hFnt=(HFONT)NULL,
+				  BlitMode bm=BlitMode::BMODE_TRANSP, BlitOp bo=BlitOp::BOP_COPY, LPARAM param=0, int AntiA=0,ULONG dwLeftMargin=0,ULONG dwRightMargin=0,ULONG dwTabSize=8) EXDEF;
 	// See the _FUSIONT macro for filename! If failing, check your surface type has a DC.
-	int DrawTextW(const UShortWCHAR * text, ULONG dwCharCount,LPRECT pRc, ULONG dtflags, COLORREF color=0, HFONT hFnt=(HFONT)NULL,
-				  BlitMode bm=BlitMode::BMODE_TRANSP, BlitOp bo=BlitOp::BOP_COPY, LPARAM param=0, int AntiA=0,ULONG dwLeftMargin=0,ULONG dwRightMargin=0,ULONG dwTabSize=8);
+	MMF2_UNICODE_OR_CF25_REQUIRED(1029)
+		int DrawTextW(const UShortWCHAR * text, ULONG dwCharCount,LPRECT pRc, ULONG dtflags, COLORREF color=0, HFONT hFnt=(HFONT)NULL,
+				  BlitMode bm=BlitMode::BMODE_TRANSP, BlitOp bo=BlitOp::BOP_COPY, LPARAM param=0, int AntiA=0,ULONG dwLeftMargin=0,ULONG dwRightMargin=0,ULONG dwTabSize=8) EXDEF;
 
 	// ======================
 	// Color / Palette functions
 	// ======================
-	// Is transparent
-	BOOL IsTransparent();
 
-	// Replace color
-	BOOL ReplaceColor(COLORREF newColor, COLORREF oldColor);
+	// Is transparent: includes alpha fully blank, or image matching transparent color/index
+	MMF2_ORD(604) _Must_inspect_result_ _NODISCARD
+		BOOL IsTransparent() EXDEF;
+
+	// Replaces a pixel color with another, not changing the pixel alpha
+	MMF_ORD(414, 691)
+		BOOL ReplaceColor(COLORREF newColor, COLORREF oldColor) EXDEF;
 
 	// Test collision fine entre deux surfaces
-	BOOL IsColliding(cSurface & dest, int xDest, int yDest, int xSrc, int ySrc, int rcWidth, int rcHeight);
+	MMF2_ORD(604)
+		BOOL IsColliding(cSurface & dest, int xDest, int yDest, int xSrc, int ySrc, int rcWidth, int rcHeight) EXDEF;
 
-	// Create icon
-	HICON CreateIcon(int iconWidth, int iconHeight, COLORREF transpColor, POINT *pHotSpot);
+	// Create Windows HICON from this image
+	MMF2_ORD(383)
+		HICON CreateIcon(int iconWidth, int iconHeight, COLORREF transpColor, POINT *pHotSpot) EXDEF;
 
 	// Palette support
-	BOOL Indexed();
+	MMF_ORD(388,588) _Must_inspect_result_ _NODISCARD
+		BOOL Indexed() EXDEF;
 
-	BOOL SetPalette(LPLOGPALETTE palette, SetPaletteAction action = SetPaletteAction::None);
-	BOOL SetPalette(csPalette * pCsPal, SetPaletteAction action = SetPaletteAction::None);
-	BOOL SetPalette(cSurface & src, SetPaletteAction action = SetPaletteAction::None);
-	BOOL SetPalette(HPALETTE palette, SetPaletteAction action = SetPaletteAction::None);
+	MMF_ORD(435, 742) _Must_inspect_result_
+		BOOL SetPalette(LPLOGPALETTE palette, SetPaletteAction action = SetPaletteAction::None) EXDEF;
+	MMF2_ORD(740) _Must_inspect_result_
+		BOOL SetPalette(csPalette * pCsPal, SetPaletteAction action = SetPaletteAction::None) EXDEF;
+	MMF_ORD(448, 739) _Must_inspect_result_
+		BOOL SetPalette(cSurface & src, SetPaletteAction action = SetPaletteAction::None) EXDEF;
+	MMF_ORD(450, 741) _Must_inspect_result_
+		BOOL SetPalette(HPALETTE palette, SetPaletteAction action = SetPaletteAction::None) EXDEF;
 
-	void Remap(cSurface & src);
-	void Remap(LPBYTE remapTable);
+	MMF_ORD(449, 683) void Remap(cSurface & src) EXDEF;
+	MMF_ORD(413, 684) void Remap(LPBYTE remapTable) EXDEF;
 
-	csPalette * GetPalette();
-	UINT		GetPaletteEntries(LPPALETTEENTRY paletteEntry, int index, int nbColors);
+	MMF2_ORD(546) _Must_inspect_result_ _NODISCARD
+		csPalette * GetPalette() EXDEF;
+	MMF_ORD(382, 547)
+		UINT GetPaletteEntries(_Pre_valid_ LPPALETTEENTRY paletteEntry, int index, int nbColors) EXDEF;
 
-	int 		GetNearestColorIndex(COLORREF rgb);
-	COLORREF	GetRGB(int index);
-	int 		GetOpaqueBlackIndex();
+	MMF_ORD(378,535) _Must_inspect_result_ _NODISCARD
+		int GetNearestColorIndex(COLORREF rgb) EXDEF;
+	MMF_ORD(386,563) _Must_inspect_result_ _NODISCARD
+		COLORREF GetRGB(int index) EXDEF;
+	MMF_ORD(379,540) _Must_inspect_result_ _NODISCARD
+		int GetOpaqueBlackIndex() EXDEF;
 
 	// ======================
 	// Full screen
 	// ======================
-	void EnumScreenModes(LPENUMSCREENMODESPROC pProc, LPVOID lParam);
-	BOOL SetScreenMode(HWND hWnd, int width, int height, int depth);
-	void RestoreWindowedMode(HWND hWnd);
-	void CopyScreenModeInfo(cSurface* pSrc);
+	MMF2_ORD(418) void EnumScreenModes(LPENUMSCREENMODESPROC pProc, LPVOID lParam) EXDEF;
+	MMF2_ORD(750) BOOL SetScreenMode(HWND hWnd, int width, int height, int depth) EXDEF;
+	MMF2_ORD(695) void RestoreWindowedMode(HWND hWnd) EXDEF;
+	MMF2_ORD(361) void CopyScreenModeInfo(cSurface* pSrc) EXDEF;
 
-#ifdef HWABETA
-	BOOL SetAutoVSync(SetAutoVSyncFlags nAutoVSync);
-#endif
-	BOOL WaitForVBlank();
+	// See parameter flags SetAutoVSyncFlags
+	MMF2_HWA_OR_CF25_REQUIRED(876) BOOL SetAutoVSync(/* SetAutoVSyncFlags */ int nAutoVSync) EXDEF;
+	MMF2_ORD(772) BOOL WaitForVBlank() EXDEF;
 
 	// System colors
-	// COLOR_MENUBAR(30) seems to be the highest sys color index, so we're using a uint8
-	static COLORREF	GetSysColor(int colorIndex);
+	// COLOR_MENUBAR(30) seems to be the highest sys color index
+	static MMF2_ORD(569) COLORREF GetSysColor(int colorIndex) EXDEF;
 	// TODO: YQ: Is this meant to be a callback?
-	static void		OnSysColorChange();
+	static MMF2_ORD(644) void OnSysColorChange() EXDEF;
 
 	// Transparent color, used if alpha is not present. See HasAlpha(). Defaults to black, RGB(0, 0, 0).
-	void 		SetTransparentColor(COLORREF rgb);
-	COLORREF	GetTransparentColor();
-	int 		GetTransparentColorIndex();
+	MMF2_ORD(753) void SetTransparentColor(COLORREF rgb) EXDEF;
+	MMF2_ORD(571) COLORREF	GetTransparentColor() EXDEF;
+	MMF2_ORD(572) int GetTransparentColorIndex() EXDEF;
 
 	// Alpha channel
-	BOOL		HasAlpha();
-	LPBYTE		LockAlpha();
-	void		UnlockAlpha();
+	MMF2_ORD(587) _Must_inspect_result_ _NODISCARD
+		BOOL HasAlpha() EXDEF;
+	MMF2_ORD(619)
+		_Ret_notnull_ LPBYTE LockAlpha() EXDEF;
+	MMF2_ORD(761) void UnlockAlpha() EXDEF;
 
 	// Gets image stride for alpha channel. See GetPitch() for a related info.
 	// Alpha is always 8bpp.
-	int			GetAlphaPitch();
+	MMF2_ORD(462) int GetAlphaPitch() EXDEF;
 	// Warning: makes a completely transparent alpha channel by default
-	void		CreateAlpha();
-	void		SetAlpha(LPBYTE pAlpha, int nPitch);
-	void		AttachAlpha(LPBYTE pAlpha, int nPitch);
-	LPBYTE		DetachAlpha(LPLONG pPitch);
-	cSurface*	GetAlphaSurface();
-	void		ReleaseAlphaSurface(cSurface* pAlphaSf);
+	MMF2_ORD(375) void CreateAlpha() EXDEF;
+	MMF2_ORD(717) void SetAlpha(LPBYTE pAlpha, int nPitch) EXDEF;
+	MMF2_ORD(339) void AttachAlpha(LPBYTE pAlpha, int nPitch) EXDEF;
+	MMF2_ORD(405) LPBYTE DetachAlpha(LPLONG pPitch) EXDEF;
+	MMF2_ORD(823) cSurface* GetAlphaSurface() EXDEF;
+	MMF2_ORD(824) void ReleaseAlphaSurface(cSurface* pAlphaSf) EXDEF;
 
 	// Transparent monochrome mask
-	ULONG		CreateMask(sMask * pMask, UINT dwFlags);
+	MMF2_ORD(384) ULONG CreateMask(sMask * pMask, UINT dwFlags) EXDEF;
 
-#ifdef HWABETA
 	// In the LostDeviceCallback, you must call OnLostDevice() to free resources.
 	// Do not call this function otherwise.
-	void 	OnLostDevice();
+	MMF2_HWA_OR_CF25_REQUIRED(1001) void OnLostDevice() EXDEF;
 	// Adds a lost device callback to the surface.
 	// Such callback is executed right when the D3D device is lost, and you must free
 	// all D3D resources and unmanaged textures you had associated with this surface.
 	// You must call OnLostDevice() on this surface in the callback!
 	// This is not called after a new device is available, so do not re-create those resources.
-	void 	AddLostDeviceCallBack(LOSTDEVICECALLBACKPROC pCallback, LPARAM lUserParam);
+	MMF2_HWA_OR_CF25_REQUIRED(983) void AddLostDeviceCallBack(LOSTDEVICECALLBACKPROC pCallback, LPARAM lUserParam) EXDEF;
 	// Removes a lost device callback added with AddLostDeviceCallBack().
-	void 	RemoveLostDeviceCallBack(LOSTDEVICECALLBACKPROC pCallback, LPARAM lUserParam);
+	MMF2_HWA_OR_CF25_REQUIRED(1004) void RemoveLostDeviceCallBack(LOSTDEVICECALLBACKPROC pCallback, LPARAM lUserParam) EXDEF;
 
 	// CF2.5+'s Direct3D11 surfaces: Set premultiplied alpha flag
-	void 	SetPremultipliedAlpha(BOOL usePMAlpha, BOOL pmedTextures);
-	void 	PremultiplyAlpha();		// Only for surfaces with a lockable buffer
+	CF25_292_02_REQUIRED(1106) void SetPremultipliedAlpha(BOOL usePMAlpha, BOOL pmedTextures) EXDEF;
+	CF25_292_02_REQUIRED(1108) void PremultiplyAlpha() EXDEF;		// Only for surfaces with a lockable buffer
 
 	// CF2.5+'s Direct3D11 surfaces only.
 	// Only for surfaces with a lockable buffer.
 	// TODO: Which surface types have a lockable buffer?
-	void 	DemultiplyAlpha();
 
-#endif
+	// WARNING: later CF252.2+ only!
+	CF25_292_02_REQUIRED(1135) void DemultiplyAlpha() EXDEF;
 
 	// Friend functions
 	// ----------------
 
 	// Useless function for reading m_actual
-	FusionAPIImport friend cSurfaceImplementation * FusionAPI GetSurfaceImplementation(cSurface &cs);
-	FusionAPIImport friend void FusionAPI SetSurfaceImplementation(cSurface &cs, cSurfaceImplementation *psi);
+	FusionAPIImport friend MMF2_ORD(568)
+		cSurfaceImplementation * FusionAPI GetSurfaceImplementation(cSurface &cs) EXDEF;
+	FusionAPIImport friend MMF2_ORD(751)
+		void FusionAPI SetSurfaceImplementation(cSurface &cs, cSurfaceImplementation *psi) EXDEF;
 
 protected:
-	static void		BuildSysColorTable();
+	static MMF2_ORD(345)
+		void BuildSysColorTable() EXDEF;
 
 // Clipping
 //----------
 	// TODO: YQ: What does this apply to?
-	HRGN SetDrawClip(HDC hDC);
-	void RestoreDrawClip(HDC hDC,HRGN hOldClipRgn);
+	MMF2_ORD(694) void RestoreDrawClip(HDC hDC,HRGN hOldClipRgn) EXDEF;
 
 // Private functions
 // -----------------
 private:
-	BOOL LoadPicture(CInputFile * pFile, ULONG bitmapSize, LIFlags loadFlags);
-	BOOL LoadDIB(LPBITMAPINFO pBmi, LPBYTE pBits, LIFlags loadFlags);
+	// MMF1-only; not present in any MMF2+ variant, so no export ordinal here.
+	// BOOL LoadPicture(CInputFile * pFile, ULONG bitmapSize, LIFlags loadFlags) EXDEF;
+
+	MMF_ORD(393, 614)
+		BOOL LoadDIB(LPBITMAPINFO pBmi, LPBYTE pBits, LIFlags loadFlags) EXDEF;
 
 // Private data
 // ------------
@@ -1121,7 +1195,8 @@ protected:
 // TODO: YQ: Is this applicable in HWA too? Why is 100 commented out?
 #define OP_MAX 128			// 100
 
-extern "C" FusionAPIImport BOOL	WINAPI BuildRemapTable	(LPBYTE, LOGPALETTE *, LOGPALETTE *, WORD);
+extern "C" FusionAPIImport MMF2_ORD(123) // ord 154, 3 param in MMF1
+	BOOL FusionAPI BuildRemapTable(LPBYTE, LOGPALETTE *, LOGPALETTE *, WORD);
 
 // Grabs a window's cSurface ptr. Used by EditorDisplay of most Fusion exts.
 // @param idWin a Win ID, from mV->mvIdEditWin or rhIdEditWin
@@ -1130,7 +1205,8 @@ extern "C" FusionAPIImport BOOL	WINAPI BuildRemapTable	(LPBYTE, LOGPALETTE *, LO
 //			standard display tech; see OEFLAGS::BACK_SAVE etc.
 //			Not sure if D3D back buffers are 2+, or unrelated.
 // TODO: What happens if bad ptr? null? crash? Are back buffers unrelated?
-FusionAPIImport _Ret_maybenull_ cSurface* FusionAPI WinGetSurface(_In_ int idWin, _In_range_(0,1) int surfID = 0);
+FusionAPIImport _Ret_maybenull_ MMF_ORD(191, 34) cSurface * FusionAPI
+	WinGetSurface(_In_ int idWin, _In_range_(0,1) int surfID = 0) EXDEF;
 
 // Required struct name due to Cnpdll.h GetImageInfos() func
 // Corresponds to image bank entry?
@@ -1176,14 +1252,14 @@ struct Img final
 	// Format, may affect flags
 	std::uint8_t imgFormat;
 	// Flags, including alpha and compression
-	Flags		imgFlags;
+	Flags imgFlags;
 	std::uint16_t imgNotUsed;
 	// XY coord of this image hot spot (display offset relative to object's hoX/hoY)
 	std::int16_t imgXSpot, imgYSpot;
 	// XY coord of this image action point (used for Launching by default?)
 	std::int16_t imgXAction, mgYAction;
 	// Image transparent color (ignored if imgFlags say it's alpha)
-	COLORREF	imgTrspColor;
+	COLORREF imgTrspColor;
 };
 enum_class_is_a_bitmask(Img::Flags);
 
@@ -1194,12 +1270,58 @@ extern "C" {
 	 * @param appli mv->mvAppli or rhPtr->rhAppli.
 	 * @param bkNum Bank number: see BK_XX enum.
 	 * @return Number of elements in bank, 0+. */
-	FusionAPIImport int FusionAPI Bank_GetEltCount(void * appli, UINT bkNum) EXDEF;
+	FusionAPIImport MMF2_ORD(10) int FusionAPI Bank_GetEltCount(void * appli, UINT bkNum) EXDEF;
 
 	/** Returns the image ID's info to the given struct.
 	 * @param appli mv->mvAppli or rhPtr->rhAppli.
 	 * @param imgID Image ID number (1-65535).
 	 * @param imgPtr Output image info struct.
 	 * @return 1 if successful. 0 if failed. */
-	FusionAPIImport int FusionAPI GetImageInfos(void* appli, ULONG imgID, Img* imgPtr) EXDEF;
+	FusionAPIImport MMF_ORD(109, 153) int FusionAPI GetImageInfos(void* appli, ULONG imgID, Img* imgPtr) EXDEF;
+
+	typedef void Appli;
+
+	// Copies an image bank entry to a DIB address. Call with null to get the size of the DIB.
+	// @param idApp rhPtr->rhIdAppli, or Edif::SDK->mV->mvIdAppli
+	// @param mode 0 = DIB mode; SM_8 = image converted to 256 colors; SM_24: image converted to 16mil
+	// @param imgNum Image bank index
+	FusionAPIImport DWORD FusionAPI InitDibHeader(_Notnull_ Appli* idApp, int mode,
+		_In_range_(1, INT32_MAX) int width, _In_range_(1, INT32_MAX) int height,
+		_Notnull_ BITMAPINFO* dib) EXDEF;
+	
+	// Fills a DIB with the given color, respecting palette.
+	// @param color Color to fill with
+	FusionAPIImport MMF_ORD(102, 151) void FusionAPI FillDib(_Notnull_ BITMAPINFO* dib, COLORREF color) EXDEF;
+
+	MMF_ORD(126, 159)
+	// Copies an image bank entry to a DIB address. Call with null to get the size of the DIB.
+	// @param idApp rhPtr->rhIdAppli, or Edif::SDK->mV->mvIdAppli
+	// @param imgNum Image bank index
+	// @param mode 0 = DIB mode; SM_8 = image converted to 256 colors; SM_24: image converted to 16mil
+	FusionAPIImport DWORD FusionAPI ImageToDib(_Notnull_ Appli* idApp, DWORD imgNum, DWORD mode,
+		_Outptr_result_buffer_maybenull_(return) LPBYTE dib) EXDEF;
+
+	// Creates an Img entry in image bank from the passed device-independent bitmap (DIB).
+	// Does not remap the DIB palette.
+	// @param idApp rhPtr->rhIdAppli, or Edif::SDK->mV->mvIdAppli
+	// @param img Image header; only action point/hot spot is used.
+	// @param flags AI_COMPARE: compare the DIB with the existing images
+	//				AI_ACE: compress the transparent pixels with ACE algorithm
+	_Success_(return != 0) _Must_inspect_result_ _NODISCARD MMF_ORD(127, 160)
+		FusionAPIImport DWORD FusionAPI DibToImage(_Notnull_ Appli* idApp, _Notnull_ Img* img, _Notnull_ BITMAPINFOHEADER* dib) EXDEF;
+
+	// Creates an Img entry in image bank from the passed device-independent bitmap (DIB).
+	// Does not remap the DIB palette.
+	// @param idApp rhPtr->rhIdAppli, or Edif::SDK->mV->mvIdAppli
+	// @param img Image header; only action point/hot spot is used.
+	// @param flags AI_COMPARE: compare the DIB with the existing images
+	//				AI_ACE: compress the transparent pixels with ACE algorithm
+	_Success_(return != 0) _Must_inspect_result_ _NODISCARD MMF2_ORD(161)
+		FusionAPIImport DWORD FusionAPI DibToImageEx(_Notnull_ Appli* idApp, _In_ _Notnull_ Img* img,
+			_Notnull_ BITMAPINFOHEADER* dib, COLORREF transpColor, DWORD flags) EXDEF;
+
+	// Remaps a DIB to match the given application's palette.
+	// @param idApp rhPtr->rhIdAppli, or Edif::SDK->mV->mvIdAppli
+	MMF_ORD(128, 152)
+		FusionAPIImport void FusionAPI RemapDib(_In_ _Notnull_ BITMAPINFO* dib, _Notnull_ Appli* idApp, _Null_ LPBYTE reserved) EXDEF;
 }

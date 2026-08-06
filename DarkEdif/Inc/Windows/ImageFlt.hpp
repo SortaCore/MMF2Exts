@@ -75,49 +75,30 @@ class FusionAPIImport CImageFilterMgr : public CFilterMgr
 {
 // Public
 public:
-	CImageFilterMgr ();
-	virtual ~CImageFilterMgr();
+	MMF2_ORD(243) CImageFilterMgr () EXDEF;
+	MMF2_ORD(295) CImageFilterMgr(const CImageFilterMgr &) EXDEF;
+	virtual MMF2_ORD(273) ~CImageFilterMgr() EXDEF;
 
-	static CImageFilterMgr* CreateInstance();
+	static MMF2_ORD(794) CImageFilterMgr* CreateInstance() EXDEF;
 
 	// Initialize
-	void	Initialize(LPCSTR pFilterPath, DWORD dwFlags);
-	void	Initialize(LPCWSTR pFilterPath, DWORD dwFlags);
-	virtual void		Free();
+	PreferFusionFunc_Unicode(1053, "CImageFilterMgr::Initialize") MMF2_ORD(591) void Initialize(LPCSTR pFilterPath, DWORD dwFlags) EXDEF;
+	MMF2_UNICODE_OR_CF25_REQUIRED(1053) void Initialize(LPCWSTR pFilterPath, DWORD dwFlags) EXDEF;
+	virtual MMF2_ORD(456) void Free() EXDEF;
 
 	// Filter infos
-	BOOL		DoesFilterSupportImages(int nIndex);
-	BOOL		DoesFilterSupportAnimations(int nIndex);
+	MMF2_ORD(408) BOOL DoesFilterSupportImages(int nIndex) EXDEF;
+	MMF2_ORD(407) BOOL DoesFilterSupportAnimations(int nIndex) EXDEF;
+
+	// Image premultiplication, CF2.5 292.02 and laterz
+	CF25_292_02_REQUIRED(1128) BOOL SetAutoPremultiplyImages(BOOL bPremultiply = TRUE) EXDEF;
+	CF25_292_02_REQUIRED(1127) BOOL GetAutoPremultiplyImages() EXDEF;
 
 	// Data
 protected:
-	friend class CImageFilter;
+	// Image premultiplication, CF2.5 292.02 and later
+	BOOL m_bAutoPremultiplyImages;
 };
-
-#if defined(_WIN32) && !defined(_UNICODE)
-class FusionAPIImport CImageFilterMgrANSI20 : public CFilterMgrANSI20
-{
-	// Public
-public:
-	CImageFilterMgrANSI20();
-	virtual ~CImageFilterMgrANSI20();
-
-	static CImageFilterMgrANSI20* CreateInstance();
-
-	// Initialize
-	void	Initialize(LPCSTR pFilterPath, DWORD dwFlags);
-	void	Initialize(LPCWSTR pFilterPath, DWORD dwFlags);
-	virtual void		Free();
-
-	// Filter infos
-	BOOL		DoesFilterSupportImages(int nIndex);
-	BOOL		DoesFilterSupportAnimations(int nIndex);
-
-	// Data
-protected:
-	friend class CImageFilter;
-};
-#endif
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -127,81 +108,72 @@ class FusionAPIImport CImageFilter
 {
 public:
 	// Constructeur / destructeur
-	CImageFilter(CImageFilterMgr* pMgr);
-	~CImageFilter();
+	MMF2_ORD(241) CImageFilter(CImageFilterMgr* pMgr) EXDEF;
+	MMF2_ORD(272) ~CImageFilter() EXDEF;
 
 	// Customisation
-	BOOL			UseSpecificFilterIndex(int index);
-	BOOL			UseSpecificFilterID(DWORD dwID);
+	MMF2_ORD(770) BOOL UseSpecificFilterIndex(int index) EXDEF;
+	MMF2_ORD(769) BOOL UseSpecificFilterID(DWORD dwID) EXDEF;
 
 	// Save customization
-	void			SetCompressionLevel(int nLevel=-1);		// 0 -> 100
+	MMF2_ORD(728) void SetCompressionLevel(int nLevel=-1) EXDEF;		// 0 -> 100
 
 	// Picture
-	int				Open(LPCSTR fileName);
-	int				Open(const UShortWCHAR* fileName);
-	int				Open(CInputFile* pf);
-	int				PrepareLoading(int width, int height, int depth, LPLOGPALETTE pPal);
-	int				Load(LPBYTE pData, int width, int height, int pitch, int depth=0, LPLOGPALETTE pPal=NULL, LPBYTE pAlpha=NULL, int nAlphaPitch=0);
-	int				Save(LPCSTR fileName, LPBYTE pData, int nWidth, int nHeight, int nDepth, int nPitch, LPLOGPALETTE pPal, LPBYTE pAlpha=NULL, int nAlphaPitch=0);
-	int				Save(const UShortWCHAR* fileName, LPBYTE pData, int nWidth, int nHeight, int nDepth, int nPitch, LPLOGPALETTE pPal, LPBYTE pAlpha=NULL, int nAlphaPitch=0);
-	void			Close();
-	int				GetWidth();
-	int				GetHeight();
-	int				GetPitch();
-	int				GetDepth();
-	DWORD			GetDataSize();
-	LPLOGPALETTE	GetPalette();
-	BOOL			GetTransparentColor(COLORREF* pTranspColor);
-	BOOL			ContainsAlphaChannel();
+	PreferFusionFunc_Unicode(1064, "CImageFilter::Open") MMF2_ORD(646) int Open(LPCSTR fileName) EXDEF;
+	MMF2_UNICODE_OR_CF25_REQUIRED(1064) int Open(const UShortWCHAR* fileName) EXDEF;
+	MMF2_ORD(645) int Open(CInputFile* pf) EXDEF;
+	MMF2_ORD(655) int PrepareLoading(int width, int height, int depth, LPLOGPALETTE pPal) EXDEF;
+	MMF2_ORD(613) int Load(LPBYTE pData, int width, int height, int pitch, int depth=0, LPLOGPALETTE pPal=NULL, LPBYTE pAlpha=NULL, int nAlphaPitch=0) EXDEF;
+	PreferFusionFunc_Unicode(1065, "CImageFilter::Save") MMF2_ORD(705) int Save(LPCSTR fileName, LPBYTE pData, int nWidth, int nHeight, int nDepth, int nPitch, LPLOGPALETTE pPal, LPBYTE pAlpha=NULL, int nAlphaPitch=0) EXDEF;
+	MMF2_UNICODE_OR_CF25_REQUIRED(1065) int Save(const UShortWCHAR* fileName, LPBYTE pData, int nWidth, int nHeight, int nDepth, int nPitch, LPLOGPALETTE pPal, LPBYTE pAlpha=NULL, int nAlphaPitch=0) EXDEF;
+	MMF2_ORD(356) void Close() EXDEF;
+	MMF2_ORD(584) int GetWidth() EXDEF;
+	MMF2_ORD(519) int GetHeight() EXDEF;
+	MMF2_ORD(550) int GetPitch() EXDEF;
+	MMF2_ORD(486) int GetDepth() EXDEF;
+	MMF2_ORD(483) DWORD GetDataSize() EXDEF;
+	MMF2_ORD(545) LPLOGPALETTE GetPalette() EXDEF;
+	MMF2_ORD(816) BOOL GetTransparentColor(COLORREF* pTranspColor) EXDEF;
+	MMF2_ORD(359) BOOL ContainsAlphaChannel() EXDEF;
 
 	// Load animation
-	BOOL			IsAnimation();
-	int				GetNumberOfFrames();
-	int				GetCurrentFrame();
-	int				GetFrameDelay(int frameIndex=-1);
-	DWORD			GetAnimDuration();
-	LPBYTE			GetUserInfo();
-	DWORD			GetUserInfoSize();
+	MMF2_ORD(601) BOOL IsAnimation() EXDEF;
+	MMF2_ORD(539) int GetNumberOfFrames() EXDEF;
+	MMF2_ORD(480) int GetCurrentFrame() EXDEF;
+	MMF2_ORD(515) int GetFrameDelay(int frameIndex=-1) EXDEF;
+	MMF2_ORD(464) DWORD GetAnimDuration() EXDEF;
+	MMF2_ORD(578) LPBYTE GetUserInfo() EXDEF;
+	MMF2_ORD(580) DWORD GetUserInfoSize() EXDEF;
 
-	void			Restart();
-	int				GoToImage(LPBYTE pData, int pitch, int n);
-	void			GetUpdateRect(LPRECT pRc);
-	int				GetLoopCount();
-	int				GetLoopFrame();
+	MMF2_ORD(693) void Restart() EXDEF;
+	MMF2_ORD(586) int GoToImage(LPBYTE pData, int pitch, int n) EXDEF;
+	MMF2_ORD(575) void GetUpdateRect(LPRECT pRc) EXDEF;
+	MMF2_ORD(529) int GetLoopCount() EXDEF;
+	MMF2_ORD(532) int GetLoopFrame() EXDEF;
 
 	// Save animation
-	int				CreateAnimation(LPCSTR fname, int width, int height, int depth,
-								int nFrames, int msFrameDuration,
-								int nLoopCount = 1, int nLoopFrame = 0,
-								LPBYTE pUserInfo = NULL, DWORD dwUserInfoSize = 0);
-	int				CreateAnimation(const UShortWCHAR * fname, int width, int height, int depth,
-								int nFrames, int msFrameDuration,
-								int nLoopCount = 1, int nLoopFrame = 0,
-								LPBYTE pUserInfo = NULL, DWORD dwUserInfoSize = 0);
-	int				CreateAnimation(COutputFile* pfout, int width, int height, int depth,
-								int nFrames, int msFrameDuration,
-								int nLoopCount = 1, int nLoopFrame = 0,
-								LPBYTE pUserInfo = NULL, DWORD dwUserInfoSize = 0);
-	int				SaveAnimationFrame(LPBYTE pData, int width, int height, int pitch, int depth, LPLOGPALETTE pPal, LPBYTE pAlpha, int nAlphaPitch, int msFrameDuration, DWORD dwFlags);
-	int				SaveAnimationFrame(LPBYTE pData, LPBYTE pPrevData, int width, int height, int pitch, int depth, LPLOGPALETTE pPal, LPBYTE pAlpha, LPBYTE pPrevAlpha, int nAlphaPitch, int msFrameDuration, DWORD dwFlags);
-	void			AddPreviousFrameDuration(int msFrameDuration);
-	DWORD			GetCurrentSaveAnimSize();
+	PreferFusionFunc_Unicode(1027, "CImageFilter::CreateAnimation") MMF2_ORD(378) int CreateAnimation(LPCSTR fname, int width, int height, int depth, int nFrames, int msFrameDuration, int nLoopCount = 1, int nLoopFrame = 0, LPBYTE pUserInfo = NULL, DWORD dwUserInfoSize = 0) EXDEF;
+	MMF2_UNICODE_OR_CF25_REQUIRED(1027) int CreateAnimation(const UShortWCHAR * fname, int width, int height, int depth, int nFrames, int msFrameDuration, int nLoopCount = 1, int nLoopFrame = 0, LPBYTE pUserInfo = NULL, DWORD dwUserInfoSize = 0) EXDEF;
+	MMF2_ORD(377) int CreateAnimation(COutputFile* pfout, int width, int height, int depth, int nFrames, int msFrameDuration, int nLoopCount = 1, int nLoopFrame = 0, LPBYTE pUserInfo = NULL, DWORD dwUserInfoSize = 0) EXDEF;
+	MMF2_ORD(708) int SaveAnimationFrame(LPBYTE pData, int width, int height, int pitch, int depth, LPLOGPALETTE pPal, LPBYTE pAlpha, int nAlphaPitch, int msFrameDuration, DWORD dwFlags) EXDEF;
+	MMF2_ORD(707) int SaveAnimationFrame(LPBYTE pData, LPBYTE pPrevData, int width, int height, int pitch, int depth, LPLOGPALETTE pPal, LPBYTE pAlpha, LPBYTE pPrevAlpha, int nAlphaPitch, int msFrameDuration, DWORD dwFlags) EXDEF;
+	MMF2_ORD(332) void AddPreviousFrameDuration(int msFrameDuration) EXDEF;
+	MMF2_ORD(481) DWORD GetCurrentSaveAnimSize() EXDEF;
 
 	// File handling
-	void			SetProgressCallBack(PROGRESSPROC pProc);
+	MMF2_ORD(749) void SetProgressCallBack(PROGRESSPROC pProc) EXDEF;
 
 	// Filter info
-	DWORD			GetFilterID();
-	LPCSTR			GetFilterNameA();
-	int				GetFilterIndex();
-	DWORD			GetFilterColorCaps();
-	BOOL			CanSave();
-	BOOL			CanSaveAnim();
-	const UShortWCHAR * GetFilterNameW();
+	MMF2_ORD(507) DWORD GetFilterID() EXDEF;
+	PreferFusionFunc_Unicode(1047, "CImageFilter::GetFilterNameW") MMF2_ORD(512) LPCSTR GetFilterNameA() EXDEF;
+	MMF2_ORD(509) int GetFilterIndex() EXDEF;
+	MMF2_ORD(501) DWORD GetFilterColorCaps() EXDEF;
+	MMF2_ORD(348) BOOL CanSave() EXDEF;
+	MMF2_ORD(350) BOOL CanSaveAnim() EXDEF;
+	MMF2_UNICODE_OR_CF25_REQUIRED(1047) const UShortWCHAR * GetFilterNameW() EXDEF;
 
 protected:
-	int				ReadHeader();
+	MMF2_ORD(664) int ReadHeader() EXDEF;
 
 	// Data
 protected:
@@ -231,75 +203,69 @@ class FusionAPIImport CImageFilterANSI20
 {
 public:
 	// Constructeur / destructeur
-	CImageFilterANSI20(CImageFilterMgr* pMgr);
-	~CImageFilterANSI20();
+	MMF2_ORD(241) CImageFilterANSI20(CImageFilterMgr* pMgr) EXDEF;
+	MMF2_ORD(272) ~CImageFilterANSI20() EXDEF;
 
 	// Customisation
-	BOOL			UseSpecificFilterIndex(int index);
-	BOOL			UseSpecificFilterID(DWORD dwID);
+	MMF2_ORD(770) BOOL UseSpecificFilterIndex(int index) EXDEF;
+	MMF2_ORD(769) BOOL UseSpecificFilterID(DWORD dwID) EXDEF;
 
 	// Save customization
-	void			SetCompressionLevel(int nLevel = -1);		// 0 -> 100
+	MMF2_ORD(728) void SetCompressionLevel(int nLevel = -1) EXDEF;		// 0 -> 100
 
 	// Picture
-	int				Open(LPCSTR fileName);
-	int				Open(CInputFile* pf);
-	int				PrepareLoading(int width, int height, int depth, LPLOGPALETTE pPal);
-	int				Load(LPBYTE pData, int width, int height, int pitch, int depth = 0, LPLOGPALETTE pPal = NULL, LPBYTE pAlpha = NULL, int nAlphaPitch = 0);
-	int				Save(LPCSTR fileName, LPBYTE pData, int nWidth, int nHeight, int nDepth, int nPitch, LPLOGPALETTE pPal, LPBYTE pAlpha = NULL, int nAlphaPitch = 0);
-	void			Close();
-	int				GetWidth();
-	int				GetHeight();
-	int				GetPitch();
-	int				GetDepth();
-	DWORD			GetDataSize();
-	LPLOGPALETTE	GetPalette();
-	BOOL			GetTransparentColor(COLORREF* pTranspColor);
-	BOOL			ContainsAlphaChannel();
+	MMF2_ORD(646) int Open(LPCSTR fileName) EXDEF;
+	MMF2_ORD(645) int Open(CInputFile* pf) EXDEF;
+	MMF2_ORD(655) int PrepareLoading(int width, int height, int depth, LPLOGPALETTE pPal) EXDEF;
+	MMF2_ORD(613) int Load(LPBYTE pData, int width, int height, int pitch, int depth = 0, LPLOGPALETTE pPal = NULL, LPBYTE pAlpha = NULL, int nAlphaPitch = 0) EXDEF;
+	MMF2_ORD(705) int Save(LPCSTR fileName, LPBYTE pData, int nWidth, int nHeight, int nDepth, int nPitch, LPLOGPALETTE pPal, LPBYTE pAlpha = NULL, int nAlphaPitch = 0) EXDEF;
+	MMF2_ORD(356) void Close() EXDEF;
+	MMF2_ORD(584) int GetWidth() EXDEF;
+	MMF2_ORD(519) int GetHeight() EXDEF;
+	MMF2_ORD(550) int GetPitch() EXDEF;
+	MMF2_ORD(486) int GetDepth() EXDEF;
+	MMF2_ORD(483) DWORD GetDataSize() EXDEF;
+	MMF2_ORD(545) LPLOGPALETTE GetPalette() EXDEF;
+	MMF2_ORD(816) BOOL GetTransparentColor(COLORREF* pTranspColor) EXDEF;
+	MMF2_ORD(359) BOOL ContainsAlphaChannel() EXDEF;
 
 	// Load animation
-	BOOL			IsAnimation();
-	int				GetNumberOfFrames();
-	int				GetCurrentFrame();
-	int				GetFrameDelay(int frameIndex = -1);
-	DWORD			GetAnimDuration();
-	LPBYTE			GetUserInfo();
-	DWORD			GetUserInfoSize();
+	MMF2_ORD(601) BOOL IsAnimation() EXDEF;
+	MMF2_ORD(539) int GetNumberOfFrames() EXDEF;
+	MMF2_ORD(480) int GetCurrentFrame() EXDEF;
+	MMF2_ORD(515) int GetFrameDelay(int frameIndex = -1) EXDEF;
+	MMF2_ORD(464) DWORD GetAnimDuration() EXDEF;
+	MMF2_ORD(578) LPBYTE GetUserInfo() EXDEF;
+	MMF2_ORD(580) DWORD GetUserInfoSize() EXDEF;
 
-	void			Restart();
-	int				GoToImage(LPBYTE pData, int pitch, int n);
-	void			GetUpdateRect(LPRECT pRc);
-	int				GetLoopCount();
-	int				GetLoopFrame();
+	MMF2_ORD(693) void Restart() EXDEF;
+	MMF2_ORD(586) int GoToImage(LPBYTE pData, int pitch, int n) EXDEF;
+	MMF2_ORD(575) void GetUpdateRect(LPRECT pRc) EXDEF;
+	MMF2_ORD(529) int GetLoopCount() EXDEF;
+	MMF2_ORD(532) int GetLoopFrame() EXDEF;
 
 	// Save animation
-	int				CreateAnimation(LPCSTR fname, int width, int height, int depth,
-		int nFrames, int msFrameDuration,
-		int nLoopCount = 1, int nLoopFrame = 0,
-		LPBYTE pUserInfo = NULL, DWORD dwUserInfoSize = 0);
-	int				CreateAnimation(COutputFile* pfout, int width, int height, int depth,
-		int nFrames, int msFrameDuration,
-		int nLoopCount = 1, int nLoopFrame = 0,
-		LPBYTE pUserInfo = NULL, DWORD dwUserInfoSize = 0);
-	int				SaveAnimationFrame(LPBYTE pData, int width, int height, int pitch, int depth, LPLOGPALETTE pPal, LPBYTE pAlpha, int nAlphaPitch, int msFrameDuration, DWORD dwFlags);
-	int				SaveAnimationFrame(LPBYTE pData, LPBYTE pPrevData, int width, int height, int pitch, int depth, LPLOGPALETTE pPal, LPBYTE pAlpha, LPBYTE pPrevAlpha, int nAlphaPitch, int msFrameDuration, DWORD dwFlags);
-	void			AddPreviousFrameDuration(int msFrameDuration);
-	DWORD			GetCurrentSaveAnimSize();
+	MMF2_ORD(378) int CreateAnimation(LPCSTR fname, int width, int height, int depth, int nFrames, int msFrameDuration, int nLoopCount = 1, int nLoopFrame = 0, LPBYTE pUserInfo = NULL, DWORD dwUserInfoSize = 0) EXDEF;
+	MMF2_ORD(377) int CreateAnimation(COutputFile* pfout, int width, int height, int depth, int nFrames, int msFrameDuration, int nLoopCount = 1, int nLoopFrame = 0, LPBYTE pUserInfo = NULL, DWORD dwUserInfoSize = 0) EXDEF;
+	MMF2_ORD(708) int SaveAnimationFrame(LPBYTE pData, int width, int height, int pitch, int depth, LPLOGPALETTE pPal, LPBYTE pAlpha, int nAlphaPitch, int msFrameDuration, DWORD dwFlags) EXDEF;
+	MMF2_ORD(707) int SaveAnimationFrame(LPBYTE pData, LPBYTE pPrevData, int width, int height, int pitch, int depth, LPLOGPALETTE pPal, LPBYTE pAlpha, LPBYTE pPrevAlpha, int nAlphaPitch, int msFrameDuration, DWORD dwFlags) EXDEF;
+	MMF2_ORD(332) void AddPreviousFrameDuration(int msFrameDuration) EXDEF;
+	MMF2_ORD(481) DWORD GetCurrentSaveAnimSize() EXDEF;
 
 	// File handling
-	void			SetProgressCallBack(PROGRESSPROC pProc);
+	MMF2_ORD(749) void SetProgressCallBack(PROGRESSPROC pProc) EXDEF;
 
 	// Filter info
-	DWORD			GetFilterID();
-	LPCSTR			GetFilterNameA();
-	int				GetFilterIndex();
-	DWORD			GetFilterColorCaps();
-	BOOL			CanSave();
-	BOOL			CanSaveAnim();
-	LPCWSTR			GetFilterNameW();
+	MMF2_ORD(507) DWORD GetFilterID() EXDEF;
+	MMF2_ORD(512) LPCSTR GetFilterNameA() EXDEF;
+	MMF2_ORD(509) int GetFilterIndex() EXDEF;
+	MMF2_ORD(501) DWORD GetFilterColorCaps() EXDEF;
+	MMF2_ORD(348) BOOL CanSave() EXDEF;
+	MMF2_ORD(350) BOOL CanSaveAnim() EXDEF;
+	MMF2_UNICODE_OR_CF25_REQUIRED(1047) LPCWSTR GetFilterNameW() EXDEF;
 
 protected:
-	int				ReadHeader();
+	MMF2_ORD(664) int ReadHeader() EXDEF;
 
 	// Data
 protected:
@@ -324,26 +290,26 @@ protected:
 	CFilterImpl* m_pFilterImpl;
 };
 
-FusionAPIImport BOOL FusionAPI ImportImageA(CImageFilterMgr* pImgMgr, LPCSTR fileName, cSurface* psf, LPDWORD pDWFilterID, DWORD dwFlags);
-FusionAPIImport BOOL FusionAPI ImportImageFromInputFile(CImageFilterMgr* pImgMgr, CInputFile* pf, cSurface* psf, LPDWORD pDWFilterID, DWORD dwFlags);
-FusionAPIImport BOOL FusionAPI CanImportImageA(CImageFilterMgr* pImgMgr, LPCSTR fileName);
-FusionAPIImport BOOL FusionAPI ImportPaletteA(CImageFilterMgr* pImgMgr, LPCSTR fileName, LPLOGPALETTE pPal);
-FusionAPIImport BOOL FusionAPI ExportImageA(CImageFilterMgr* pImgMgr, LPCSTR pFileName, cSurface* psf, DWORD dwFilterID);
-FusionAPIImport BOOL FusionAPI CanImportAnimationA(CImageFilterMgr* pImgMgr, LPCSTR fileName, BOOL* bNeedConversion);
-FusionAPIImport BOOL FusionAPI BeginAnimationImportA(CImageFilterMgr* pImgMgr, LPCSTR pFileName, cSurface* psf, CImageFilter* pFilter, DWORD dwFlags);
-FusionAPIImport BOOL FusionAPI GetNextAnimationFrame(CImageFilterMgr* pImgMgr, cSurface* psf, CImageFilter* pFilter);
-FusionAPIImport void FusionAPI EndAnimationImport(CImageFilterMgr* pImgMgr, CImageFilter* pFilter);
-FusionAPIImport BOOL FusionAPI BeginAnimationExportA(CImageFilterMgr* pImgMgr, LPCSTR pFileName, cSurface* psf, CImageFilter* pFilter, int nFrames, int msFrameDuration, int nLoopCount, int nLoopFrame);
-FusionAPIImport BOOL FusionAPI ExportNextFrame(CImageFilterMgr* pImgMgr, cSurface* psf, CImageFilter* pFilter, int msFrameDuration);
-FusionAPIImport void FusionAPI EndAnimationExport(CImageFilterMgr* pImgMgr, CImageFilter* pFilter);
+FusionAPIImport PreferFusionFunc_Unicode(1050, "ImportImageW") MMF2_ORD(136) BOOL FusionAPI ImportImageA(CImageFilterMgr* pImgMgr, LPCSTR fileName, cSurface* psf, LPDWORD pDWFilterID, DWORD dwFlags) EXDEF;
+FusionAPIImport MMF2_ORD(137) BOOL FusionAPI ImportImageFromInputFile(CImageFilterMgr* pImgMgr, CInputFile* pf, cSurface* psf, LPDWORD pDWFilterID, DWORD dwFlags) EXDEF;
+FusionAPIImport PreferFusionFunc_Unicode(1022, "CanImportImageW") MMF2_ORD(138) BOOL FusionAPI CanImportImageA(CImageFilterMgr* pImgMgr, LPCSTR fileName) EXDEF;
+FusionAPIImport PreferFusionFunc_Unicode(1051, "ImportPaletteW") MMF2_ORD(139) BOOL FusionAPI ImportPaletteA(CImageFilterMgr* pImgMgr, LPCSTR fileName, LPLOGPALETTE pPal) EXDEF;
+FusionAPIImport PreferFusionFunc_Unicode(1030, "ExportImageW") MMF2_ORD(140) BOOL FusionAPI ExportImageA(CImageFilterMgr* pImgMgr, LPCSTR pFileName, cSurface* psf, DWORD dwFilterID) EXDEF;
+FusionAPIImport PreferFusionFunc_Unicode(1021, "CanImportAnimationW") MMF2_ORD(141) BOOL FusionAPI CanImportAnimationA(CImageFilterMgr* pImgMgr, LPCSTR fileName, BOOL* bNeedConversion) EXDEF;
+FusionAPIImport PreferFusionFunc_Unicode(1020, "BeginAnimationImportW") MMF2_ORD(142) BOOL FusionAPI BeginAnimationImportA(CImageFilterMgr* pImgMgr, LPCSTR pFileName, cSurface* psf, CImageFilter* pFilter, DWORD dwFlags) EXDEF;
+FusionAPIImport MMF2_ORD(143) BOOL FusionAPI GetNextAnimationFrame(CImageFilterMgr* pImgMgr, cSurface* psf, CImageFilter* pFilter) EXDEF;
+FusionAPIImport MMF2_ORD(144) void FusionAPI EndAnimationImport(CImageFilterMgr* pImgMgr, CImageFilter* pFilter) EXDEF;
+FusionAPIImport PreferFusionFunc_Unicode(1019, "BeginAnimationExportW") MMF2_ORD(145) BOOL FusionAPI BeginAnimationExportA(CImageFilterMgr* pImgMgr, LPCSTR pFileName, cSurface* psf, CImageFilter* pFilter, int nFrames, int msFrameDuration, int nLoopCount, int nLoopFrame) EXDEF;
+FusionAPIImport MMF2_ORD(146) BOOL FusionAPI ExportNextFrame(CImageFilterMgr* pImgMgr, cSurface* psf, CImageFilter* pFilter, int msFrameDuration) EXDEF;
+FusionAPIImport MMF2_ORD(147) void FusionAPI EndAnimationExport(CImageFilterMgr* pImgMgr, CImageFilter* pFilter) EXDEF;
 
-FusionAPIImport BOOL FusionAPI ImportImageW(CImageFilterMgr* pImgMgr, const UShortWCHAR* fileName, cSurface* psf, LPDWORD pDWFilterID, DWORD dwFlags);
-FusionAPIImport BOOL FusionAPI CanImportImageW(CImageFilterMgr* pImgMgr, const UShortWCHAR* fileName);
-FusionAPIImport BOOL FusionAPI ImportPaletteW(CImageFilterMgr* pImgMgr, const UShortWCHAR* fileName, LPLOGPALETTE pPal);
-FusionAPIImport BOOL FusionAPI ExportImageW(CImageFilterMgr* pImgMgr, const UShortWCHAR* pFileName, cSurface* psf, DWORD dwFilterID);
-FusionAPIImport BOOL FusionAPI CanImportAnimationW(CImageFilterMgr* pImgMgr, const UShortWCHAR* fileName, BOOL* bNeedConversion);
-FusionAPIImport BOOL FusionAPI BeginAnimationImportW(CImageFilterMgr* pImgMgr, const UShortWCHAR* pFileName, cSurface* psf, CImageFilter* pFilter, DWORD dwFlags);
-FusionAPIImport BOOL FusionAPI BeginAnimationExportW(CImageFilterMgr* pImgMgr, const UShortWCHAR* pFileName, cSurface* psf, CImageFilter* pFilter, int nFrames, int msFrameDuration, int nLoopCount, int nLoopFrame);
+FusionAPIImport MMF2_UNICODE_OR_CF25_REQUIRED(1050) BOOL FusionAPI ImportImageW(CImageFilterMgr* pImgMgr, const UShortWCHAR* fileName, cSurface* psf, LPDWORD pDWFilterID, DWORD dwFlags) EXDEF;
+FusionAPIImport MMF2_UNICODE_OR_CF25_REQUIRED(1022) BOOL FusionAPI CanImportImageW(CImageFilterMgr* pImgMgr, const UShortWCHAR* fileName) EXDEF;
+FusionAPIImport MMF2_UNICODE_OR_CF25_REQUIRED(1051) BOOL FusionAPI ImportPaletteW(CImageFilterMgr* pImgMgr, const UShortWCHAR* fileName, LPLOGPALETTE pPal) EXDEF;
+FusionAPIImport MMF2_UNICODE_OR_CF25_REQUIRED(1030) BOOL FusionAPI ExportImageW(CImageFilterMgr* pImgMgr, const UShortWCHAR* pFileName, cSurface* psf, DWORD dwFilterID) EXDEF;
+FusionAPIImport MMF2_UNICODE_OR_CF25_REQUIRED(1021) BOOL FusionAPI CanImportAnimationW(CImageFilterMgr* pImgMgr, const UShortWCHAR* fileName, BOOL* bNeedConversion) EXDEF;
+FusionAPIImport MMF2_UNICODE_OR_CF25_REQUIRED(1020) BOOL FusionAPI BeginAnimationImportW(CImageFilterMgr* pImgMgr, const UShortWCHAR* pFileName, cSurface* psf, CImageFilter* pFilter, DWORD dwFlags) EXDEF;
+FusionAPIImport MMF2_UNICODE_OR_CF25_REQUIRED(1019) BOOL FusionAPI BeginAnimationExportW(CImageFilterMgr* pImgMgr, const UShortWCHAR* pFileName, cSurface* psf, CImageFilter* pFilter, int nFrames, int msFrameDuration, int nLoopCount, int nLoopFrame) EXDEF;
 
 #ifdef _UNICODE
 #define ImportImage ImportImageW

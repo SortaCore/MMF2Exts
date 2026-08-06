@@ -1,3 +1,4 @@
+#define DARKEDIF_INTERNAL_INCLUDE
 #include "Common.hpp"
 #include "Extension.hpp"
 #include "DarkEdif.hpp"
@@ -39,7 +40,7 @@ bool Edif::IS_COMPATIBLE(mv * v)
 	// which won't work anyway because Runtime MFX lacks A/C/E menus and such.
 
 	// No GetVersion function provided, abort
-	if (!v->GetVersion)
+	if (!v->mvGetVersion)
 		return false;
 
 	static int isCompatibleResult = -1;
@@ -52,7 +53,7 @@ bool Edif::IS_COMPATIBLE(mv * v)
 		return isCompatibleResult != 0;
 
 	// Build too low, abort
-	const unsigned int fusionVer = v->GetVersion();
+	const unsigned int fusionVer = v->mvGetVersion();
 	if ((fusionVer & MMFBUILD_MASK) < Extension::MinimumBuild)
 		return false;
 
@@ -242,7 +243,7 @@ void Edif::Init(mv * mV, EDITDATA * edPtr)
 	Edif::SDK->mV = mV;
 
 	// HMainWin may be edited since we last used it
-	DarkEdif::Internal_WindowHandle = mV->HMainWin;
+	DarkEdif::Internal_WindowHandle = mV->mvHMainWin;
 
 	// Redraw the object in frame editor
 	#if EditorBuild
@@ -300,7 +301,7 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 #endif
 
 #ifdef _WIN32
-	if (mV->GetVersion == NULL)
+	if (mV->mvGetVersion == NULL)
 	{
 		// The ZipToJson tool is used to package a Fusion zip containing MFX, help file, examples etc.,
 		// and upload it to Clickteam Extension Manager.
@@ -325,8 +326,8 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 	}
 	else // mv functions are available
 	{
-		DarkEdif::Internal_WindowHandle = mV->HMainWin;
-		DarkEdif::IsFusion25 = ((mV->GetVersion() & MMFVERSION_MASK) == CFVERSION_25);
+		DarkEdif::Internal_WindowHandle = mV->mvHMainWin;
+		DarkEdif::IsFusion25 = ((mV->mvGetVersion() & MMFVERSION_MASK) == CFVERSION_25);
 
 		// 2.0 uses floats for angles if it's a Direct3D display, Software or DirectDraw uses int
 		// Fusion 2.5 always uses floats, even in Software, and doesn't use DirectDraw at all
@@ -416,7 +417,7 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 		// Calculate run mode
 		if (fusionStartupScreen)
 			DarkEdif::RunMode = DarkEdif::MFXRunMode::SplashScreen;
-		else if (mV->HMainWin != 0)
+		else if (mV->mvHMainWin != 0)
 			DarkEdif::RunMode = DarkEdif::MFXRunMode::Editor;
 		else
 		{
@@ -465,7 +466,7 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 				TCHAR value[6];
 				DWORD value_length = std::size(value), err;
 				const std::tstring settingsRegPath =
-					((mV->GetVersion() & MMFVERFLAG_MASK) == MMFVERFLAG_PRO) ?
+					((mV->mvGetVersion() & MMFVERFLAG_MASK) == MMFVERFLAG_PRO) ?
 					_T("Software\\Clickteam\\Fusion Developer 2.5\\General"s) :
 					_T("Software\\Clickteam\\Fusion 2.5\\General"s);
 				if ((err = RegOpenKey(HKEY_CURRENT_USER, settingsRegPath.c_str(), &key)) ||
@@ -653,7 +654,7 @@ Edif::SDKClass::SDKClass(mv * mV, json_value &_json) : json (_json)
 		if (GetSurfacePrototype(&proto, 32, (int)SurfaceType::Memory_DeviceContext, (int)SurfaceDriver::Bitmap) == FALSE)
 			DarkEdif::MsgBox::Error(_T("DarkEdif error"), _T("Getting surface prototype failed."));
 
-		if (mV->ImgFilterMgr)
+		if (mV->mvImgFilterMgr)
 		{
 			Icon = new cSurface();
 			char * IconData;
@@ -666,7 +667,7 @@ Edif::SDKClass::SDKClass(mv * mV, json_value &_json) : json (_json)
 				File->Create((LPBYTE)IconData, IconSize);
 
 				const std::unique_ptr<cSurface> tempIcon = std::make_unique<cSurface>();
-				const bool loadedOK = ImportImageFromInputFile(mV->ImgFilterMgr, File, tempIcon.get(), NULL, 0);
+				const bool loadedOK = ImportImageFromInputFile(mV->mvImgFilterMgr, File, tempIcon.get(), NULL, 0);
 				if (!loadedOK)
 				{
 					// Read PNG bit depth: Skip 8 byte PNG header, IHDR 4 byte chunk length/type, img width/height,

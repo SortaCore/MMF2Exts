@@ -186,7 +186,7 @@ CRunAppMultiPlat* CRunAppMultiPlat::get_ParentApp() {
 // Gets current Fusion frame number (1+)
 std::size_t CRunAppMultiPlat::GetNumFusionFrames() {
 #ifdef _WIN32
-	return hdr.NbFrames;
+	return hdr.gaNbFrames;
 #elif defined(__APPLE__)
 	return (std::size_t)((CRunApp*)this)->gaNbFrames;
 #elif defined(__ANDROID__)
@@ -425,6 +425,7 @@ TCHAR * Edif::Runtime::CopyString(const TCHAR * String)
 
 	TCHAR * New = NULL;
 	New = (TCHAR *) Allocate(_tcslen(String) + 1);
+#pragma warning(suppress:4996)
 	_tcscpy(New, String);
 
 	return New;
@@ -437,6 +438,7 @@ char * Edif::Runtime::CopyStringEx(const char * String)
 
 	char * New = NULL;
 	New = (char *)CallRunTimeFunction2(hoPtr, RFUNCTION::GET_STRING_SPACE_EX, 0, (strlen(String) + 1) * sizeof(char));
+#pragma warning(suppress:4996)
 	strcpy(New, String);
 
 	return New;
@@ -450,6 +452,7 @@ wchar_t * Edif::Runtime::CopyStringEx(const wchar_t * String)
 
 	wchar_t * New = NULL;
 	New = (wchar_t *)CallRunTimeFunction2(hoPtr, RFUNCTION::GET_STRING_SPACE_EX, 0, (wcslen(String) + 1) * sizeof(wchar_t));
+#pragma warning(suppress:4996)
 	wcscpy(New, String);
 
 	return New;
@@ -545,7 +548,7 @@ bool Edif::Runtime::IsHWACapableRuntime()
 	// Consider using GetAppDisplayMode() >= SurfaceDriver::Direct3D9 for "HWA with shaders" detection.
 	// Note Direct3D8 is greater than Direct3D9.
 
-	return hoPtr->hoAdRunHeader->rh4.rh4Mv->CallFunction(NULL, CallFunctionIDs::ISHWA, 0, 0, 0) == 1;
+	return hoPtr->hoAdRunHeader->rh4.rh4Mv->mvCallFunction(NULL, CallFunctionIDs::ISHWA, 0, 0, 0) == 1;
 }
 
 SurfaceDriver Edif::Runtime::GetAppDisplayMode()
@@ -562,7 +565,7 @@ SurfaceDriver Edif::Runtime::GetAppDisplayMode()
 		constexpr int GAOF_D3D11 = GAOF_D3D9 | GAOF_D3D8;
 
 		// No need to find parent-most app; subapps have same OtherFlags
-		const int i = hoPtr->hoAdRunHeader->rhApp->hdr.OtherFlags;
+		const int i = hoPtr->hoAdRunHeader->rhApp->hdr.gaOtherFlags;
 
 		if ((i & GAOF_DDRAWEITHER) != 0)
 			sd = SurfaceDriver::DirectDraw;
@@ -618,7 +621,7 @@ void FusionAPI SetRunObjectTextColor(RUNDATA* rdPtr, COLORREF rgb)
 bool Edif::Runtime::IsUnicode()
 {
 #ifdef _WIN32
-	return hoPtr->hoAdRunHeader->rh4.rh4Mv->CallFunction(NULL, CallFunctionIDs::ISUNICODE, 0, 0, 0) == 1;
+	return hoPtr->hoAdRunHeader->rh4.rh4Mv->mvCallFunction(NULL, CallFunctionIDs::ISUNICODE, 0, 0, 0) == 1;
 #else
 	// At this point in DarkEdif dev, Unicode is assumed in non-Windows runtime, as it's assumed to be CF2.5.
 	// This is because the Android exporter in Fusion 2.0 only went to Android OS v4.3, API 18,
@@ -1289,7 +1292,7 @@ void Edif::Runtime::WriteGlobal(const TCHAR * name, void * Value)
 	while (rhPtr->rhApp->ParentApp)
 		rhPtr = rhPtr->rhApp->ParentApp->Frame->rhPtr;
 
-	EdifGlobal * Global = (EdifGlobal *) rhPtr->rh4.rh4Mv->GetExtUserData(rhPtr->rhApp, hInstLib);
+	EdifGlobal * Global = (EdifGlobal *) rhPtr->rh4.rh4Mv->mvGetExtUserData(rhPtr->rhApp, hInstLib);
 
 	if (!Global)
 	{
@@ -1300,7 +1303,7 @@ void Edif::Runtime::WriteGlobal(const TCHAR * name, void * Value)
 
 		Global->Next = 0;
 
-		rhPtr->rh4.rh4Mv->SetExtUserData(rhPtr->rhApp, hInstLib, Global);
+		rhPtr->rh4.rh4Mv->mvSetExtUserData(rhPtr->rhApp, hInstLib, Global);
 
 		return;
 	}
@@ -1335,7 +1338,7 @@ void * Edif::Runtime::ReadGlobal(const TCHAR * name)
 	while (rhPtr->rhApp->ParentApp)
 		rhPtr = rhPtr->rhApp->ParentApp->Frame->rhPtr;
 
-	EdifGlobal * Global = (EdifGlobal *) rhPtr->rh4.rh4Mv->GetExtUserData(rhPtr->rhApp, hInstLib);
+	EdifGlobal * Global = (EdifGlobal *) rhPtr->rh4.rh4Mv->mvGetExtUserData(rhPtr->rhApp, hInstLib);
 
 	while (Global)
 	{

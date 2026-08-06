@@ -27,7 +27,7 @@ void FusionAPI StartApp(mv *mV, CRunApp* pApp)
 //	if ( pData != NULL )
 //	{
 //		delete pData;
-//		mV->SetExtUserData(pApp, hInstLib, NULL);
+//		mV->mvSetExtUserData(pApp, hInstLib, NULL);
 //	}
 }*/
 
@@ -44,7 +44,7 @@ void FusionAPI EndApp(mv *mV, CRunApp* pApp)
 //	if ( pData != NULL )
 //	{
 //		delete pData;
-//		mV->SetExtUserData(pApp, hInstLib, NULL);
+//		mV->mvSetExtUserData(pApp, hInstLib, NULL);
 //	}
 }*/
 
