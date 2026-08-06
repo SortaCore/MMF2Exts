@@ -719,9 +719,10 @@
 			 even when NDK is r16b, which comes with VS, and is too early for API 31. -->
 		<_SysrootLinkFix>$(SysrootLink.Replace('\$(AndroidAPILevel)\', '$evil$'))</_SysrootLinkFix>
 
-		<!-- API that's readily accessible in VS 2019. Note 21 is minimum 64-bit API.
+		<!-- API that's readily accessible in VS 2019. Note 21 is minimum 64-bit API,
+			 and minimum on all arches in r26+.
 			 API depends on NDK that VS is using; see later code for API support check. -->
-		<AndroidAPILevel Condition="'$(AndroidAPILevel)'=='' AND ('$(Platform)'=='ARM64' OR '$(Platform)'=='x64')">android-21</AndroidAPILevel>
+		<AndroidAPILevel Condition="'$(AndroidAPILevel)'=='' AND ($(NDKVersion) &gt;= 26 OR '$(Platform)'=='ARM64' OR '$(Platform)'=='x64')">android-21</AndroidAPILevel>
 		<AndroidAPILevel Condition="'$(AndroidAPILevel)'==''">android-19</AndroidAPILevel>
 
 		<!-- This one sets the __ANDROID_API__ define to same as above.
@@ -759,6 +760,9 @@
 
 			<!-- Not necessary in Release, but has minimal size changes. -->
 			<RuntimeTypeInfo>true</RuntimeTypeInfo>
+	 
+			<!-- Force C++ headers before C headers, or newer NDK breaks. -->
+			<ISystem>$(StlIncludeDirectories);$(ISystem)</ISystem>
 
 			<!-- Manually add includes -->
 			<AdditionalIncludeDirectories>$(Sysroot)\usr\include;$(StlIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -774,8 +778,10 @@
 
 			<!-- Include math library (libm.so). -->
 			<LibraryDependencies>$(StlLibraryName);m;ESxRenderer;ES1Renderer;%(LibraryDependencies)</LibraryDependencies>
-			<!-- Include android_support library for x86 and ARM (available in x86/ARM constantly, but only in ARM64/x64 for NDK17 and lower) -->
-			<LibraryDependencies Condition="$(Platform)=='ARM' OR $(Platform)=='x86' OR '$(NDKVersion)' &lt; '17.0'">$(StlLibraryName);android_support;%(LibraryDependencies)</LibraryDependencies>
+			<!-- Include android_support library for x86 and ARM.
+				 Available in x86/ARM constantly, but only in ARM64/x64 for NDK17 and lower.
+				 Removed in NDK 26. -->
+			<LibraryDependencies Condition="'$(NDKVersion)' &lt; '26.0' AND ($(Platform)=='ARM' OR $(Platform)=='x86' OR '$(NDKVersion)' &lt; '17.0')">$(StlLibraryName);android_support;%(LibraryDependencies)</LibraryDependencies>
 			<!-- This SO static object file will be moved by the DarkEdifPostBuildTool,
 				 so don't confuse VS by building this way. -->
 			<IncrementalLink>false</IncrementalLink>
@@ -783,8 +789,10 @@
 			<DebuggerSymbolInformation Condition="$(RelBuild)==1">OmitAllSymbolInformation</DebuggerSymbolInformation>
 			<!-- Since Nov 2025, all Google Play Android 15+ libraries must be built with 16KB alignment.
 				 r22 and lower must specify common page size; higher just max page size.
+				 r28 and higher will build for 16KB by default.
+				 Since Aug 2026, all Google Play Android libraries must be built with 16KB alignment AND r28+ NDK.
 				 https://developer.android.com/guide/practices/page-sizes#ndk-build_1 -->
-			<AdditionalOptions Condition="'$(TargetArch)'=='x86_64' OR '$(TargetArch)'=='arm64'">-Wl,-z,max-page-size=16384 %(AdditionalOptions)</AdditionalOptions>
+			<AdditionalOptions Condition="('$(TargetArch)'=='x86_64' OR '$(TargetArch)'=='arm64') AND $(NDKVersion) &lt; 28">-Wl,-z,max-page-size=16384 %(AdditionalOptions)</AdditionalOptions>
 			<AdditionalOptions Condition="('$(TargetArch)'=='x86_64' OR '$(TargetArch)'=='arm64') AND $(NDKVersion) &lt;= 22">-Wl,-z,common-page-size=16384 %(AdditionalOptions)</AdditionalOptions>
 		</Link>
 	</ItemDefinitionGroup>
@@ -1112,6 +1120,8 @@ https://forums.developer.apple.com/forums/thread/113746?answerId=349757022#34975
 			 Android Game Development VS extension may extend the debugging and VS NDK support.
 			 AGDE is detected here by the Google props file. -->
 		<Warning Condition="$(NDKVersion) &gt; 23 AND !Exists('$(VCTargetsPath)Google\Google.Android.Cpp.DiscoverNdk.props')"
-			Text="Android NDK r24 and later doesn't support native Android C++ debugging in VS." />
+			Text="Android NDK r24 and later doesn't support native Android C++ debugging in VS. Install the Android Game Development VS extension." />
+		<Warning Condition="$(NDKVersion) &lt; 28"
+			Text="Although DarkEdif builds 16KB-aligned with earlier NDK, Android NDK r28+ is required to not produce a warning in Google Play. Install the new NDK into C:\Program Files\AndroidNDK64, restart VS, then select it in Tools > Options menu item, Cross Platform > C++ > Android NDK path." />
 	</Target>
 </Project>
