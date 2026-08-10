@@ -6920,7 +6920,7 @@ void FusionAPI EditDebugItem(RUNDATA *rdPtr, int id)
 
 #endif // USE_DARKEDIF_FUSION_DEBUGGER
 
-#ifdef _WIN32
+#if defined (_WIN32) && !defined(NOPROPS)
 // Called by Fusion edittime and runtime, requesting IDs used in the element banks (image bank, font bank)
 // @remarks There are only object property types for images and fonts, but there are banks
 //			for samples, collision masks and image HWA textures as well; see BK_XX enum in Cnpdll.h
