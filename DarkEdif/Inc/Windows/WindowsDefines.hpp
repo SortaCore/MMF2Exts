@@ -215,6 +215,20 @@
 #endif
 #include <windows.h>
 
+// If using old Windows SDKs, these versions won't be available
+#ifndef _WIN32_WINNT_WIN8
+#define _WIN32_WINNT_WIN8 0x0602
+#endif
+#ifndef _WIN32_WINNT_WINBLUE
+#define _WIN32_WINNT_WINBLUE 0x0603
+#endif
+#ifndef _WIN32_WINNT_WINTHRESHOLD
+#define _WIN32_WINNT_WINTHRESHOLD 0x0A00
+#endif
+#ifndef _WIN32_WINNT_WIN10
+#define _WIN32_WINNT_WIN10 0x0A00
+#endif
+
 // Include TCHAR, allowing both ANSI and Unicode functions
 #include "Strings.hpp"
 
