@@ -38,7 +38,7 @@ short expressionsInfos[]=
 // ============================================================================
 //
 // CONDITION ROUTINES
-//
+// 
 // ============================================================================
 
 
@@ -47,20 +47,20 @@ short expressionsInfos[]=
 // ============================================================================
 //
 // EXPRESSIONS ROUTINES
-//
+// 
 // ============================================================================
 
 long WINAPI DLLExport GetVol(LPRDATA rdPtr,long param1)
 {
 	long p1 = CNC_GetFirstExpressionParameter(rdPtr, param1, TYPE_STRING);
 	//Reversing the string.
-	LPSTR buf = (LPSTR)callRunTimeFunction(rdPtr, RFUNCTION_GETSTRINGSPACE, MAX_PATH , 0);
+	LPTSTR buf = (LPTSTR)callRunTimeFunction(rdPtr, RFUNCTION_GETSTRINGSPACE, MAX_PATH , 0);
 	buf[0] = '\0';
 	DWORD w1,w2,w3;
-	char ignore[10];
+	TCHAR ignore[10];
 	//None of the info is null because sometimes that crashes Win9x machines.
-	GetVolumeInformation( (LPSTR)p1 , buf , MAX_PATH , &w1 , &w2 , &w3 , ignore , 9 );
-
+	GetVolumeInformation( (LPTSTR)p1 , buf , MAX_PATH , &w1 , &w2 , &w3 , ignore , 9 );
+	
 	rdPtr->rHo.hoFlags |= HOF_STRING;
 	return (long)buf;
 }
@@ -74,18 +74,18 @@ long WINAPI DLLExport GetVol(LPRDATA rdPtr,long param1)
 // Located at the end of the source for convinience
 // Must finish with a 0
 //
-long (WINAPI * ConditionJumps[])(LPRDATA rdPtr, long param1, long param2) =
-			{
+long (WINAPI * ConditionJumps[])(LPRDATA rdPtr, long param1, long param2) = 
+			{ 
 			0
 			};
-
+	
 short (WINAPI * ActionJumps[])(LPRDATA rdPtr, long param1, long param2) =
 			{
 			0
 			};
 
-long (WINAPI * ExpressionJumps[])(LPRDATA rdPtr, long param) =
-			{
+long (WINAPI * ExpressionJumps[])(LPRDATA rdPtr, long param) = 
+			{     
 			GetVol,
 			0
 			};
