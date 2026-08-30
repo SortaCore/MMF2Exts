@@ -403,7 +403,7 @@
 		<IntDir>$(_FusionSDKTempDir)\</IntDir>
 
 		<!-- Minifies JSON file and builds call table for runtimes that lack A/C/E ASM -->
-		<DarkEdifPreBuildToolParams>/ProjName="$(ExtName)" /TargetPlat="$(_TargetPlatInclMac)" /TargetArch="$(TargetArch)" /MacroInputFile="$(SDKRootFolder)\Lib\Shared\ACECallTable_Macro.cpp"  /MacroOutputFile="$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp" /JSONInputPathToMinify="$(ProjectDir)\DarkExt.json" /FusionConfigIniPath="$(_FusionSDKConfigIniPath)" /UsingSmartPropertySystem=$(UsingSmartPropertySystem) /ExtDisplayType=$(DarkEdif_DisplayType) /IsTextExt=$(DarkEdif_OEFLAGTextPresent) /IsPausableExt=$(DarkEdif_PausableExt) /SDKRootFolder="$(SDKRootFolder)"</DarkEdifPreBuildToolParams>
+		<DarkEdifPreBuildToolParams>/ProjName="$(ExtName)" /TargetPlat="$(_TargetPlatInclMac)" /TargetArch="$(TargetArch)" /MacroInputFile="$(SDKRootFolder)\Lib\Shared\ACECallTable_Macro.cpp"  /MacroOutputFile="$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp" /JSONInputPathToMinify="$(ProjectDir)\DarkExt.json" /FusionConfigIniPath="$(_FusionSDKConfigIniPath)" /UsingSmartPropertySystem=$(UsingSmartPropertySystem) /ExtDisplayType=$(DarkEdif_DisplayType) /IsTextExt=$(DarkEdif_OEFLAGTextPresent) /IsPausableExt=$(DarkEdif_PausableExt) /SDKRootFolder="$(SDKRootFolder)" /SDKTempDir="$(_FusionSDKTempDir)"</DarkEdifPreBuildToolParams>
 	</PropertyGroup>
 	<!-- Worth noting a When cannot contain a ItemDefinitionGroup -->
 	<ItemDefinitionGroup Label="Configuration">
@@ -682,7 +682,7 @@
 	################################# -->
 	<PropertyGroup Condition="'$(_TargetPlat)'!='Windows'">
 		<!-- To move the compiled SO file into the Data\Runtime\Android/iOS zip file. -->
-		<DarkEdifPostBuildToolParams>/ProjName="$(ExtName)" /TargetArch="$(TargetArch)" /InputSOFolder="$(OutDir.TrimEnd('\'))" /OutputDir="$(MFXDir.TrimEnd('\'))" /ProjectDir="$(ProjectDir.TrimEnd('\'))" /TargetPlat="$(_TargetPlatInclMac)" /ProjConfig="$(Configuration)" /FusionConfigIniPath="$(_FusionSDKConfigIniPath)" /ExtDisplayType=$(DarkEdif_DisplayType) /IsTextExt=$(DarkEdif_OEFLAGTextPresent) /IsPausableExt=$(DarkEdif_PausableExt)</DarkEdifPostBuildToolParams>
+		<DarkEdifPostBuildToolParams>/ProjName="$(ExtName)" /TargetArch="$(TargetArch)" /InputSOFolder="$(OutDir.TrimEnd('\'))" /OutputDir="$(MFXDir.TrimEnd('\'))" /ProjectDir="$(ProjectDir.TrimEnd('\'))" /TargetPlat="$(_TargetPlatInclMac)" /ProjConfig="$(Configuration)" /FusionConfigIniPath="$(_FusionSDKConfigIniPath)" /ExtDisplayType=$(DarkEdif_DisplayType) /IsTextExt=$(DarkEdif_OEFLAGTextPresent) /IsPausableExt=$(DarkEdif_PausableExt) /SDKTempDir="$(_FusionSDKTempDir)"</DarkEdifPostBuildToolParams>
 
 		<!-- Android uses Clang, a different format of commandline items
 			-D PROJECT_NAME=\"$(ExtName)\"
