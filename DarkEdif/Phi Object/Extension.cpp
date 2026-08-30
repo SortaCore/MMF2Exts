@@ -75,9 +75,8 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const 
 	LinkExpression(26, GetNetworkType);
 
 #ifdef _WIN32
-#if WINVER < _WIN32_WINNT_WIN7
 #if WINVER < _WIN32_WINNT_WIN8
-	_Struct_size_bytes_(Size) struct SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX {
+	_Struct_size_bytes_(Size) struct _SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX {
 		LOGICAL_PROCESSOR_RELATIONSHIP Relationship;
 		DWORD Size;
 		union {
@@ -85,16 +84,19 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const 
 			NUMA_NODE_RELATIONSHIP NumaNode;
 			CACHE_RELATIONSHIP Cache;
 			GROUP_RELATIONSHIP Group;
-			SHARED_COMPUTE_UNIT_RELATIONSHIP SharedComputeUnit;
+			// Weirdly, it is in MSDN, but undefined in WinSDK
+			// SHARED_COMPUTE_UNIT_RELATIONSHIP SharedComputeUnit;
 		} DUMMYUNIONNAME;
 	};
 	typedef struct _SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX, * PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX;
+#else
+	static_assert(sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX) != 0, "Didn't find expected type");
 #endif
 	DWORD slpiSizeExp, slpiSizeAct;
 	if (DarkEdif::Windows::Has7Plus())
 	{
 		std::vector<SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX> slpiEx;
-		BOOL(WINAPI* const GLPIExFunc)(PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX, PDWORD) =
+		BOOL(WINAPI* const GLPIExFunc)(SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *, PDWORD) =
 			(decltype(GLPIExFunc))GetProcAddress(GetModuleHandle(_T("kernel32")), "GetLogicalProcessorInformationEx");
 		assert(GLPIExFunc);
 		while (true)
@@ -109,8 +111,8 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const 
 				DarkEdif::MsgBox::Error(_T("!!"), _T("Error code: %u."), GetLastError());
 				break;
 			}
-			if (slpiSizeAct < slpiSizeExp && !(slpiSizeAct % sizeof(slpi[0])))
-				slpi.resize((slpiSizeAct / sizeof(slpi[0])) - 1);
+			if (slpiSizeAct < slpiSizeExp && !(slpiSizeAct % sizeof(slpiEx[0])))
+				slpiEx.resize((slpiSizeAct / sizeof(slpiEx[0])) - 1);
 		}
 		// extra data?
 		if (slpiSizeAct % sizeof(slpiEx[0]))
@@ -174,11 +176,11 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const 
 			{
 				++cur->numCores;
 				cur->numLogicalProcessors += __builtin_popcount(i.ProcessorMask);
-				CallNtPowerInformation()
+				/*CallNtPowerInformation()
 				int cpuInfo[4];
 				__cpuid(cpuInfo, 0x16);
 				CallNtPowerInformation()
-				cur->coreStockMHz = i.
+				cur->coreStockMHz = i.*/
 			}
 			else if (i.Relationship == RelationProcessorPackage)
 			{
