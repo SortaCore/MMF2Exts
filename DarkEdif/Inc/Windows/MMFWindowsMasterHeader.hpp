@@ -4623,18 +4623,23 @@ struct mv {
 	// Sound manager
 	CSoundManager * mvSndMgr;
 
+	union {
 #if EditorBuild
-	// Opaque struct for Fusion. Only known detail is it is a different address between MFAs loaded in Fusion.
-	CEditApp *		mvEditApp;
-	CEditFrame *	mvEditFrame;
-#else
-	// Current application, runtime - not usable in frame editor and co, just runtime
-	CRunApp *		mvRunApp;
-	CRunFrame *		mvRunFrame;
+		// Opaque struct for Fusion. Only known detail is it is a different address between MFAs loaded in Fusion.
+		CEditApp* mvEditApp;
 #endif
+		// Current application, runtime - not usable in frame editor and co, just runtime
+		CRunApp* mvRunApp;
+	};
+	union {
+#if EditorBuild
+		CEditFrame* mvEditFrame;
+#endif
+		CRunFrame* mvRunFrame;
+	};
 
 	// Current RunHeader, containing most main details as rhPtr
-	RunHeader *			mvRunHdr;
+	RunHeader * mvRunHdr;
 	DWORD mvPextsHoldingGlobals;
 	// Preferences (sound on/off)
 	FusionANSIWarning TCHAR * subType;
