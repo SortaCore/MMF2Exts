@@ -243,42 +243,25 @@ public:
 #endif
 #endif
 
-	// Gets byte position inside file. Requires CF2.5 build 296.27 or later.
+	// Gets byte position inside file. Requires CF2.5 build 292.27 or later.
 	virtual _Success_(return >= 0) _Must_inspect_result_ _NODISCARD CF25_292_27_REQUIRED(1151)
-		LONGLONG GetPositionEx()
-	{
-		// This code shouldn't run, it should call the derived class's implementation.
-		LOGW(_T("Calling base " __FUNCTION__ " function when should be calling derived.\n"));
-		return GetPosition();
-	}
+		LONGLONG GetPositionEx() EXDEF;
 
-	// Gets number of bytes of the file. Requires CF2.5 build 296.26 or later.
-	virtual _Success_(return >= 0) _Must_inspect_result_ _NODISCARD
-		LONGLONG GetLengthEx()
-	{
-		// This code shouldn't run, it should call the derived class's implementation.
-		LOGW(_T("Calling base " __FUNCTION__ " function when should be calling derived.\n"));
-		return GetLength();
-	}
+	// Gets number of bytes of the file. Requires CF2.5 build 292.27 or later.
+	virtual _Success_(return >= 0) _Must_inspect_result_ _NODISCARD CF25_292_27_REQUIRED(1149)
+		LONGLONG GetLengthEx() EXDEF;
 
 	// Relocates the read position by byte offset relative to start or end of file, or current position of read cursor, depending on method.
-	// Requires CF2.5 build 296.26 or later.
+	// Requires CF2.5 build 292.27 or later.
 	// See SEEK_XX for methods. When seeking from end, SEEK_END, an offset of -5 is 5 bytes from the end of the file.
 	// Returns original byte position from start of file.
 	// @remarks While you can pass a positive offset and write beyond end of file,
 	//			this may create a sparse file and that's probably not wanted.
 	// TODO: Confirm return value semantics when not using start of file seek
-	// Ordinal 5309.
-	virtual _Success_(return >= 0)
+	virtual _Success_(return >= 0) CF25_292_27_REQUIRED(1153)
 		LONGLONG SeekEx(_In_ _When_(method == SEEK_SET, _In_range_(0, INT64_MAX))
 			_When_(method == SEEK_END, _In_range_(INT64_MIN, 0))
-			LONGLONG offset, _In_range_(0, 2) int method)
-	{
-		// This code shouldn't run, it should call the derived class's implementation.
-		LOGW(_T("Calling base " __FUNCTION__ " function when should be calling derived.\n"));
-		return GetLength();
-	}
-
+			LONGLONG offset, _In_range_(0, 2) int method) EXDEF;
 };
 //typedef CInputFile * LPINPUTFILE;
 
@@ -314,15 +297,15 @@ public:
 		int Create(_In_z_ const UShortWCHAR * filename, _In_ DWORD dwOffset, _In_ DWORD dwSize) EXDEF;
 
 	// Returns 0 on success, CFCERROR enum on failure.
-	// Requires CF2.5 build 296.26 or later.
+	// Requires CF2.5 build 292.27 or later.
 	_Success_(return == 0) _Must_inspect_result_ MMF2_ORD(1140)
 		int CreateEx(_In_valid_hfile_ HFILE hf, _In_ ULONGLONG dwOffset, _In_ ULONGLONG dwSize) EXDEF;
 	// Returns 0 on success, CFCERROR enum on failure.
-	// Requires CF2.5 build 296.26 or later.
+	// Requires CF2.5 build 292.27 or later.
 	_Success_(return == 0) _Must_inspect_result_ MMF2_ORD(1141)
 		int CreateEx(_In_z_ const char * filename, ULONGLONG dwOffset, _In_ ULONGLONG dwSize) EXDEF;
 	// Returns 0 on success, CFCERROR enum on failure.
-	// Requires CF2.5 build 296.26 or later.
+	// Requires CF2.5 build 292.27 or later.
 	_Success_(return == 0) _Must_inspect_result_ MMF2_ORD(1142)
 		int CreateEx(_In_z_ const UShortWCHAR * filename, _In_ ULONGLONG dwOffset, _In_ ULONGLONG dwSize) EXDEF;
 
@@ -370,14 +353,14 @@ public:
 	// Returns the filename in Unicode format - null if no underlying handle, e.g. a CInputMemFile
 	virtual	_Ret_maybenull_z_ _NODISCARD MMF2_UNICODE_OR_CF25_REQUIRED(1039)
 		UShortWCHAR * GetFileNameW() EXDEF;
-	// Gets byte position inside file. Requires CF2.5 build 296.26 or later.
+	// Gets byte position inside file. Requires CF2.5 build 292.27 or later.
 	virtual _Success_(return >= 0) _Must_inspect_result_ _NODISCARD CF25_292_27_REQUIRED(1150)
 		LONGLONG GetPositionEx() EXDEF;
-	// Gets number of bytes of the file. Requires CF2.5 build 296.26 or later.
+	// Gets number of bytes of the file. Requires CF2.5 build 292.27 or later.
 	virtual _Success_(return >= 0) _Must_inspect_result_ _NODISCARD CF25_292_27_REQUIRED(1148)
 		LONGLONG GetLengthEx() EXDEF;
 	// Relocates the read position by byte offset relative to start or end of file, or current position of read cursor, depending on method.
-	// Requires CF2.5 build 296.26 or later.
+	// Requires CF2.5 build 292.27 or later.
 	// See SEEK_XX for methods. When seeking from end, SEEK_END, an offset of -5 is 5 bytes from the end of the file.
 	// Returns original byte position from start of file.
 	// @remarks While you can pass a positive offset and write beyond end of file,
@@ -391,7 +374,7 @@ protected:
 	_Success_(return == 0) _Must_inspect_result_ MMF2_ORD(336)
 		int Attach(_In_valid_hfile_ HANDLE hnd, _In_ DWORD dwOffset, _In_ DWORD dwSize) EXDEF;
 	// Attach to a byte range [dwOffset, dwOffset + dwSize) of the passed handle.
-	// Requires CF2.5 build 296.26 or later.
+	// Requires CF2.5 build 292.27 or later.
 	_Success_(return == 0) _Must_inspect_result_ CF25_292_27_REQUIRED(1139)
 		int AttachEx(_In_valid_hfile_ HANDLE hnd, _In_ ULONGLONG dwOffset, _In_ ULONGLONG dwSize) EXDEF;
 private:

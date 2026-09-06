@@ -111,7 +111,7 @@
 		#define CF25_REQUIRED(ord) /* OK */
 		#define PreferFusionFunc_HWA(ord, func) FusionAPISwitch(ord, func, "MMF2 HWA and CF2.5")
 		#define PreferFusionFunc_CF25(ord, func) FusionAPISwitch(ord, func, "CF2.5")
-		#if FUSION_TARGET_BUILD >= 296027
+		#if FUSION_TARGET_BUILD >= 292027
 			#define CF25_292_27_REQUIRED(ord) /* OK */
 			#define CF25_292_02_REQUIRED(ord) /* OK */
 			#define PreferFusionFunc_CF25_296_02(ord, func) FusionAPISwitch(ord, func, "CF2.5 build 292.2+")
