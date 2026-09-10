@@ -7051,7 +7051,6 @@ void DarkEdif::LateInit(Extension* ext)
 			if (Bank_GetEltCount(ext->rhPtr->rhIdAppli, BK_IMG) == 0)
 			{
 				// Fall back on a quick check for Direct3D11
-				constexpr int GAOF_D3D11 = GAOF_D3D9 | GAOF_D3D8;
 				IsFusion25Plus = ext->Runtime.GetAppDisplayMode() == SurfaceDriver::Direct3D11;
 
 				// If not D3D11 and no images, give up and assume not CF2.5+.
