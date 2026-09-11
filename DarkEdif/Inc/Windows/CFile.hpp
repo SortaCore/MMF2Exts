@@ -124,7 +124,7 @@ FusionAPIImport CF25_292_27_REQUIRED(1147) std::uint64_t FusionAPI File_SeekEnd_
 class FusionAPIImport CInputFile
 {
 public:
-	virtual ~CInputFile() {};
+	virtual ~CInputFile() EXDEF;
 
 	// Deletes the object.
 	// TODO: Is this opposite of Create() like cSurface, or opposite of NewInstance?

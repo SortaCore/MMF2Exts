@@ -12,17 +12,17 @@
 #define EXDEF { __assume(0); }
 #endif
 
-// EXORD indicates this is implemented by MMFS2 lib by ordinal number.
+// MMF2_ORD indicates this is implemented by MMFS2 lib by ordinal number.
 // In MMF2 base, some ANSI functions were implemented with no suffix, then in Unicode add-on implemented with A suffix.
 // This creates no link-time errors, as ordinal indexes are used instead, so ANSI exts will call the suffixed function.
 // However, if you want compatibility, it's best to call by ordinal number, e.g. GetProcAddress(_T("mmfs2.dll"), MAKEINTRESOURCEA(ord)).
-// For this case, EXORD2 provides MMF1 and MMF2 ordinal indexes.
-// EXORD provides MMF2 ordinal index.
-// EXORDs are also provided for functions that are present in all MMF2 versions,
+// For this case:
+// MMF2_ORD provides MMF2 ordinal index.
+// MMF_ORD are also provided for functions that are present in all MMF1+2 versions,
 // for the crazies who want to try creating a MMF1+ extension.
 //
 // When ordinals are limited to requiring HWA, Unicode, CF2.5 or a specific build,
-// then XXX_REQUIRED(ord) is used instead of EXORD, e.g. MMF2_UNICODE_OR_CF25_REQUIRED(123)
+// then XXX_REQUIRED(ord) is used instead of MMF2_ORD, e.g. MMF2_UNICODE_OR_CF25_REQUIRED(123)
 // means if you build for MMF2 Unicode/CF2.5, it's safe as-is.
 // MMF2 base will not find that ordinal and have a link time error, so the editor won't show the object in Create New Object window.
 // If you wanted both - fallback behaviours - then you target the base one, and you will get warnings for using the function directly,
@@ -62,12 +62,13 @@
 #ifndef FUSION_TARGET_BUILD
 #if defined(_UNICODE) && defined(HWABETA)
 // Latest CF2.5
-#define FUSION_TARGET_BUILD 292026
+#define FUSION_TARGET_BUILD 292027
 #else
 // Last MMF2 beta
 #define FUSION_TARGET_BUILD 258002
 #endif
-#endif
+#endif // FUSION_TARGET_BUILD
+
 // Sanity check
 #if FUSION_TARGET_BUILD > 280027 && (!defined(HWABETA) || (!defined(_UNICODE) && !defined(ALLOW_ANSI_EXT_IN_UNICODE_RUNTIME)))
 #error Incorrect Fusion target build or project configuration; if targeting CF2.5, _UNICODE and HWABETA defines are expected.
