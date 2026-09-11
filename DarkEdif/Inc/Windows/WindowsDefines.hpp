@@ -73,7 +73,14 @@
 #error Incorrect Fusion target build or project configuration; if targeting CF2.5, _UNICODE and HWABETA defines are expected.
 #endif
 
+// VS 2017-2022 is fine, but VS 2026 is borked and creates unnecessary deprecation warnings on declaration,
+// not on use: https://developercommunity.visualstudio.com/t/MSVC-emits-spurious-warning-C4996-on-dep/11131112
+#if _MSC_VER >= 1950
+#define FUSION_FUNC_NOT_AVAILABLE(ord, x) /* no op */
+#else // earlier than VS 2026
 #define FUSION_FUNC_NOT_AVAILABLE(ord, x) [[deprecated("The function is not available in your target build, requires " x ". Use runtime linking to ordinal " ord " instead.")]]
+#endif // Earlier than VS 2026
+
 #ifndef DARKEDIF_INTERNAL_INCLUDE
 #define FusionAPISwitch(ord, func, build) [[deprecated("This function is better suited by " #func ", which is " #build ". Ordinal " #ord ".")]]
 #else
