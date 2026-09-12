@@ -3,12 +3,12 @@
 // --------------------
 
 // Basic object details
-#define	ObjectName			"ZlibStream object"
-#define	ObjectAuthor		"Darkwire Software"
-#define	ObjectCopyright		"Copyright \xA9 2019 Darkwire Software"
-#define	ObjectComment		"Compress and decompress files with Zlib without loading them into the memory. Allows several actions at once."
-#define	ObjectURL			"http://www.dark-wire.com/"
-#define	ObjectHelp			"Help\\ZlibStream.chm"
+#define	ObjectName			_T("ZlibStream")
+#define	ObjectAuthor		_T("Darkwire Software")
+#define	ObjectCopyright		_T("Copyright \xA9 2011-2026 Darkwire Software")
+#define	ObjectComment		_T("Compress and decompress files with Zlib without loading them into the memory. Allows several actions at once.")
+#define	ObjectURL			_T("http://www.dark-wire.com/")
+#define	ObjectHelp			_T("Help\\ZlibStream.chm")
 
 // If you register your object with Clickteam, change this to the ID you were given
 #define ObjectRegID			REGID_PRIVATE

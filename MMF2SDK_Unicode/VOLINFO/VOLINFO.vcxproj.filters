@@ -32,13 +32,13 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Ext.def">
+      <Filter>Source Files</Filter>
+    </None>
     <None Include="res\EXTICON.BMP">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="res\EXTIMG.BMP">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="Ext.def">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>
@@ -47,6 +47,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Main.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\Inc\BlitMac.h">
@@ -138,9 +141,6 @@
     </ClInclude>
     <ClInclude Include="..\Inc\WinMacro.h">
       <Filter>MMF Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="Resource.h">
-      <Filter>Resource Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
