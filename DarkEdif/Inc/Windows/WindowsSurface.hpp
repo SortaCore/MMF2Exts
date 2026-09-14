@@ -465,6 +465,7 @@ struct FusionD3DSurfDriverInfo final
 	// (*((ID3D11ShaderResourceView **)x.m_ppD3DTexture))->GetResource((ID3D11Resource**)&texture);
 	FusionD3DTexture D3DTexture;
 
+#ifdef FUSION_INTERNAL_ACCESS
 	template<typename T = void>
 	inline T * GetTexturePtr() {
 		// Deref twice for D3D11, once for others
@@ -472,6 +473,7 @@ struct FusionD3DSurfDriverInfo final
 			return (T*)D3DTexture.D3D11TextureHolder->D3DGenericTexture;
 		return (T*)D3DTexture.D3D8Or9Texture;
 	}
+#endif // FUSION_INTERNAL_ACCESS
 
 	// PS max level - may come up as Shader Model.
 	// This is capped to min of max supported by D3D version, and max supported by GPU.
