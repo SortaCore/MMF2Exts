@@ -167,7 +167,7 @@
 		<UseLinkTimeCodeGeneration>0</UseLinkTimeCodeGeneration>
 		<UseLinkTimeCodeGeneration Condition="$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_UseLinkTimeCodeGenerationRegex)).Success)">1</UseLinkTimeCodeGeneration>
 
-		<!-- FavorSpeedOrSize = speed|size|size_redist
+		<!-- FavorSizeOrSpeed = speed|size|size_redist
 			 size_redist is like size, but adds a VS Redistributable dependency. -->
 		<_FavorSizeOrSpeedRegex><![CDATA[(?im)^FavorSizeOrSpeed\s*=\s*((?:speed)|(?:size(?:_redist)?))\s*?$]]></_FavorSizeOrSpeedRegex>
 		<FavorSizeOrSpeed>speed</FavorSizeOrSpeed>
@@ -430,6 +430,13 @@
 			<!-- Not including ProjectDir causes includes of "Common.hpp" from the DarkEdif SDK to fail.
 				 OpenCV's projects are in an addition layer of subfolders. -->
 			<AdditionalIncludeDirectories>$(ProjectDir.TrimEnd('\'));$(SDKRootFolder)\Inc\$(_TargetPlatInclMac);$(SDKRootFolder)\Inc\Shared;$(SolutionDir)Temp\$(ExtName);$(SDKRootFolder)\Inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+			<!-- Enforces standard C++ rules for reference binding, string literal conversions,
+				 rvalue casts, ternary operand types, extern "C" parameters, goto scoping,
+				 hidden friends, and static_assert handling. -->
+			<ConformanceMode>true</ConformanceMode>
+			<!-- Enables better C/C++ standards, enabled for C11, C++20 standard files,
+				 but not C++17 files by default. #if _MSVC_TRADITIONAL == 0 when active. -->
+			<UseStandardPreprocessor>true</UseStandardPreprocessor>
 		</ClCompile>
 		<Link>
 			<AdditionalLibraryDirectories>$(ProjectDir.TrimEnd('\'));$(SDKRootFolder)\Lib\$(_TargetPlat)\$(TargetArch);$(SDKRootFolder)\Lib\$(_TargetPlat);$(SDKRootFolder)\Lib\Shared;$(SolutionDir)Temp\$(ExtName);$(SDKRootFolder)\Lib;%(AdditionalLibraryDirectories);</AdditionalLibraryDirectories>
@@ -458,10 +465,10 @@
 			/D "MMF2EXTS_COMMIT_SHA=DE_STRIFY($(MMF2Exts_SHA))"
 			</_FusionSDKAdds>
 		<!-- ResourceCompiler doesn't like newlines. -->
-		<_FusionSDKAdds>$(_FusionSDKAdds.Replace('\n',' ').Replace('\t',' '))</_FusionSDKAdds>
+		<_FusionSDKAdds>$([System.Text.RegularExpressions.Regex]::Replace($(_FusionSDKAdds), '\s{2,}', ' '))</_FusionSDKAdds>
 		<!-- #if EditorBuild needs to evaluate to true.
 			 Worth noting in ResourceCompiler, "true" is not true. 1 is apparently true though. -->
-		<_FusionSDKAddsRC>$(_FusionSDKAdds.Replace('\n',' ').Replace('\','\\\').Replace('DE_STRIFY(','asStr(')) /D "BUILD_DATE=asStr($(BuildDate))"</_FusionSDKAddsRC>
+		<_FusionSDKAddsRC>$(_FusionSDKAdds.Replace('\','\\\').Replace('DE_STRIFY(','asStr(')) /D "BUILD_DATE=asStr($(BuildDate))"</_FusionSDKAddsRC>
 	</PropertyGroup>
 
 <!--#################################
@@ -481,7 +488,8 @@
 
 		<!-- If not XP, then use the latest compiler. $(PlatformToolsetVersion) is not available,
 			 so the following "check for toolset" are copied from Microsoft.Cpp.Defaults.props;
-			 v141 = VS 2017, v142 = VS 2019, v143 = VS 2022, v144 = VS2026, v145 = VS2028. Note v100 (VS 2010) is MS's default. -->
+			 v141 = VS 2017, v142 = VS 2019, v143 = VS 2022, v144 = VS2026, v145 = VS2028.
+			 Note v100 (VS 2010) is MS's default. -->
 		<PlatformToolset Condition="$(PlatformToolset)==''">v100</PlatformToolset>
 		<PlatformToolset Condition="$(PlatformToolset)=='v100' AND
 			Exists('$(VCTargetsPath)Platforms\Win32\PlatformToolsets\v145\Toolset.props')">v145</PlatformToolset>
@@ -536,15 +544,24 @@
 				 but matters when it's one project. -->
 			<MultiProcessorCompilation Condition="$(_UseMultiProcessor)==1">true</MultiProcessorCompilation>
 
-			<!-- Define PROJECT_NAME for use in DLL metadata. Unfortunately, we don't know company name.
+			<!-- Defines PROJECT_NAME and other details for use in DLL metadata.
+				 Unfortunately, we don't know company name.
 				 Can't do it in PreprocessorDefinitions, it doesn't like projects with spaces in their
 				 name.
-				 Also, make __cplusplus represent the C++ standard for MSVC. -->
-			<AdditionalOptions>$(_FusionSDKAdds) /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
-			<!-- Disable thread-safe initialization on XP, as VS 2019 uses Vista+ functionality to implement it.
-				 This will only create a problem if you have statics accessed from multiple threads that spawn at the same time. To conditionally write code for this, see __cpp_threadsafe_static_init. -->
-			<AdditionalOptions Condition="$(WindowsXPCompatibility)==1 AND $(VisualStudioVersion)&gt;=16.0">/Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
-			<AdditionalOptions Condition="$(WindowsXPCompatibility)==0 OR $(VisualStudioVersion)&lt;16.0">/DThreadSafeStaticInitIsSafe=1 %(AdditionalOptions)</AdditionalOptions>
+				 Make __cplusplus correctly represent the C++ standard for MSVC.
+				 Make constexpr externally exported, which is C++ standard but not MSVC default.
+				 Make new operators throw on no memory, rather than return null. -->
+			<AdditionalOptions>$(_FusionSDKAdds) /Zc:__cplusplus /Zc:externConstexpr /Zc:throwingNew %(AdditionalOptions)</AdditionalOptions>
+			
+			<!-- In VS 2022, VS tools v14.35, we can add:
+				 Make sure a template name doesn't get reused as a local variable name.
+				 Check for optimized global data conflicting; MSVC by default disables some checks. -->
+			<AdditionalOptions Condition="'$(VCToolsVersion)' &gt;= '14.35'">%(AdditionalOptions) /Zc:templateScope /Zc:checkGwOdr</AdditionalOptions>
+			
+			<!-- Disable thread-safe initialization on XP. This will only create a problem if you have statics accessed from multiple threads
+				 that spawn at the same time. To conditionally write code for this, see __cpp_threadsafe_static_init or ThreadSafeStaticInitIsSafe. -->
+			<AdditionalOptions Condition="$(WindowsXPCompatibility)==1">/Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
+			<AdditionalOptions Condition="$(WindowsXPCompatibility)==0">/DThreadSafeStaticInitIsSafe=1 %(AdditionalOptions)</AdditionalOptions>
 		</ClCompile>
 		<Link>
 			<!-- Windows subsystem. Required to prevent a warning message -->
@@ -654,9 +671,9 @@
 				 by doing the optimisation process when all compiled files can be inspected. -->
 			<WholeProgramOptimization Condition="$(UseLinkTimeCodeGeneration)==1">true</WholeProgramOptimization>
 			<!-- LTCG optimisation type -->
-			<FavorSizeOrSpeed Condition="$(UseLinkTimeCodeGeneration)==1">$(FavorSizeOrSpeed)</FavorSizeOrSpeed>
+			<FavorSizeOrSpeed Condition="$(UseLinkTimeCodeGeneration)==1">$(FavorSizeOrSpeed.Replace('_redist',''))</FavorSizeOrSpeed>
 			<!-- Replace functions with direct ASM where possible -->
-			<IntrinsicFunctions Condition="$(FavorSizeOrSpeed)=='speed'">true</IntrinsicFunctions>
+			<IntrinsicFunctions>true</IntrinsicFunctions>
 			<!-- Moves all texts in the program to a single section, removing overlaps, to improve size -->
 			<StringPooling>true</StringPooling>
 			<!-- No checks, we want speed -->
@@ -671,7 +688,8 @@
 		<Link>
 			<!-- Removes unused functions, can't be used in debug due to Incremental -->
 			<OptimizeReferences>true</OptimizeReferences>
-			<!-- Required for Link Time Code Generation to work -->
+			<!-- Allows functions with same definitions to be merged.
+				 Required for Link Time Code Generation to work effectively. -->
 			<EnableCOMDATFolding Condition="$(UseLinkTimeCodeGeneration)==1">true</EnableCOMDATFolding>
 		</Link>
 	</ItemDefinitionGroup>
