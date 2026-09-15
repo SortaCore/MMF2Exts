@@ -6,17 +6,20 @@ If you plan on distributing your own version publicly, it is highly recommended 
 Since these source codes are collated by Phi, not by the authors themselves, they may be old versions, but should be suitable for demonstration.
 
 ### Tools to use ###
-It's recommended you use Visual Studio 2019, although other editions can be used with loss of platform compatiblity.
+It's recommended you use Visual Studio 2026, although you can go as early as VS 2017.
 
 You should install either the Express edition, or get the free **Community** edition, which supports VS addons.
-* VS 2017 Community - Android, Windows XP+ support, no iOS, no Mac - can be downloaded under [older VS downloads][Older VS editions]. Requires a free registration.
-* VS 2019 Community - iOS, Mac, Android, Windows XP+ support - can be downloaded under [VS 2019 Community DD] (direct download from MS).
-* VS 2022 Community - iOS, Mac, Android, Windows Vista+ support - can be downloaded here: [VS 2022 Community DD] (direct download from MS).
-* VS 2026 - Android, Windows Vista+ support, iOS\*, Mac\* - can be downloaded here: [VS 2026 Express], [VS 2026 Community]  
-  \*= _Microsoft will deprecate remote building for iOS/Mac in VS 2026. If this means removal, this will no longer be usable for DarkEdif._
+* VS 2017 - Android, Windows XP+ support, no iOS, no Mac - can be downloaded under [older VS downloads][Older VS editions].  
+  Alternatively, download directly: [VS 2017 Community DD]
+* VS 2019 - Android, Windows XP+ support, iOS, Mac - can be downloaded under [VS 2019 Community DD] (direct download from MS).
+* VS 2022 - Android, Windows 7+ support*, iOS, Mac - can be downloaded under [VS 2022 Community DD] (direct download from MS).
+* VS 2026 - Android, Windows 10+ support*, iOS, Mac - can be downloaded here: [VS 2026 Community]  
+
+\* = the Windows XP+ toolset can be installed on VS 2022 and 2026. It is more limited than the regular toolset.  
+The regular toolset cannot change its minimum target; you're either targeting XP+ using that toolset, or 7+/10+.
 
 To build iOS/Mac, you need a Mac, running Xcode 10.4.3, or later. This runs on Mac OS 12 (Monterey).  
-Your Mac should be a model released in 2014.  
+Your Mac should be a model released in 2014 or later.  
 Earlier Xcode 10.2+ (Mac 2012 Q3+) and later Xcode can be used, with some compatibility loss.
 
 For more details on setting up on each platform, refer to the [DarkEdif help file].
@@ -30,7 +33,7 @@ But code it to prevent compilation on other platforms you provide projects for, 
 ### Windows targeting ###
 
 #### XP+ targeting ####
-The SDKs are compatible with the **C++ Windows XP targeting pack**, for Windows XP+ instead of Vista+ targeting. You can find it under Additional/Individual Components tab in the Visual Studio installer; search for "Windows XP" using the search bar on the top.
+The SDKs are compatible with the **C++ Windows XP targeting pack**, for Windows XP+ instead of later targeting. You can find it under Additional/Individual Components tab in the Visual Studio installer; search for "Windows XP" using the search bar on the top.
 
 If the Visual Studio XP-targeting pack is installed, it will be auto-detected by all the Fusion SDKs and XP+ targeting will be enabled by default.  
 If XP targeting pack is used, your extensions will be Windows XP and later compatible, and if not, it's Windows Vista and later.  
@@ -38,8 +41,6 @@ All Fusion SDKs will use [WINVER and _WIN32_WINNT][WINVER] preprocessor macros s
 
 To confirm manually if any Windows API function is compatible, you can normally find out on MSDN under "Requirements > minimum client OS" at the bottom of the page;
 for example [GetProcessIdOfThread()] is Vista+.
-
-You'll have to install v14.27 of the C++ compiler tools - this is easy to search for in Visual Studio 2019 Components tab in Visual Studio Installer. It will appear as "MSVC v142 - VS 2019 C++ x64/x86 build tools (v14.27)". This is the latest toolset that Microsoft recommend for XP targeting.
 
 #### Later OS versions
 If you want to use later OS functions at cost of compatibility, you can change the targeting by using the FusionSDKConfig INI WindowsXPCompatibility option to false ([how to][XP compatibility false]), and reloading your VS solution.
@@ -53,14 +54,14 @@ You will want to:
    XP is WINVER 0x0501; the Linker version equivalent is "5.01". So, if you want to target Vista+ (0x0600), set minimum version to "6.00".
 
 You will also need a Windows SDK:
-* Windows 7.0 SDK: If you've got the *C++ Windows XP-targeting pack* Visual Studio Installer component installed, the Windows 7.0 SDK will be installed as part of it.  
+* Windows 7.0 SDK: If you've got the *C++ Windows XP-targeting pack* Visual Studio Installer component installed,  
+  the Windows 7.0 SDK will be installed as part of it.  
 * Windows 8.1 SDK:  
   Install *Universal CRT SDK* component in Visual Studio Installer's Components tab. Then:
   * VS 2017: Add 8.1 SDK from Visual Studio Installer's Components tab.  
   * VS 2019, 2022: Install 8.1 SDK manually from the [Windows SDK archive]. You only need the first option in the installer.
 * Windows 10 SDK: VS 2017-2022, install from Visual Studio Installer's Components tab.
 * Windows 11 SDK: VS 2022-2026, install from Visual Studio Installer's Components tab.
-
 
 ### Android targeting
 To target Android, in the Visual Studio Installer, under Individual Components tab, you need to enable "C++ Android development tools". That should be all you need.
@@ -158,7 +159,6 @@ If you don't want to provide Fusion 2.0 ANSI compatiblity, you can remove the no
 [VS 2017 Community DD]: https://aka.ms/vs/15/release/vs_community.exe
 [VS 2019 Community DD]: https://aka.ms/vs/16/release/vs_community.exe
 [VS 2022 Community DD]: https://aka.ms/vs/17/release/vs_community.exe
-[VS 2026 Express]: https://visualstudio.microsoft.com/vs/express/
 [VS 2026 Community]: https://visualstudio.microsoft.com/vs/community/
 [DarkEdif ext dev features]: https://github.com/SortaCore/MMF2Exts/wiki/DarkEdif-ext-dev-features
 [DarkEdif Fusion user features]: https://github.com/SortaCore/MMF2Exts/wiki/DarkEdif-Fusion-user-features

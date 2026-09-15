@@ -137,13 +137,6 @@
 		<WindowsXPCompatibility Condition="$(WindowsXPCompatibility)==1 AND
 			$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_WindowsXPCompatibilityRegex)).Success)">0</WindowsXPCompatibility>
 
-		<!-- Windows XP only works properly in VS 2019 16.7 and below (toolset v14.27.29114 and below).
-			 Some STL libraries will randomly break otherwise, like std::shared_timed_mutex,
-			 because the SDK's lib files under the hood use Vista+ functions, ignoring the compatibility.
-			 (in std::shared_timed_mutex's case, it uses Vista-only SRWLock functions). -->
-		<VCToolsVersion Condition="$(VCToolsVersion)=='' AND $(WindowsXPCompatibility)==1 AND $(_TargetPlat)=='Windows' AND $(VisualStudioVersion)==16.0">14.27.29110</VCToolsVersion>
-		<VCToolsRedistVersion Condition="$(VCToolsRedistVersion)=='' AND $(WindowsXPCompatibility)==1 AND $(_TargetPlat)=='Windows' AND $(VisualStudioVersion)==16.0">14.27.29110</VCToolsRedistVersion>
-
 		<!-- RunStaticCodeAnalysis = true|debugonly
 			 If set to true, will cause all settings to be adjusted to run static analysis; including
 			 dropping Windows XP compiler, setting MFX output to DLL, etc. Not to be used for releases,
@@ -467,13 +460,26 @@
 <!--#################################
 		BEGIN Windows
 	################################# -->
-	<!-- Wish I could merge all these into a Choose,
-		 but ItemDefinitionGroup can't be in a Choose. -->
+
+	<!-- Fix XP targeting. The v141_xp compatibility props don't correctly find VS2017,
+		 so XP is built with the default VS2019-2026 compiler/linker, and XP-compatible RC.
+		 We look up VS2017 path and set it ourselves before Microsoft.Cpp.props searches for paths. -->
+	<PropertyGroup Condition="$(WindowsXPCompatibility)==1 AND $(VisualStudioVersion) &gt;= 16.0 AND
+		!Exists('$(VSInstallDir)VC\Auxiliary\Build\Microsoft.VCToolsVersion.v141.default.props')">
+		<_FixVSPath>$([Microsoft.Build.Utilities.ToolLocationHelper]::GetFoldersInVSInstallsAsString('15.0', '16.0', 'VC\Auxiliary\Build'))</_FixVSPath>
+		<_FixVSPath>$([Microsoft.Build.Utilities.ToolLocationHelper]::FindRootFolderWhereAllFilesExist('$(_FixVSPath)', 'Microsoft.VCToolsVersion.default.props'))</_FixVSPath>
+		<VSInstallDir_150 Condition="'$(_FixVSPath)'!=''">$([System.IO.Path]::GetFullPath('$(_FixVSPath)\..\..\..\'))</VSInstallDir_150>
+		<VCInstallDir_150 Condition="'$(_FixVSPath)'!=''">$(VSInstallDir_150)VC\</VCInstallDir_150>
+		<_VCToolsVersionProps Condition="'$(_FixVSPath)'!=''">$(_FixVSPath)\Microsoft.VCToolsVersion.default.props</_VCToolsVersionProps>
+	</PropertyGroup>
 
 	<PropertyGroup Label="Configuration" Condition="'$(_TargetPlat)'=='Windows'">
-		<!-- Latest XP-compatible compiler.
-			 While pre-XP may still run on XP compiler, it's dubious.
-			 In a similar vein, the XP compiler may work on pre-XP, but also dubious. -->
+		<!-- Latest XP-compatible compiler. Pre-XP may still run on XP compiler, but is dubious.
+			 In a similar vein, the XP compiler may work on pre-XP, but also dubious.
+			 Both the CRT implementation, the Windows SDK and the compiler all alter code,
+			 with some assumptions made, such as thread-local storage.
+			 VS 2017 XP toolset can be installed and used on any VS,
+			 but detection of VS path is currently broken in VS 2019-2026. -->
 		<PlatformToolset Condition="$(WindowsXPCompatibility)==1">v141_xp</PlatformToolset>
 		<!-- Prevent Windows XP not-being-supported-later warnings -->
 		<XPDeprecationWarning Condition="$(WindowsXPCompatibility)==1">false</XPDeprecationWarning>
@@ -996,17 +1002,10 @@ https://forums.developer.apple.com/forums/thread/113746?answerId=349757022#34975
 		<Error Text="FusionSDK error: Windows 8.1 or lower SDK cannot work fully without the 'Universal CRT SDK' Visual Studio component." />
 	</Target>
 
-	<!-- Windows XP requires VS 2017 (any toolset version) or VS 2019 (specific toolset version). -->
-	<Target Name="XP toolset check" Condition="$(WindowsXPCompatibility)==1 AND $(_TargetPlat)=='Windows' AND $(VisualStudioVersion) != 15.0" BeforeTargets="ClCompile;CheckVCToolsetVersion">
-		<!-- VS 2017 (15.0) ^ doesn't have any restrictions on toolset version, so no checks are done for it. -->
-
-		<!-- Using VS 2022. -->
-		<Error Text="FusionSDK error: You're using XP compatibility - you have to use Visual Studio 2019 or 2017. See the MMF2Exts README.md file." Condition="$(VisualStudioVersion) &gt;= 17.0" />
-		<!-- Using VS 2019, but aren't correctly specifying the toolset. This only happens if user manually specifies a toolset too large in their vcxproj/props files. -->
-		<Error Text="FusionSDK error: You're using XP compatibility, but not correctly selecting toolset v14.27 or lower. Contact DarkEdif creators." Condition="$(VisualStudioVersion)==16.0 AND $(VCToolsVersion.Replace('.','')) &gt; 142729110" />
-
-		<!-- Using VS 2019, but don't have the XP toolset version. -->
-		<Error Text="FusionSDK error: You're using XP compatibility, but you don't have C++ toolset v14.27 or earlier added on your VS setup. See the MMF2Exts README.md file." Condition="$(VisualStudioVersion)==16.0 AND $(VCToolsVersion.Replace('.','')) &lt;= 142729110 AND !Exists('$(VCToolsInstallDir)')" />
+	<!-- Windows XP requires VS 2017 (15.0). Newer VS should call the older toolset; currently VS 2019-2022 doesn't. -->
+	<Target Name="XP toolset check" Condition="$(WindowsXPCompatibility)==1 AND $(_TargetPlat)=='Windows' AND $(VisualStudioVersion) &gt;= 15.0" BeforeTargets="ClCompile">
+		<Error Text="FusionSDK error: You're using XP compatibility, but not correctly selecting XP toolset v141_xp. Contact DarkEdif creators." Condition="$(PlatformToolset)!='v141_xp'" />
+		<Error Text="FusionSDK error: You're using XP compatibility, but not using the VS 2017 XP toolset. Expected VS 2017 toolset v14.16.27023, got toolset v$(VCToolsVersion)." Condition="$(VCToolsVersion) &gt; 14.16.27023" />
 	</Target>
 	<!-- VS 2017 doesn't support C++17 on Android projects - it does on Windows, and a workaround is used on iOS. -->
 	<Target Name="Android on VS 2017 check" Condition="$(_TargetPlat)=='Android' AND $(VisualStudioVersion)==15.0" BeforeTargets="ClCompile;Build">
