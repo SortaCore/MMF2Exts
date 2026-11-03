@@ -146,7 +146,7 @@ int Extension::DEPRECATED_PendingData_GetLong(int readFromIndex)
 const TCHAR * Extension::PendingData_GetInt64(int readFromIndex)
 {
 	if (readFromIndex < 0 || (curEvent->source->pendingDataToRead.size() - (size_t)readFromIndex) < sizeof(std::int64_t))
-		return globals->CreateError(-1, _T("Could not retrieve int64 at index %d: reading beyond the end of the pending data."), readFromIndex), 0;
+		return globals->CreateError(-1, _T("Could not retrieve int64 at index %d: reading beyond the end of the pending data."), readFromIndex), Runtime.CopyString(_T("0"));
 
 	const std::int64_t i64 = *((std::int64_t *)&curEvent->source->pendingDataToRead[readFromIndex]);
 	curEvent->source->pendingDataToReadCursor += sizeof(std::int64_t);
@@ -155,7 +155,7 @@ const TCHAR * Extension::PendingData_GetInt64(int readFromIndex)
 const TCHAR * Extension::PendingData_GetUnsignedInt64(int readFromIndex)
 {
 	if (readFromIndex < 0 || (curEvent->source->pendingDataToRead.size() - (size_t)readFromIndex) < sizeof(std::uint64_t))
-		return globals->CreateError(-1, _T("Could not retrieve uint64 at index %d: reading beyond the end of the pending data."), readFromIndex), 0;
+		return globals->CreateError(-1, _T("Could not retrieve uint64 at index %d: reading beyond the end of the pending data."), readFromIndex), Runtime.CopyString(_T("0"));
 
 	const std::uint64_t ui64 = *((std::int64_t *)&curEvent->source->pendingDataToRead[readFromIndex]);
 	curEvent->source->pendingDataToReadCursor += sizeof(std::uint64_t);
