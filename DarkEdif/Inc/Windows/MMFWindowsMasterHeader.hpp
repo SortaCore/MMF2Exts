@@ -1517,8 +1517,8 @@ enum
 struct EditDebugInfo
 {
 	// Title to edit. Cannot be null if ANSI ext in Unicode editor; otherwise if null uses a default text.
-	// @remarks This is Fusion internals, but matches the ext encoding.
-	TCHAR * Title;
+	// @remarks This is Fusion internals, but matches the ext encoding, so not a FusionANSIWarning
+	const TCHAR * Title;
 	// Integer to edit. Floats aren't allowed.
 	int		value;
 	// Text to edit.
