@@ -1038,14 +1038,15 @@ struct ConditionOrActionManager_Windows : ACEParamReader
 
 		// param1/param2 are runtime pre-evaluated parameters on Windows, if there is 2 or less params.
 		// This is an old tactic from pre-MMF2 where only two parameters were possible.
-		// But we can't use them as-is, if the params are float.
-		// Fusion provides the pre-calculations for numbers as integer parameters, even if the math
-		// was float, and thus it calculates them incorrectly.
+		// But we can't use them as-is, if the params are float, as the pre-evaluations are cast to integers.
 		isTwoOrLess = info->NumOfParams <= 2;
 
 		// If we auto-read the 2 params pased, we want to increment hoCurrentParam to fix the runtime bug
 		// Using CNC_GetXX to read parameters if <= 2 params is not recommended,
 		// may mess up if the pre-evaluated params generated events.
+		//
+		// Note Fusion does not re-evaluate the expressions to get floats; their CValue returns are cached
+		// and just re-interpreted.
 		for (int i = 0; isTwoOrLess && i < info->NumOfParams; ++i)
 		{
 			if ((info->FloatFlags & (1 << i)) != 0)
@@ -1572,38 +1573,26 @@ jmethodID ExpressionManager_Android::setRetInt, ExpressionManager_Android::setRe
 
 struct ExpressionManager_Windows : ACEParamReader {
 	RunObject * rdPtr;
-	bool isOneOrLess = false;
 	int param = 0;
 	ExpressionManager_Windows(RunObject * rdPtr) : rdPtr(rdPtr)
 	{
-	}
-	void SetOneOrLess(long param)
-	{
-		isOneOrLess = true;
-		this->param = param;
 	}
 
 	// Inherited via ACEParamReader
 	virtual float GetFloatParam(int index) override
 	{
-		if (isOneOrLess && index == 0)
-			return *(float*)&param;
 		int i = (int)CallRunTimeFunction(rdPtr, RFUNCTION::GET_PARAM_1 + (index > 0), TYPE_FLOAT, index);
 		return *(float*)&i;
 	}
 
 	virtual const TCHAR * GetStringParam(int index) override
 	{
-		if (isOneOrLess && index == 0)
-			return (const TCHAR*)param;
 		// We don't have to free this memory; Fusion will manage it
 		return (const TCHAR *)CallRunTimeFunction(rdPtr, RFUNCTION::GET_PARAM_1 + (index > 0), TYPE_STRING, index);
 	}
 
 	virtual std::int32_t GetIntegerParam(int index, Params) override
 	{
-		if (isOneOrLess && index == 0)
-			return param;
 		return (std::int32_t)CallRunTimeFunction(rdPtr, RFUNCTION::GET_PARAM_1 + (index > 0), TYPE_INT, index);
 	}
 	virtual long GetObjectParam(int)
@@ -1695,7 +1684,11 @@ struct ExpressionManager_iOS : ACEParamReader {
 #endif
 
 #ifdef _WIN32
-long FusionAPI Edif::ExpressionJump(RUNDATA * rdPtr, long param)
+// Entry point for Expression callback.
+// @remarks The long parameter is rh4ExpTokens, intended to be passed to GET_PARAM_1/CncGet*ExpressionParameter,
+// but in CF2.5 runtime at least, the callbacks ignore the passed param and read rh4ExpTokens from rhPtr directly.
+// TODO: Investigate the runtime version this long started being ignored.
+long FusionAPI Edif::ExpressionJump(RUNDATA * rdPtr, long)
 {
 	const int ID = ForbiddenInternals::GetEventNumber((RunObject*)rdPtr);
 	Extension * const ext = ((RunObject*)rdPtr)->GetExtension();
@@ -1732,10 +1725,7 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _expressionJ
 	ExpReturnType ExpressionRet = info->Flags.ef;
 
 	int ParameterCount = info->NumOfParams;
-#if _WIN32
-	if (ParameterCount <= 1)
-		((ExpressionManager_Windows)params).SetOneOrLess(param);
-#elif defined(__ANDROID__)
+#ifdef __ANDROID__
 	// Java variables related to object selection and current event are cached: invalidate them
 	ext->Runtime.InvalidateByNewACE();
 #endif
