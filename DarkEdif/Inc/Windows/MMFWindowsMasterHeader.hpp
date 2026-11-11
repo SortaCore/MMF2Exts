@@ -1612,7 +1612,8 @@ DarkEdifInternalAccessProtected:
 	objInfoList *	rh2EventPosOiList, 	// Position in oilist for TYPE exploration
 				*	rh2EventPrev;			// Previous object address
 
-	pev *			rh2PushedEvents;		//
+	// Pushed events
+	pev *			rh2PushedEvents;	//
 	unsigned char * rh2PushedEventsTop,	//
 				  * rh2PushedEventsMax;	//
 	int	  			rh2NewPushedEvents;	//
@@ -1644,6 +1645,14 @@ DarkEdifInternalAccessProtected:
 	int		  		rh2ShuffleNumber;
 
 	POINT			rh2MouseSave;			// Mouse saving when pause
+	// Freezes the runtime when 1+. The only resumes are rh4PauseKey, and the ext getting
+	// ticked by a WndProc message, as modifying this variable from another thread is UB.
+	// @remarks While the rh2PauseCompteur counter is nonzero, most events are skipped,
+	// and you cannot queue more events via Push/Generate.
+	// It skips clock/input updates, object Handle/movement ticks,
+	// timer/event/queued-event processing, display updates.
+	// Generate/PushEvent calls will be discarded, and since Handle is paused too,
+	// WndProc messages are the only thing that can be used to resume.
 	int		  		rh2PauseCompteur;
 	unsigned long	rh2PauseTimer;
 	unsigned int	rh2PauseVbl;
@@ -1713,49 +1722,187 @@ typedef struct tagKPXLIB {
 #define	CallRunTimeFunction2(hoPtr,num,wParam,lParam)	(hoPtr->hoAdRunHeader->rh4.rh4KpxFunctions[(int)num].routine(hoPtr, wParam, lParam) )
 #define	CallRunTimeFunction3(rh4_,num,wParam,lParam)	(rh4_.rh4KpxFunctions[num].routine(hoPtr, wParam, lParam) )
 
+// Windows runtime services; call on main thread only.
 enum class RFUNCTION {
+	// Re-enable this object's Extension::Handle calls after Handle disabled it by returning REFLAG::ONE_SHOT.
+	// @remarks In Windows, restores the handler in rhObjectList[hoNumber].oblRoutine to one based on OEFLAGS.
+	// In non-Windows, edits a bool noHandle within CExtension.
+	REHANDLE,
+
+	// Immediately trigger this object's zero-based extension condition ID (wParam).
+	// This will invalidate the caller event's selection!
+	// With the condition ID bit 0x8000 not set, lParam should be a LONG copied into rhCurParam[0],
+	// with rhCurParam[1] set to 0.
+	// If 0x8000 is set, lParam should point to &LONG[2], which elements are copied into rhCurParam[0..1].
+	// @remarks This doesn't trigger the step-through editor. PUSH_EVENT_STOP does that exclusively.
+	// The runtime stores even less object selection here than PUSH_EVENT, so make sure you call this
+	// only via DarkEdif's wrapper, or the runtime may fall over both broadly and in very specific
+	// event setups.
+	GENERATE_EVENT,
+
+	// Queue this object's extension condition ID (wParam) to run events at the end of the runtime FPS tick.
+	// This is not end of current event.
+	// Copies lParam as a LONG arg, stored as rhCurParam[0] during condition run, with rhCurOi = 0,
+	// and rhCurParam[1] not reset, thus keeping its value.
+	// There's no cleanup for your LONG lParam, so only use GenerateEvent to store pointer data.
+	// @remarks There is a MAX_PUSHEVENTS of 32, but rh2PushedEvents is a linked-list in CF2.5,
+	// and doesn't check the max, so it may be an obsolete limit.
+	PUSH_EVENT,
+
+	// MMF1, replaced with GET_STRING_SPACE_EX in MMF2+.
+	// Undocumented, but may relate to the MMF1 ext ChangeRunData export.
+	FIND_RUNDATA,
+
+	// MMF2+: Larger size runtime-managed temporary string storage. Do not free.
+	// lParam should be size in BYTES. Include the null terminator, and ANSI/Unicode char width.
+	// @remarks In old MMF1.5, this is FIND_RUNDATA.
+	GET_STRING_SPACE_EX = 3,
+
+	// Evaluates the first expression parameter, advancing the expression-token cursor.
+	// wParam requests the value type, TYPE_XXX enum.
+	// Use DarkEdif ACEParamReader, or CNC_GetFirstExpressionParameter().
+	// All parameters of an expression MUST be read.
+	GET_PARAM_1,
+
+	// Expressions only. Evaluates the next expression parameter, advancing the expression-token cursor.
+	// Use DarkEdif ACEParamReader, or CNC_GetNextExpressionParameter().
+	// All parameters of an expression MUST be read.
+	GET_PARAM_2,
+
+	// This does not cancel a pushed event or run after a pushed event stops.
+	// It's like PUSH_EVENT, saving lParam as rhCurParam[0], but also:
+	// * pauses the MMF1 step-through editor if no condition relates to this event.
+	// * saves the source object hoOi and restores in rhCurOi.
+	// @remarks Non-Windows Push Event always saves and restores hoOi.
+	// rhCurParam[1] is not reset between pushed events.
+	PUSH_EVENT_STOP,
+
+	// Only recommended when running a blocking long task on main thread, not for pausing the app.
+	// Use when opening a file selector or dialog that is meant to freeze the main thread,
+	// but without causing display freeze.
 	//
-	REHANDLE,				// Re-enable the call to Handle() every frame
-	GENERATE_EVENT,			// Immediately create a triggered condition. Do not call in other threads.
-	PUSH_EVENT,				// Generates the event after the next event loop, only should be used if possibly cancelling this event later. Do not call in other threads.
-	GET_STRING_SPACE_EX,	// Allocates memory from MMF for a char * or wchar_t *, letting you store a string.
-	GET_PARAM_1,			// Retrieves the value of the first parameter of an a/c/e.
-	GET_PARAM_2,			// Retrieves the value of 2nd+ parameter (first call with this is 2nd, next 3rd, etc).
-	PUSH_EVENT_STOP,		// Removes event created by Push Event. Cannot do this with Generate Event as it happens immediately.
+	// Use rhQuit instead to pause the runtime, as System object does, which will activate
+	// the runtime pause cleanly at the end of a game tick.
+	// Set rh4PauseKey to break on a keypress, or use a WndProc message; the ext won't otherwise
+	// get control back from the runtime, as only WndProc is still called within the ext.
+	// @remarks This increments rh2PauseCompteur, instantly pausing most runtime processing,
+	//			skipping ticks and preventing event calls.
+	//			If rh2PauseCompteur 0 -> 1, it calls PauseRunObject on extensions, and runs the
+	//			remaining actions of the event, and remaining events of current tick that don't
+	//			check rh2PauseCompteur; which, while a practice recommended by MMF1/2 SDK docs,
+	//			is not always done.
 	PAUSE,
+
+	// The opposite of PAUSE. Only used for blocking long tasks on main thread.
+	// @remarks Decrements rh2PauseCompteur if nonzero; resume only when rh2PauseCompteur
+	// is back to zero. The resume adjusts rh2 pause timers to exclude the pause time period,
+	// and clears rh4PauseKey.
 	CONTINUE,
-	REDISPLAY,				// Causes the entire frame to redraw
-	GET_FILE_INFOS,			// Retrieve information about the current app (see FILEINFOS namespace and Edif.Runtime.cpp)
+
+	// Request a full Fusion frame display update.
+	// For redrawing this object only, use REDRAW or return REFLAG::DISPLAY from Extension::Handle.
+	REDISPLAY,
+
+	// Not recommended. Use DarkEdif::GetMFXRelativeFolder() or GetRunningApplicationPath().
+	// Copies application path information into the lParam buffer; wParam specifies a FILEINFO.
+	// Used in Runtime.GetApplicationDrive/Directory/Path/Name and GetApplicationTempPath.
+	GET_FILE_INFOS,
+
+	// Register an extension-created child window for runtime message routing.
+	// Set hoOffsetToWindows to the window-count/HWND list first!
+	// Pass zero for both lParam and wParam.
+	// You can also define the hook, set the WndHookProc in wParam, expected format:
+	// LRESULT WINAPI WndHookProc(RunHeader * rhPtr, HWND hWnd, uint msgType, WPARAM wParam, LPARAM lParam)
 	SUB_CLASS_WINDOW,
-	REDRAW,					// Causes the object to redraw this extension
+
+	// Request this object be redrawn. Consider returning REFLAG::DISPLAY from Extension::Handle() instead.
+	// Use Runtime.Redraw() to run this.
+	REDRAW,
+
+	// Queues this object instance in rhDestroyList, to be destroyed at the end of the current event tick.
+	// Doesn't set HeaderObjectFlags::Destroyed. Use Runtime.Destroy().
 	DESTROY,
-	GET_STRING_SPACE,		// Deprecated GET_STRING_SPACE_EX; affords less memory
+
+	// Do not use. Temporary expression-return string storage; size in bytes is wParam, with lParam unused.
+	// @remarks The runtime recycles the storage.
+	// MMF2 SDK docs specify a limit of 65 KiB limit for this non-EX version.
+	// MMF1 SDK docs only defines this, not EX.
+	// GET_STRING_SPACE_EX reads its size from lParam instead.
+	GET_STRING_SPACE,
+
+	// Execute a program; pass a ParamProgram * in lParam. wParam is unused.
+	// Use Runtime.ExecuteProgram().
 	EXECUTE_PROGRAM,
+
+	// Do not use.
+	// @remarks Not sure if this is a 16-bit hold-over to get a far pointer,
+	// or something to do with system objects. Is not implemented in CF 296.9.
 	GET_OBJECT_ADDRESS,
+
+	// Decode and advances past the action/condition parameter at hoCurrentParam,
+	// with wParam specifying the expected type.
+	// Use the DarkEdif ACEParamReader instead, or the CNC_Get*Parameter macros
 	GET_PARAM,
+
+	// Do not use.
+	// @remarks Not present in CF2.5. In MMF1 SDK but not documented.
+	// EXPPARAM_XX enum may relate.
 	GET_EXP_PARAM,
+
+	// For actions/conditions with 1-2 parameters; they are by default supplied as int,
+	// even if the runtime read them and got a float. This reads the cached pre-evaluated
+	// values back as float.
+	// wParam is arg index, 0 or 1. Does not re-evaluate the expression to get its float value.
+	// @remarks The float is stored in rh4ExpValue1/2. In MMF2 those are CValues,
+	// in MMF1 they're DWORDs, supplemented with rh4ExpType1/2.
 	GET_PARAM_FLOAT,
-	EDIT_INT,				// Edittime only: Opens a dialog box to edit an integer
-	EDIT_TEXT,				// Edittime only: Opens a dialog box to edit text.
+
+	// MMF2 and later: Fusion debugger during Run Application: open the integer editor.
+	// You should not need to call this yourself, FusionDebugger will handle it.
+	EDIT_INT,
+
+	// MMF2 and later: Fusion debugger during Run Application: open the text editor.
+	// You should not need to call this yourself, FusionDebugger will handle it.
+	EDIT_TEXT,
+
+	// MMF2 and later: Call this object's movement with function ID wParam and opaque argument lParam.
+	// Intended for use by movement-influencing extensions, e.g. Clickteam Movement Controller.
+	// See Runtime.CallMovement().
 	CALL_MOVEMENT,
+
+	// MMF2 and later: Set this object's position to X = wParam, Y = lParam through the runtime position service.
+	// This is preferable over editing hoX/hoY directly as it will notify movements.
+	// See Runtime.SetPosition().
 	SET_POSITION,
+
+	// MMF2 and later: Return the runtime's condition/action/expression dispatch tables; see Runtime.GetCallTables().
 	GET_CALL_TABLES,
-	// CF2.5
+
+	// CF2.5: instantly triggers a common-object condition number (wParam), instead of a standard condition ID.
+	// lParam should be a pointer to a LONG[2].
+	// This can be used for triggering conditions that are common to all objects, such as "Animation has finished".
+	// Like GENERATE_EVENT, this does not preserve the caller's selection.
 	GENERATE_COMMON_EVENT,
+
+	// CF2.5: return a runtime random value using wParam as the maximum argument.
 	RANDOM,
+
+	// CF2.5: add the HeaderObject * in lParam to the current object selection.
 	ADD_CURRENT_OBJECT,
-	// CF2.5 build 292.02
-	GET_PARAM_INT,			// CF2.5 build 292.02: Gets expression param as int explicitly?
+
+	// CF2.5 build 292.02+: decode/advance the next action/condition parameter as a plain integer,
+	// rather than reading the parameter type and handling it differently, as CNC_GetIntParameter
+	// would do. Internal use only.
+	GET_PARAM_INT,
 };
 
 // For A/C: interprets parameter by requesting runtime evaluate, based on hoCurrentParam
 #define CNC_GetParameter(rdPtr)							CallRunTimeFunction(rdPtr, RFUNCTION::GET_PARAM, 0xFFFFFFFF, 0)
 #define CNC_GetIntParameter(rdPtr)						CallRunTimeFunction(rdPtr, RFUNCTION::GET_PARAM, 0, 0)
-// CF2.5 292.02+: Gets expression param as int explicitly
-// #define CNC_GetIntParamExpression(rdPtr)				((((long (FusionAPI *)(HeaderObject *))(((RunHeader *)rdPtr->rHo.hoAdRunHeader)->rh4.rh4KpxFunctions[RFUNCTION_GETPARAMINT].routine))((HeaderObject *)rdPtr) )
 #define CNC_GetStringParameter(rdPtr)					CallRunTimeFunction(rdPtr, RFUNCTION::GET_PARAM, 0xFFFFFFFF, 0)
 #define CNC_GetFloatParameter(rdPtr)					CallRunTimeFunction(rdPtr, RFUNCTION::GET_PARAM, 2, 0)
-// For A/C taking <= 2 params only: reads a number param as float, does not re-evaluate
+// For A/C taking <= 2 params only: reads a number param as float, does not re-evaluate.
+// The values are read back from rhPtr->rh4.rh4ExpValue1/2
 #define CNC_GetFloatValue(rdPtr, par)					CallRunTimeFunction(rdPtr, RFUNCTION::GET_PARAM_FLOAT, par, 0)
 #define CNC_GetFirstExpressionParameter(rdPtr, lParam, wParam)	CallRunTimeFunction(rdPtr, RFUNCTION::GET_PARAM_1, wParam, lParam)
 #define CNC_GetNextExpressionParameter(rdPtr, lParam, wParam)	CallRunTimeFunction(rdPtr, RFUNCTION::GET_PARAM_2, wParam, lParam)
@@ -2050,7 +2197,7 @@ struct RunHeader {
 	std::size_t get_MaxObjects();
 	// Gets number of valid object instances currently in frame
 	std::size_t get_NObjects();
-	CRunApp* get_App();
+	CRunAppMultiPlat* get_App();
 
 	int get_WindowX() const;
 	int get_WindowY() const;
@@ -2059,7 +2206,7 @@ struct RunHeader {
 	// Converts a OI number to a OIList index, suitable for GetOIListByIndex()
 	short GetOIListIndexFromOi(const short oi);
 	// Gets a qualifier OIList by its offset
-	qualToOi* GetQualToOiListByOffset(std::size_t byteOffset);
+	qualToOi* GetQualToOiListByOffset(std::size_t offset);
 	RunObjectMultiPlatPtr GetObjectListOblOffsetByIndex(std::size_t index);
 	EventGroupFlags GetEVGFlags();
 
@@ -2082,7 +2229,7 @@ DarkEdifInternalAccessProtected:
 						rhHMainWin,			// Call GetClientRect(HMainWin, RECT *) to get the real client area
 						rhHTopLevelWnd;
 
-	CRunApp *			rhApp;				// Application info
+	CRunAppMultiPlat *	rhApp;				// Application info
 	CRunFrameMultiPlat*	rhFrame;			// Frame info
 
 	unsigned int		rhJoystickPatch;	// To reroute the joystick
@@ -2157,9 +2304,13 @@ DarkEdifInternalAccessProtected:
 						rhFirstObjectNumber;	// Number, for collisions
 
 	long				rhOiListPtr;		// OI list enumeration
-	short 				rhObListNext,		// Branch label
+	short 				rhObListNext;		// Branch label
 
-						rhDestroyPos;
+	// 0 or 1. If 1, indicates rhDestroyList should be scanned for set bits, and the objects
+	// referenced destroyed.
+	// Non-Windows uses this as an "instances to destroy" counter, Windows uses it as a bool.
+	short rhDestroyPos;
+
 	// Re-used in CF2.5 build 295.2+ in place of rhFree5 variable
 	// @remarks Latest orig CF2.5 SDK still has it as long rhFree5
 	int rhLastCreatedObjectFixedValue;
@@ -2169,15 +2320,39 @@ DarkEdifInternalAccessProtected:
 	RunHeader3			rh3;				// Sub-structure #2
 	RunHeader4			rh4;				// Sub-structure #3
 
-	unsigned long *		rhDestroyList;		// Destroy list address
+	// Bitfield of objects to destroy at end of this tick, read when rhDestroyPos is 1.
+	// rhPtr->rhDestroyList[hoNumber / 32] |= 1u << (hoNumber % 32);
+	// If you destroy a new instance during DestroyRunObject, it may be handled in current tick
+	// or delayed until end of next tick, dependent on bit scan pointer position vs the newly destroyed hoNumber.
+	unsigned long *		rhDestroyList;
 
 	int					rhDebuggerCommand;	// Current debugger command
-	char				rhFree13[DB_BUFFERSIZE];		// Buffer libre!
+
+	char				rhFree13[DB_BUFFERSIZE - (8 * 3)];		// Buffer libre!
+
+	// Added at some point in CF2.5, present in 296.9
+	std::uint64_t rhFrameTime, rhFrameTimeBase, rhFrameTimeTotal;
+
 	void *				rhDbOldHO;
 	unsigned short		rhDbOldId,
 						rhFree7;
 
 	objectsList *		rhObjectList;			// Object list address
+
+	// Fields present in 296.9 Run App, but not fully documented:
+	objInfoList ** rhModifiedOiList;
+	objInfoList ** rhModifiedOiListEnd;
+	int rhDpiY;
+	int rhCachedEventCount;
+	short rhCachedOi;
+	short rhCachedOiFree;
+	HeaderObject * rhCachedSelectedObject;
+	// Opaque pointers: the PDB describes runtime-owned STL vectors; their ABI is not exposed here.
+	void * rhCollisionCandidates; // vector<CollisionCandidate>
+	void * rhCollisionObjects; // vector<HeaderObject *>
+	void * rhSelectionStack; // vector<vector<SaveSelection>>
+	event2 * rhChildEventToExecute;
+	void * rhIndexedFastLoops; // vector<EventGroupMP *>
 };
 //typedef	RunHeader 	* fprh;
 //typedef	RunHeader 	* RunHeader *;
@@ -2806,7 +2981,7 @@ DarkEdifInternalAccessProtected:
 	RCROUTINE	rcRoutineAnimation;		// Offset to animation routine
 
 	int	   		rcPlayer;				// Player who controls
-	
+
 	int	   		rcNMovement;			// Number of the current movement
 	CRunMvt *	rcRunMvt;				// Pointer to extension movement
 	// Sprite ID if defined; can be nulled mid-runtime for a live object,
@@ -3489,16 +3664,28 @@ DarkEdifInternalAccessProtected:
 };
 
 // To push an event
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+// Used in pushed events, used for pushed events per FPS tick; only applies in MMF2 and earlier.
+// Since CF2.5, pev is stored as a linked list with no hard limit
 #define		MAX_PUSHEDEVENTS	32
 
+// Pushed event data queued to run
 struct pev {
 	NO_DEFAULT_CTORS_OR_DTORS(pev);
 DarkEdifInternalAccessProtected:
+	// CF2.5 only: next queued event in linked list.
+	// MMF2 and earlier uses a fixed size of pushed events, and doesn't have this variable.
+	pev* pevNext;
+	// Event code, can be extension condition or common condition,
+	// although PUSH_EVENT only writes an extension condition
 	long	pevCode;
+	// Function called to run the events, not the condition callback.
 	void (* pevRoutine)(HeaderObject *, long);
+	// The lParam passed to PushEvent/PushEventStop; copied to rhCurParam[0] during dispatch.
 	long	pevParam;
+	// The object to run the event on.
 	HeaderObject *	pevObject;
+	// If you used PushEventStop, the rhCurOi is stored, if PushEvent, 0 is stored.
 	short	pevOi;
 };
 #define	PIXEL_SPEED					5
@@ -3760,25 +3947,55 @@ enum class AH2OPT : std::uint32_t {
 };
 enum_class_is_a_bitmask(AH2OPT);
 
-enum class SCREENORIENTATION {
-	PORTRAIT,
-	LANDSCAPE_LEFT,
-	LANDSCAPE_RIGHT,
-	AUTO,
-	LANDSCAPE_AUTO,
-	PORTRAIT_AUTO,
+enum class SCREENORIENTATION : std::uint16_t {
+	// Android/iOS: portrait standing straight
+	PORTRAIT = 0,
+	// Android/iOS: 90 degree rotation anti-clockwise
+	LANDSCAPE_LEFT = 1,
+	// iOS: 90 degree rotation clockwise
+	LANDSCAPE_RIGHT = 2,
+	// Android/iOS: All four 90 degree orientations
+	AUTO = 3,
+	// Android/iOS: Both landscape orientations
+	LANDSCAPE_AUTO = 4,
+	// iOS: Both portrait orientations
+	PORTRAIT_AUTO = 5,
+	// iOS uses 6 for upside portrait and 7 for sensor in CRunApp/MainViewController, but that's not stored in AppHeader2
 };
+
+enum class AH2OPT2 : std::uint16_t {
+	NONE = 0,
+	// Android/iOS: Listen to object-level Load on Call flags; OIL_LOADONCALL
+	// By default, OIFlags::LOAD_ON_CALL is ignored. OILFlags::IGNORE_LOAD_ON_CALL
+	// TODO: Not sure how this interacts with the frame-level Load On Call.
+	ENABLE_LOAD_ON_CALL = 0x0001,
+	// Android/iOS: Use Windows-like box collisions for obstacle backgrounds, which doesn't
+	// let a single object being box collision treat the non-box 2nd object as box
+	// instead of fine collision
+	WINDOWS_LIKE_BOX_COLLISIONS = 0x0002,
+	// Allow selection of objects marked destroyed in child events
+	SELECT_DELETED_OBJECTS_IN_CHILD_EVENTS = 0x0004,
+	// Android: Images in the application are premultiplied
+	PREMULTIPLIED_IMAGES = 0x0008,
+	// CF2.5 296.06 and later: the setting of "Fix qualifier limit error", encodes
+	// rhQualToOiList offsets as multiplies of 8-bytes instead of 1-byte, see rhQualToOiListSize
+	FIX_QUALIFIER_LIMIT = 0x0020,
+};
+enum_class_is_a_bitmask(AH2OPT2);
 
 // Optional header
 struct AppHeader2 {
 	NO_DEFAULT_CTORS_OR_DTORS(AppHeader2);
 DarkEdifInternalAccessProtected:
-	AH2OPT			Options;
-	std::uint32_t	BuildType,
-					BuildFlags;
-	unsigned short	ScreenRatioTolerance,
-					ScreenAngle;			// 0 (no rotation/portrait), 1 (90 clockwise/landscape left), 2 (90 anticlockwise/landscape right), 3 (automatic portrait), 4 (automatic landscape), 5 (fully automatic)
-	unsigned int	Unused2;
+	AH2OPT				Options;
+	std::uint32_t		BuildType,
+						BuildFlags;
+	std::uint16_t		ScreenRatioTolerance;
+	// Android/iOS: Stores screen rotation, limited differently per OS
+	SCREENORIENTATION	ScreenAngle;
+	// Unused in MMF2?
+	std::uint16_t		iPhoneDisplayOption;
+	AH2OPT2				Options2;
 };
 
 #ifndef	  _H2INC
@@ -4604,10 +4821,10 @@ using EditAnimationParamsA = EditAnimationParams<char>;
 struct mv {
 	NO_DEFAULT_CTORS_OR_DTORS(mv);
 	// Common to editor and runtime
-	HINSTANCE			mvHInst;				// Application HINSTANCE
+	HINSTANCE			mvHInst;			// Application HINSTANCE
 	void *				mvIdAppli;			// Application object in DLL
-	void *				mvIdMainWin;			// Main window object in DLL
-	void *				mvIdEditWin;			// Child window object in DLL
+	void *				mvIdMainWin;		// Main window object in DLL
+	void *				mvIdEditWin;		// Child window object in DLL
 	HWND				mvHMainWin,			// Main window handle
 						mvHEditWin;			// Child window handle
 	HPALETTE			mvHPal256;			// 256 color palette
@@ -4797,13 +5014,18 @@ inline void mvRefreshProp(mv * mV, EDITDATA * edPtr, unsigned int nPropID, BOOL 
 inline void * mvReAllocEditData(mv * mV, EDITDATA * edPtr, unsigned int dwNewSize) \
 	{ return (void *)mV->mvCallFunction(edPtr, CallFunctionIDs::REALLOCEDITDATA, (LPARAM)edPtr, dwNewSize, 0); }
 
-
+// Warning: if you request a string prop value, it will not match ext encoding, but editor encoding.
+// You'll get a Prop_WStr for MMF2 Unicode + CF2.5 editor, Prop_AStr for MMF2 ANSI.
 inline Prop * mvGetPropValue(mv * mV, EDITDATA * edPtr, unsigned int nPropID) \
 	{ return (Prop *)mV->mvCallFunction(edPtr, CallFunctionIDs::GETPROPVALUE, (LPARAM)nPropID, (LPARAM)0, (LPARAM)0); }
 
+// Warning: if you request a string prop value, it will not match ext encoding, but editor encoding.
+// You'll get a Prop_WStr for MMF2 Unicode + CF2.5 editor, Prop_AStr for MMF2 ANSI.
 inline Prop * mvGetAppPropValue(mv * mV, EDITDATA * edPtr, unsigned int nPropID) \
 	{ return (Prop *)mV->mvCallFunction(edPtr, CallFunctionIDs::GETAPPPROPVALUE, (LPARAM)nPropID, (LPARAM)0, (LPARAM)0); }
 
+// Warning: if you request a string prop value, it will not match ext encoding, but editor encoding.
+// You'll get a Prop_WStr for MMF2 Unicode + CF2.5 editor, Prop_AStr for MMF2 ANSI.
 inline Prop * mvGetFramePropValue(mv * mV, EDITDATA * edPtr, unsigned int nPropID) \
 	{ return (Prop *)mV->mvCallFunction(edPtr, CallFunctionIDs::GETFRAMEPROPVALUE, (LPARAM)nPropID, (LPARAM)0, (LPARAM)0); }
 
@@ -5500,7 +5722,7 @@ DarkEdifInternalAccessProtected:
 	// Default global value values
 	unsigned char * pGlobalValuesInit;
 	// Number of global values
-	int nGlobalValues;				
+	int nGlobalValues;
 	CValueMultiPlat * pGlobalValues;			// Global values
 	unsigned char *	pFree;						// No longer used
 	// Global value names
