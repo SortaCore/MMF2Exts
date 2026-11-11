@@ -1023,12 +1023,12 @@ endFunc:
 
 #ifdef _WIN32
 
-struct ConditionOrActionManager_Windows : ACEParamReader
+struct ConditionOrActionManager_Windows final : ACEParamReader
 {
 	RunObject * const rdPtr;
-	Extension* const ext;
+	Extension * const ext;
 	bool isTwoOrLess;
-	bool isCondition;
+	const bool isCondition;
 
 	// Converts an int expression representing a Fusion direction number 0-31 into its position on a mask.
 	// Used as New Direction users can press 1+1 button and put in a number calculation instead.
@@ -1087,8 +1087,12 @@ struct ConditionOrActionManager_Windows : ACEParamReader
 		ext->Runtime.param2 = param2;
 	}
 
+	ConditionOrActionManager_Windows() = delete;
+	ConditionOrActionManager_Windows(const ConditionOrActionManager_Windows &) = delete;
+	ConditionOrActionManager_Windows(const ConditionOrActionManager_Windows &&) = delete;
+
 	// Inherited via ACEParamReader
-	virtual float GetFloatParam(int index)
+	virtual float GetFloatParam(int index) final
 	{
 		if (isTwoOrLess)
 			return *(const float*)(index == 0 ? &ext->Runtime.param1 : &ext->Runtime.param2);
@@ -1098,14 +1102,14 @@ struct ConditionOrActionManager_Windows : ACEParamReader
 		return *(float*)&i;
 	}
 
-	virtual const TCHAR * GetStringParam(int index)
+	virtual const TCHAR * GetStringParam(int index) final
 	{
 		if (isTwoOrLess)
 			return (const TCHAR *)(index == 0 ? ext->Runtime.param1 : ext->Runtime.param2);
 		return (const TCHAR *)CNC_GetStringParameter(rdPtr);
 	}
 
-	virtual std::int32_t GetIntegerParam(int index, Params type)
+	virtual std::int32_t GetIntegerParam(int index, Params type) final
 	{
 		if (isTwoOrLess)
 			return (index == 0 ? ext->Runtime.param1 : ext->Runtime.param2);
@@ -1164,10 +1168,10 @@ struct ConditionOrActionManager_Windows : ACEParamReader
 // how many a/c/e are running in this ext at the mo
 int aceIndex = 0;
 
-struct ConditionOrActionManager_Android : ACEParamReader
+struct ConditionOrActionManager_Android final : ACEParamReader
 {
 	jobject javaActOrCndObj, javaExtPtr, javaExtRHPtr;
-	bool isCondition;
+	const bool isCondition;
 	int ourAceIndex;
 
 	static global<jclass> extClass, cndClass, actClass;
@@ -1213,9 +1217,12 @@ struct ConditionOrActionManager_Android : ACEParamReader
 			getRH = threadEnv->GetFieldID(extClass, "rh", "LRunLoop/CRun;");
 		}
 	}
+	ConditionOrActionManager_Android() = delete;
+	ConditionOrActionManager_Android(const ConditionOrActionManager_Android&) = delete;
+	ConditionOrActionManager_Android(const ConditionOrActionManager_Android&&) = delete;
 
 	// Inherited via ACEParamReader
-	virtual float GetFloatParam(int index)
+	virtual float GetFloatParam(int index) final
 	{
 		LOGV("Getting float param, cond=%d, index %d.\n", isCondition ? 1 : 0, index);
 		const float f = threadEnv->CallFloatMethod(javaActOrCndObj, isCondition ? getCndParamFloat : getActParamFloat, javaExtRHPtr, index);
@@ -1224,7 +1231,7 @@ struct ConditionOrActionManager_Android : ACEParamReader
 		return f;
 	}
 
-	virtual const TCHAR * GetStringParam(int index)
+	virtual const TCHAR * GetStringParam(int index) final
 	{
 		LOGV("Getting string param, cond=%d, index %d.\n", isCondition ? 1 : 0, index);
 		strings[stringIndex].init(
@@ -1235,7 +1242,7 @@ struct ConditionOrActionManager_Android : ACEParamReader
 		return strings[stringIndex++].str().data();
 	}
 
-	virtual std::int32_t GetIntegerParam(int index, Params type)
+	virtual std::int32_t GetIntegerParam(int index, Params type) final
 	{
 		LOGV("Getting integer param, cond=%d, index %d, type %d.\n", isCondition ? 1 : 0, index, (int)type);
 		const std::int32_t in = threadEnv->CallIntMethod(javaExtPtr, getActOrCondParamInt, javaActOrCndObj, index, type);
@@ -1244,7 +1251,7 @@ struct ConditionOrActionManager_Android : ACEParamReader
 		return in;
 	}
 
-	virtual long GetObjectParam(int index)
+	virtual long GetObjectParam(int index) final
 	{
 		// If condition, getParamObject() returns a PARAM_OBJECT; dereference it and read its OIList var via Java side
 		if (isCondition)
@@ -1321,43 +1328,46 @@ extern "C"
 
 // segregate to prevent two iOS exts conflicting
 inline namespace FusionInternals {
-struct ConditionOrActionManager_iOS : ACEParamReader
+struct ConditionOrActionManager_iOS final : ACEParamReader
 {
-	::Extension* ext;
-	void * objCActOrCndObj;
-	bool isCondition;
+	::Extension* const ext;
+	void * const objCActOrCndObj;
+	const bool isCondition;
 
 	ConditionOrActionManager_iOS(bool isCondition, Extension* ext, void * objCActOrCndObj)
 		: ext(ext), objCActOrCndObj(objCActOrCndObj), isCondition(isCondition)
 	{
 	}
+	ConditionOrActionManager_iOS() = delete;
+	ConditionOrActionManager_iOS(const ConditionOrActionManager_iOS &) = delete;
+	ConditionOrActionManager_iOS(const ConditionOrActionManager_iOS &&) = delete;
 
 	// Inherited via ACEParamReader
-	virtual float GetFloatParam(int index)
+	virtual float GetFloatParam(int index) final
 	{
 		LOGV("Getting float param, cond=%d, index %d.\n", isCondition ? 1 : 0, index);
-		double f = (isCondition ? DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, cndGetParamExpDouble) : DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, actGetParamExpDouble))(ext->objCExtPtr, objCActOrCndObj, index);
+		const double f = (isCondition ? DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, cndGetParamExpDouble) : DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, actGetParamExpDouble))(ext->objCExtPtr, objCActOrCndObj, index);
 		LOGV("Got float param, cond=%d, index %d OK: %f.\n", isCondition ? 1 : 0, index, f);
 		return (float)f;
 	}
 
-	virtual const TCHAR* GetStringParam(int index)
+	virtual const TCHAR* GetStringParam(int index) final
 	{
 		LOGV("Getting string param, cond=%d, index %d.\n", isCondition ? 1 : 0, index);
-		const TCHAR* str = (isCondition ? DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, cndGetParamExpString) : DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, actGetParamExpString))(ext->objCExtPtr, objCActOrCndObj, index);
+		const TCHAR* const str = (isCondition ? DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, cndGetParamExpString) : DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, actGetParamExpString))(ext->objCExtPtr, objCActOrCndObj, index);
 		LOGV("Got string param, cond=%d, index %d OK: \"%s\".\n", isCondition ? 1 : 0, index, str);
 		return str;
 	}
 
-	virtual std::int32_t GetIntegerParam(int index, Params type)
+	virtual std::int32_t GetIntegerParam(int index, Params type) final
 	{
 		LOGV("Getting integer param, cond=%d, index %d, type %d.\n", isCondition ? 1 : 0, index, (int)type);
-		std::int32_t in = (isCondition ? DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, cndGetParamExpression) : DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, actGetParamExpression))(ext->objCExtPtr, objCActOrCndObj, index, (int)type);
+		const std::int32_t in = (isCondition ? DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, cndGetParamExpression) : DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, actGetParamExpression))(ext->objCExtPtr, objCActOrCndObj, index, (int)type);
 		LOGV("Got integer param, cond=%d, index %d, type %d OK: %i.\n", isCondition ? 1 : 0, index, (int)type, in);
 		return in;
 	}
 
-	virtual long GetObjectParam(int index)
+	virtual long GetObjectParam(int index) final
 	{
 		// If condition, the parameter look-up gets an EventParam from runtime, which we dereference into a OINUM
 		if (isCondition)
@@ -1388,7 +1398,7 @@ struct ConditionOrActionManager_iOS : ACEParamReader
 long FusionAPI Edif::ConditionJump(RUNDATA * rdPtr, long param1, long param2)
 {
 	Extension * const ext = ((RunObject*)rdPtr)->GetExtension();
-	int ID = ForbiddenInternals::GetEventNumber(((RunObject*)rdPtr));
+	const int ID = ForbiddenInternals::GetEventNumber(((RunObject*)rdPtr));
 	ConditionOrActionManager_Windows params(true, (RunObject*)rdPtr, param1, param2);
 #elif defined(__ANDROID__)
 ProjectFunc jlong conditionJump(JNIEnv *, jobject, jlong extPtr, int ID, CCndExtension cndExt)
@@ -1506,7 +1516,7 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _actionJump(
 
 #ifdef __ANDROID__
 
-struct ExpressionManager_Android : ACEParamReader {
+struct ExpressionManager_Android final : ACEParamReader {
 	CNativeExpInstance expJavaObj;
 	JavaAndCString strings[16];
 	int stringIndex = 0;
@@ -1531,6 +1541,10 @@ struct ExpressionManager_Android : ACEParamReader {
 			setRetString = threadEnv->GetMethodID(expClass, "setReturnString", "(Ljava/lang/String;)V");
 		}
 	}
+	ExpressionManager_Android() = delete;
+	ExpressionManager_Android(const ExpressionManager_Android &) = delete;
+	ExpressionManager_Android(const ExpressionManager_Android &&) = delete;
+
 	void SetValue(int a) {
 		threadEnv->CallVoidMethod(expJavaObj, setRetInt, a);
 	}
@@ -1549,7 +1563,7 @@ struct ExpressionManager_Android : ACEParamReader {
 	}
 
 	// Inherited via ACEParamReader
-	virtual float GetFloatParam(int index)
+	virtual float GetFloatParam(int index) final
 	{
 		LOGV("Getting float param, expr, index %d OK.\n", index);
 		const float f = threadEnv->CallFloatMethod(expJavaObj, getParamFloat);
@@ -1557,7 +1571,7 @@ struct ExpressionManager_Android : ACEParamReader {
 		return f;
 	}
 
-	virtual const TCHAR * GetStringParam(int index)
+	virtual const TCHAR * GetStringParam(int index) final
 	{
 		LOGV("Getting string param, expr, index %d.\n", index);
 		strings[stringIndex].init((jstring)threadEnv->CallObjectMethod(expJavaObj, getParamString));
@@ -1565,14 +1579,14 @@ struct ExpressionManager_Android : ACEParamReader {
 		return strings[stringIndex++].str().data();
 	}
 
-	virtual std::int32_t GetIntegerParam(int index, Params)
+	virtual std::int32_t GetIntegerParam(int index, Params) final
 	{
 		LOGV("Getting integer param, expr, index %d OK.\n", index);
 		const std::int32_t i = threadEnv->CallIntMethod(expJavaObj, getParamInt);
 		LOGV("Got integer param, expr, index %d OK: %i.\n", index, i);
 		return i;
 	}
-	virtual long GetObjectParam(int)
+	virtual long GetObjectParam(int) final
 	{
 		// Expressions can't use object parameters
 		return 0;
@@ -1646,13 +1660,17 @@ struct ExpressionManager_Windows : ACEParamReader {
 #elif defined(__APPLE__)
 // segregate to prevent two iOS exts conflicting
 inline namespace FusionInternals {
-struct ExpressionManager_iOS : ACEParamReader {
+struct ExpressionManager_iOS final : ACEParamReader {
 	Extension* const ext;
 
 	ExpressionManager_iOS(Extension* ext) :
 		ext(ext)
 	{
 	}
+	ExpressionManager_iOS() = delete;
+	ExpressionManager_iOS(const ExpressionManager_iOS &) = delete;
+	ExpressionManager_iOS(const ExpressionManager_iOS &&) = delete;
+
 	void SetValue(int a) {
 		DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expSetReturnInt)(ext->objCExtPtr, a);
 	}
@@ -1664,7 +1682,7 @@ struct ExpressionManager_iOS : ACEParamReader {
 	}
 
 	// Inherited via ACEParamReader
-	virtual float GetFloatParam(int index)
+	virtual float GetFloatParam(int index) final
 	{
 		LOGV("Getting float param, expr, index %d OK.\n", index);
 		float f = DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expGetParamFloat)(ext->objCExtPtr);
@@ -1672,7 +1690,7 @@ struct ExpressionManager_iOS : ACEParamReader {
 		return f;
 	}
 
-	virtual const TCHAR* GetStringParam(int index)
+	virtual const TCHAR* GetStringParam(int index) final
 	{
 		LOGV("Getting string param, expr, index %d.\n", index);
 		const TCHAR* str = DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expGetParamString)(ext->objCExtPtr);
@@ -1680,14 +1698,14 @@ struct ExpressionManager_iOS : ACEParamReader {
 		return str;
 	}
 
-	virtual std::int32_t GetIntegerParam(int index, Params)
+	virtual std::int32_t GetIntegerParam(int index, Params) final
 	{
 		LOGV("Getting integer param, expr, index %d OK.\n", index);
 		std::int32_t i = DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expGetParamInt)(ext->objCExtPtr);
 		LOGV("Got integer param, expr, index %d OK: %d.\n", index, i);
 		return i;
 	}
-	virtual long GetObjectParam(int)
+	virtual long GetObjectParam(int) final
 	{
 		// Expressions can't use object parameters
 		return 0;
