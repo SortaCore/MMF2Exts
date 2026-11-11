@@ -1029,6 +1029,26 @@ struct ConditionOrActionManager_Windows : ACEParamReader
 	Extension* const ext;
 	bool isTwoOrLess;
 	bool isCondition;
+
+	// Converts an int expression representing a Fusion direction number 0-31 into its position on a mask.
+	// Used as New Direction users can press 1+1 button and put in a number calculation instead.
+	static std::uint32_t NewDirectionIntToMask(const long direction)
+	{
+		// A direction of -1 indicates no direction set; return empty mask.
+		if (direction == -1)
+			return 0U;
+		if (direction < 0 || direction > 31)
+		{
+			LOGE(_T("Invalid New Direction value %d passed by user, going with none.\n"), direction);
+			return 0U;
+		}
+		return 1U << direction;
+	}
+	static void AdvanceEventParam(EventParam*& evp)
+	{
+		evp = (EventParam*)(((char*)evp) + evp->size);
+	}
+
 	ConditionOrActionManager_Windows(bool isCondition, RunObject * rdPtr, long param1, long param2)
 		: rdPtr(rdPtr), ext(rdPtr->GetExtension()), isCondition(isCondition)
 	{
@@ -1049,10 +1069,18 @@ struct ConditionOrActionManager_Windows : ACEParamReader
 		// and just re-interpreted.
 		for (int i = 0; isTwoOrLess && i < info->NumOfParams; ++i)
 		{
+			long& value = i == 0 ? param1 : param2;
 			if ((info->FloatFlags & (1 << i)) != 0)
-				(i == 0 ? param1 : param2) = CNC_GetFloatValue(rdPtr, i);
+				value = CNC_GetFloatValue(rdPtr, i);
+			else if (info->Parameter[i].p == Params::New_Direction)
+			{
+				// Fusion pre-evaluates a picker mask to one direction; swap back to full mask.
+				// Whereas, if expression is used, the expression must be converted to a mask
+				value = rdPtr->rHo.hoCurrentParam->Code == (int)Params::New_Direction ?
+					rdPtr->rHo.hoCurrentParam->evp.L[0] : (long)NewDirectionIntToMask(value);
+			}
 
-			rdPtr->rHo.hoCurrentParam = (EventParam*)(((char*)rdPtr->rHo.hoCurrentParam) + rdPtr->rHo.hoCurrentParam->size);
+			AdvanceEventParam(rdPtr->rHo.hoCurrentParam);
 		}
 
 		ext->Runtime.param1 = param1;
@@ -1066,7 +1094,7 @@ struct ConditionOrActionManager_Windows : ACEParamReader
 			return *(const float*)(index == 0 ? &ext->Runtime.param1 : &ext->Runtime.param2);
 		// CNC_GetFloatValue works more consistently when events are generated inside params,
 		// than CNC_GetFloatParameter does
-		int i = (int)CNC_GetFloatParameter(rdPtr);
+		const int i = (int)CNC_GetFloatParameter(rdPtr);
 		return *(float*)&i;
 	}
 
@@ -1079,29 +1107,24 @@ struct ConditionOrActionManager_Windows : ACEParamReader
 
 	virtual std::int32_t GetIntegerParam(int index, Params type)
 	{
-		// TODO: Does pre-evaluated parameters work with NewDirection, or does it loop directions?
 		if (isTwoOrLess)
 			return (index == 0 ? ext->Runtime.param1 : ext->Runtime.param2);
 
-		// PARAM_NEWDIRECTION will return directions as 0-31, instead of bitmask, if you use GetIntParameter(),
-		// and then repeat the condition for each direction.
+		// Reading PARAM_NEWDIRECTION through GetIntParameter() picks one direction from the mask.
 		// When the user says 1+1 expression on New Direction, it's stored as a code 22, Expression.
 		// This value -> bitmask workaround is handled by the DarkEdif wrappers in Android/iOS.
 		if (type == Params::New_Direction)
 		{
 			// TODO: Should hoCurrentParam be incremented to next param?
 			if (rdPtr->rHo.hoCurrentParam->Code == (int)Params::New_Direction)
-				return rdPtr->rHo.hoCurrentParam->evp.L[0];
-			// Convert 0-31 to New Direction bitmask; also, -1 becomes empty bitmask (0)
-			int ret = (std::int32_t)CNC_GetIntParameter(rdPtr);
-			if (ret == -1)
-				return 0;
-			if (ret < 0 || ret > 31)
 			{
-				LOGE(_T("Invalid New Direction value %d passed by user, going with none.\n"), ret);
-				return 0;
+				const int res = (int)rdPtr->rHo.hoCurrentParam->evp.L[0];
+				AdvanceEventParam(rdPtr->rHo.hoCurrentParam);
+				return res;
 			}
-			return 1 << ret;
+
+			// Convert 0-31 to New Direction bitmask; also, -1 becomes empty bitmask (0)
+			return (std::int32_t)NewDirectionIntToMask(CNC_GetIntParameter(rdPtr));
 		}
 		return (std::int32_t)CNC_GetIntParameter(rdPtr);
 	}
