@@ -947,8 +947,11 @@ EventGroupMP * RunHeader::get_EventGroup() {
 std::size_t RunHeader::GetNumberOi() {
 	return rhNumberOi - 1; // Windows runtime includes an invalid Oi at the end of list as part of count
 }
-qualToOi* RunHeader::GetQualToOiListByOffset(std::size_t byteOffset) {
-	return (qualToOi*)(((std::uint8_t*)rhQualToOiList) + (byteOffset & 0x7FFF));
+qualToOi* RunHeader::GetQualToOiListByOffset(std::size_t offset) {
+	// Windows edits the offset calculation if the app setting "Fix qualifier limit error" is on.
+	// Since CF2.5 296.06, you can read the offset of 1 or 8 from rhQualToOiListSize;
+	// prior to that, it's always 1-byte.
+	return (qualToOi*)(((std::uint8_t*)rhQualToOiList) + ((offset & 0x7FFF) * std::max(1U, rhQualToOiListSize)));
 }
 RunObjectMultiPlatPtr RunHeader::GetObjectListOblOffsetByIndex(std::size_t index) {
 	return rhObjectList[index].oblOffset;

@@ -2252,7 +2252,9 @@ DarkEdifInternalAccessProtected:
 	int					rhNObjects,
 						rhMaxObjects;
 
-	unsigned int		rhFree2[4];			// !No description in original SDK
+	// Added in CF2.5 296.06, set to either 1 or 8, see AH2OPT2::FIX_QUALIFIER_LIMIT, unused earlier
+	unsigned int		rhQualToOiListSize;
+	unsigned int		rhFree2[3];			// !No description in original SDK
 
 	int 				rhNumberOi;			// Number of OI in the list
 	objInfoList *		rhOiList;			// ObjectInfo list
