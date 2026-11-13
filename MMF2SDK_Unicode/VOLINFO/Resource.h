@@ -2,7 +2,7 @@
 // App Studio generated include file.
 // Used by Ext.rc
 //
-#define _APS_NO_MFC			 1
+#define _APS_NO_MFC             1
 
 // About box information
 #define	IDST_OBJNAME			128
@@ -12,10 +12,10 @@
 #define	IDST_HTTP				132
 
 // Dialog Box ID
-#define DB_SETUP				20003
+#define DB_SETUP                20003
 
 // Help ID
-#define ID_HELP				 20004
+#define ID_HELP                 20004
 
 
 // 	Actions
@@ -25,10 +25,10 @@
 #define MN_ACTIONS				20000
 
 // Commands of action menu
-#define IDMN_ACTION					25000
+#define IDMN_ACTION	       		25000
 
 // Action strings
-#define M_ACTION				 5000
+#define M_ACTION                 5000
 
 // Titles of action parameters
 #define M_ACT_P1				 5501
@@ -73,13 +73,13 @@
 #define	M_EXP_P2				 7501
 
 // Next default values for new objects
-//
+// 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 
-#define _APS_NEXT_RESOURCE_VALUE		101
-#define _APS_NEXT_COMMAND_VALUE		 40001
-#define _APS_NEXT_CONTROL_VALUE		 1001
-#define _APS_NEXT_SYMED_VALUE			101
+#define _APS_NEXT_RESOURCE_VALUE        101
+#define _APS_NEXT_COMMAND_VALUE         40001
+#define _APS_NEXT_CONTROL_VALUE         1001
+#define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

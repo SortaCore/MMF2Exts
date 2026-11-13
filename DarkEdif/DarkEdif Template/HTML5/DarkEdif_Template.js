@@ -549,7 +549,7 @@ function CRunDarkEdif_Template() {
 	this.$conditionFuncs = [
 	/* 0 */ this.Condition_AreTwoNumbersEqual
 
-	// update getNumOfConditions function if you edit this!!!!
+	// update getNumberOfConditions function if you edit this!!!!
 	];
 	this.$expressionFuncs = [
 	/* 0 */ this.Expression_Add,

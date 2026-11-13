@@ -78,6 +78,11 @@
 				"Type": "FolderEnd"
 			},
 			{
+                "Title": "Props outside folder",
+                "Info": "This blue header is called a group inside the DarkExt.json file.",
+                "Type": "Group"
+            },
+			{
 				"Title": "Static text 1",
 				"Info": "Blank text",
 				"Type": "Text",
@@ -139,7 +144,7 @@
 		"About": {
 			"Name": "Exemple objet",
 			"Author": "Votre Nom",
-			"Copyright": "Copyright \u00A9 2022 par Votre Nom",
+			"Copyright": "Copyright \u00A9 2026 par Votre Nom",
 			"Comment": "Une ou deux phrases pour décrire votre poste",
 			"Help": "Help/Example.chm",
 			"URL": "http://www.example.com/"
@@ -209,6 +214,11 @@
 			{
 				"Type": "FolderEnd"
 			},
+			{
+                "Title": "Groupe",
+                "Info": "Voir le fichier DarkExt.json.",
+                "Type": "Group"
+            },
 			{
 				"Title": "Texte statique 1",
 				"Info": "Texte vide",
