@@ -80,11 +80,13 @@ FusionAPIImport PreferFusionFunc_CF25_296_02(1143, "File_GetLength_Ex") _Success
 	// Returns the file length. Limited to 2GiB files; see File_GetLength_Ex, or SetFilePointerEx.
 	long FusionAPI File_GetLength(_In_valid_hfile_ HFILE hf) EXDEF;
 
-// Closes the given HFILE. Does not change its value. Recommended to use CloseHandle() instead.
-// @remarks Due to possible write issues (e.g. out of space), you should avoid using this function
-//			if writing the file, as you will not be able to handle flushing error scenarios, e.g. disk full.
-//			A successful write does not mean it got to the disk; it means OS cached it for writing successfully.
-FusionAPIImport [[deprecated("Use _lclose()")]] MMF2_ORD(419)
+// Closes the given HFILE. Recommended to use CloseHandle() instead to get exit errors.
+// Does not change the HFILE value.
+// @remarks Due to possible write issues (e.g. disk full), you should avoid using this function
+//			if writing the file, as you will not be able to handle flushing error scenarios.
+//			A successful write call earlier does not mean the write got to the disk; it means
+//			the OS cached it for writing successfully, so you'll see the write error here instead.
+FusionAPIImport [[deprecated("Use CloseHandle()")]] MMF2_ORD(419)
 	void FusionAPI File_Close(_In_valid_hfile_ _Post_invalid_ HFILE hf) EXDEF;
 FusionAPIImport _Must_inspect_result_ _NODISCARD MMF2_ORD(421)
 	BOOL FusionAPI File_ExistA(_In_z_ const char* pName) EXDEF;
