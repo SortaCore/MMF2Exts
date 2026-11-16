@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //
 //  CALPlayer.h
 //  RuntimeIPhone
@@ -69,3 +71,5 @@ OSStatus read_Proc (void *inClientData, SInt64 inPosition, UInt32 requestCount, 
 OSStatus write_Proc (void *inClientData, SInt64 inPosition, UInt32 requestCount, const void *buffer, UInt32  *actualCount);
 SInt64 getSize_Proc (void *inClientData);
 OSStatus setSize_Proc (void *inClientData, SInt64 size);
+
+#import "CSound.h"

@@ -108,3 +108,6 @@
 -(BOOL)InsideZone:(double)angle withAngleRef:(double) angle_ref andGap:(double) gap;
 
 @end
+
+#import "CRunApp.h"
+#import "CImage.h"

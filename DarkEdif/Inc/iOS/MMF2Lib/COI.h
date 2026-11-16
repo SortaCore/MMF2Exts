@@ -100,3 +100,7 @@
 -(void)discard:(CRunApp*)app;
 -(void)loadEffectData:(CFile*)file;
 @end
+
+#import "COC.h"
+#import "CFile.h"
+#import "CRunApp.h"

@@ -113,3 +113,8 @@ extern UIColor* getUIColor(int rgb);
 -(void)dealloc;
 @end
 
+#import "CFont.h"
+#import "CBitmap.h"
+#import "CRenderToTexture.h"
+#import "CRenderer.h"
+#import "CSprite.h"

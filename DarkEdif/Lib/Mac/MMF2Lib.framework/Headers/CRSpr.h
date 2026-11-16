@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CRSPR : Gestion des objets sprites
@@ -79,3 +81,11 @@
 -(BOOL)checkEndFadeOut;
 
 @end
+
+#import "CObject.h"
+#import "CSpriteGen.h"
+#import "CObjectCommon.h"
+#import "CCreateObjectInfo.h"
+#import "CSprite.h"
+#import "CTrans.h"
+#import "CFadeSprite.h"

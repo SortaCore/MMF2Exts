@@ -15,6 +15,8 @@
 * misrepresented as being the original software.
 * 3. This notice may not be removed or altered from any source distribution.
 */
+#pragma once
+
 
 #ifndef B2_CHAIN_SHAPE_H
 #define B2_CHAIN_SHAPE_H
@@ -100,3 +102,5 @@ inline b2ChainShape::b2ChainShape()
 }
 
 #endif
+
+#import "b2EdgeShape.h"

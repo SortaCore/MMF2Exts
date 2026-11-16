@@ -73,3 +73,5 @@ enum {
 -(CMask*)spriteGetMask;
 
 @end
+
+#import "COI.h"

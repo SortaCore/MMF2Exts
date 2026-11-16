@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CMOVEDEFPATH : donnÈes du mouvement path
@@ -43,3 +45,6 @@
 -(void)load:(CFile*)file withLength:(int)length;
 
 @end
+
+#import "CFile.h"
+#import "CPathStep.h"

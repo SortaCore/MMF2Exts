@@ -43,3 +43,7 @@
 -(void)presentViewController:(UIViewController *)viewControllerToPresent animated:(BOOL)flag;
 -(void)dismissViewControllerAnimated:(BOOL)flag;
 @end
+
+#import "CRunApp.h"
+#import "CRunView.h"
+#import "MainView.h"

@@ -111,3 +111,8 @@
 -(CMask*)spriteGetMask;
 
 @end
+
+#import "CRunApp.h"
+#import "CSprite.h"
+#import "CValue.h"
+#import "CRenderToTexture.h"

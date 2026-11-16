@@ -51,3 +51,11 @@ class CRenderer;
 -(CMask*)spriteGetMask;
 
 @end
+
+#import "CObjectCommon.h"
+#import "CCreateObjectInfo.h"
+#import "CImageBank.h"
+#import "CSprite.h"
+#import "CMask.h"
+#import "CBitmap.h"
+#import "CRenderer.h"

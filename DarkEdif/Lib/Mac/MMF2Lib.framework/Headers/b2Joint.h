@@ -15,6 +15,8 @@
 * misrepresented as being the original software.
 * 3. This notice may not be removed or altered from any source distribution.
 */
+#pragma once
+
 
 #ifndef B2_JOINT_H
 #define B2_JOINT_H
@@ -220,3 +222,9 @@ inline bool b2Joint::GetCollideConnected() const
 }
 
 #endif
+
+#import "b2Body.h"
+#import "b2BlockAllocator.h"
+#import "b2World.h"
+#import "b2Island.h"
+#import "b2GearJoint.h"

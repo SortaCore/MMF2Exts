@@ -79,3 +79,10 @@ class CRenderer;
 -(void)end;
 
 @end
+
+#import "CBitmap.h"
+#import "CFile.h"
+#import "CTransitionData.h"
+#import "CRunApp.h"
+#import "CRenderer.h"
+#import "CRenderToTexture.h"

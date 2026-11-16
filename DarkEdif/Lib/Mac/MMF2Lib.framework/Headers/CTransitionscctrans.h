@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CTransitionCTrans : point d'entree des transitions standart
@@ -318,3 +320,7 @@ class CRenderer;
 -(void)end;
 @end
 
+#import "CTransitionData.h"
+#import "CFile.h"
+#import "CRenderer.h"
+#import "CRenderToTexture.h"

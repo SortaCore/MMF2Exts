@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CEffectEx: effect executable code
@@ -85,4 +87,8 @@ class Renderer;
 -(bool)refreshParamSurface;
 @end
 
-
+#import "CFile.h"
+#import "CRunApp.h"
+#import "CEffectParam.h"
+#import "CEffect.h"
+#import "CValue.h"

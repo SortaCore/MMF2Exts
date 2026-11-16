@@ -41,3 +41,5 @@
 -(void)setModuleName:(NSString*)name withID:(int)id;
 
 @end
+
+#import "CFile.h"

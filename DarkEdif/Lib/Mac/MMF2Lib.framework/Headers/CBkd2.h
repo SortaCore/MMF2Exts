@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 // -----------------------------------------------------------------------------
 //
 // CBKD2 : objet paste dans le decor
@@ -61,3 +63,9 @@
 -(void)fillEffectData:(COI*)oiPtr;
 
 @end
+
+#import "CRun.h"
+#import "CRunApp.h"
+#import "COI.h"
+#import "CSprite.h"
+#import "CEffectEx.h"

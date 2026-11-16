@@ -24,7 +24,7 @@
 //----------------------------------------------------------------------------------
 #pragma once
 #import <Foundation/Foundation.h>
-#import "IDrawable.h"
+#import "IDrawableProtocol.h"
 #import "CoreMath.h"
 #import "CRect.h"
 
@@ -144,3 +144,21 @@ class CRenderer;
 -(int)checkOrCreateEffectIfNeededByName:(NSString*)name andEffectParam:(int)rgba;
 -(void)fillEffectData;
 @end
+
+#import "CRun.h"
+#import "CRCom.h"
+#import "CRAni.h"
+#import "CRMvt.h"
+#import "CRVal.h"
+#import "CRSpr.h"
+#import "CObjInfo.h"
+#import "CArrayList.h"
+#import "CObjectCommon.h"
+#import "CMask.h"
+#import "CSprite.h"
+#import "CImageBank.h"
+#import "CCreateObjectInfo.h"
+#import "CBitmap.h"
+#import "CEffectEx.h"
+#import "CRenderer.h"
+#import "IDrawable.h"

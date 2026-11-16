@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CCOLMASK : masque de collision
@@ -70,3 +72,5 @@
 -(BOOL)testIt:(short*)dMask withMask:(CMask*)sMask andYBase:(int)yBase andX:(int)xx andY:(int)yy;
 
 @end
+
+#import "CMask.h"

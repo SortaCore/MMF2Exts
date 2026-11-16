@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CTRANS : interface avec un effet de transition
@@ -78,3 +80,10 @@ class CRenderer;
 -(void)end;
 
 @end
+
+#import "CBitmap.h"
+#import "CFile.h"
+#import "CTransitionData.h"
+#import "CRunApp.h"
+#import "CRenderer.h"
+#import "CRenderToTexture.h"

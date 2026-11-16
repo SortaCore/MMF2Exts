@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CMOVEEXTENSIOn : Mouvement extension
@@ -52,3 +54,5 @@
 -(double)callMovement2:(int)function param:(double)param param2:(double)param2;
 
 @end
+
+#import "CRunMvtExtension.h"

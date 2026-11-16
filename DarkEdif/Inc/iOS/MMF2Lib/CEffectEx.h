@@ -85,4 +85,7 @@ class Renderer;
 -(bool)refreshParamSurface;
 @end
 
-
+#import "CFile.h"
+#import "CRunApp.h"
+#import "CEffectParam.h"
+#import "CValue.h"

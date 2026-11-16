@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CMOVERACE : Mouvement voiture de course
@@ -55,3 +57,6 @@
 -(void)setDir:(int)dir;
 
 @end
+
+#import "CObject.h"
+#import "CMoveDef.h"

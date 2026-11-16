@@ -66,3 +66,5 @@
 -(void)kill:(BOOL)bFast;
 
 @end
+
+#import "CSprite.h"

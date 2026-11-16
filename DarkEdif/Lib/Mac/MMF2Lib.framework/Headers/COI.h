@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // COI
@@ -97,3 +99,6 @@
 -(void)enumElements:(id)enumImages withFont:(id)enumFonts;
 -(void)loadEffectData:(CFile*)file;
 @end
+
+#import "COC.h"
+#import "CFile.h"

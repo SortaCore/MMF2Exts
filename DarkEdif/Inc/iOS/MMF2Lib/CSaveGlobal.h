@@ -74,3 +74,6 @@
 -(id)init;
 -(void)dealloc;
 @end
+
+#import "CArrayList.h"
+#import "CValue.h"

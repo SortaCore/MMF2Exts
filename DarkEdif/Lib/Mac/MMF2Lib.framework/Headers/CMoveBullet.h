@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CMOVEBULLET : mouvement shoot
@@ -45,3 +47,6 @@
 -(void)setYPosition:(int)y;
 -(void)kill;
 @end
+
+#import "CObject.h"
+#import "CMoveDef.h"

@@ -39,3 +39,5 @@
 -(void)load:(CFile*)file withInitFlags:(BOOL)initFlag;
 
 @end
+
+#import "CFile.h"

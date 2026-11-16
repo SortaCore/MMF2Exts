@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CMOVEDEF classe abstraite de definition d'un mouvement
@@ -56,3 +58,5 @@
 -(void)setData:(short)t withControl:(short)c andMoveAtStart:(unsigned char)m andDirAtStart:(int)d andOptions:(unsigned char)mo;
 
 @end
+
+#import "CFile.h"

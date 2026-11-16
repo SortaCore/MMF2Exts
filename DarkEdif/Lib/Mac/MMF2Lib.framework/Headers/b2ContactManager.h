@@ -15,6 +15,8 @@
 * misrepresented as being the original software.
 * 3. This notice may not be removed or altered from any source distribution.
 */
+#pragma once
+
 
 #ifndef B2_CONTACT_MANAGER_H
 #define B2_CONTACT_MANAGER_H
@@ -50,3 +52,7 @@ public:
 };
 
 #endif
+
+#import "b2Contact.h"
+#import "b2WorldCallbacks.h"
+#import "b2BlockAllocator.h"

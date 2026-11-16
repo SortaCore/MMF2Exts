@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // COILIST : liste des OI de l'application
@@ -56,3 +58,7 @@
 -(void)enumElements:(id)enumImages withFont:(id)enumFonts;
 
 @end
+
+#import "CRunApp.h"
+#import "COI.h"
+#import "CFile.h"

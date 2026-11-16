@@ -46,3 +46,7 @@
 -(CRunExtension*)loadRunObject:(int)type;
 
 @end
+
+#import "CRunApp.h"
+#import "CRunExtension.h"
+#import "CExtLoad.h"

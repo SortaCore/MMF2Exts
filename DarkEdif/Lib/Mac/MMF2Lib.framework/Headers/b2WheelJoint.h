@@ -15,6 +15,8 @@
 * misrepresented as being the original software.
 * 3. This notice may not be removed or altered from any source distribution.
 */
+#pragma once
+
 
 #ifndef B2_WHEEL_JOINT_H
 #define B2_WHEEL_JOINT_H
@@ -211,3 +213,5 @@ inline float32 b2WheelJoint::GetSpringDampingRatio() const
 }
 
 #endif
+
+#import "b2Joint.h"

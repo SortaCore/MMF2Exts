@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CFONTBANK : stockage des fontes
@@ -57,3 +59,8 @@
 -(short)enumerate:(short)num;
 
 @end
+
+#import "CRunApp.h"
+#import "CFont.h"
+#import "CFontInfo.h"
+#import "CFile.h"

@@ -57,3 +57,7 @@
 -(void)enumElements:(id)enumImages withFont:(id)enumFonts;
 
 @end
+
+#import "CRunApp.h"
+#import "COI.h"
+#import "CFile.h"

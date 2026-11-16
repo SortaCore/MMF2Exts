@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CFADESPRITE sprite pour transisions
@@ -45,3 +47,11 @@ class CRenderer;
 -(CMask*)spriteGetMask;
 
 @end
+
+#import "CTrans.h"
+#import "CBitmap.h"
+#import "CImageBank.h"
+#import "CMask.h"
+#import "CSprite.h"
+#import "CRenderer.h"
+#import "CRenderToTexture.h"

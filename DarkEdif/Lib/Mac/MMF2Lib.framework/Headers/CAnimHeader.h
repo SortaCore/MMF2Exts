@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CANIMHEADER : header d'un ensemble d'animations
@@ -39,3 +41,6 @@
 -(void)enumElements:(id)enumImages;
 
 @end
+
+#import "CFile.h"
+#import "CAnim.h"

@@ -106,3 +106,11 @@
 }
 
 @end
+
+#import "CLoadQualifiers.h"
+#import "CQualToOiList.h"
+#import "CObject.h"
+#import "CObjInfo.h"
+#import "CArrayList.h"
+#import "CRun.h"
+#import "CSoundBank.h"

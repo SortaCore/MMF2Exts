@@ -81,3 +81,12 @@ class CRenderer;
 -(CObject*)getNextObject;
 
 @end
+
+#import "CBitmap.h"
+#import "CRenderer.h"
+#import "CRunExtension.h"
+#import "CCndExtension.h"
+#import "CActExtension.h"
+#import "CValue.h"
+#import "CImage.h"
+#import "CRunApp.h"

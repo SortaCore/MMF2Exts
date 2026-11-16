@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CANIMDIR : Une direction d'animation
@@ -41,3 +43,5 @@
 -(void)enumElements:(id)enumImages;
 
 @end
+
+#import "CFile.h"

@@ -583,3 +583,6 @@ public:
 };
 
 //#endif
+
+#import "CRun.h"
+#import "CObject.h"

@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CObjInfo informations sur un objet
@@ -77,3 +79,5 @@
 -(NSString*)description;
 
 @end
+
+#import "COI.h"

@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CEXTLOADER: Chargement des extensions
@@ -45,3 +47,7 @@
 -(CRunExtension*)loadRunObject:(int)type;
 
 @end
+
+#import "CRunApp.h"
+#import "CRunExtension.h"
+#import "CExtLoad.h"

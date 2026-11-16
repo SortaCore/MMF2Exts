@@ -59,3 +59,6 @@
 -(UIFont*)createFont;
 
 @end
+
+#import "CFile.h"
+#import "CFontInfo.h"

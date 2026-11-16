@@ -46,3 +46,16 @@ class CRenderer;
 }
 
 @end
+
+#import "CExtension.h"
+#import "CRun.h"
+#import "CBitmap.h"
+#import "CMask.h"
+#import "CCreateObjectInfo.h"
+#import "CActExtension.h"
+#import "CCndExtension.h"
+#import "CFontInfo.h"
+#import "CImage.h"
+#import "CFile.h"
+#import "CValue.h"
+#import "CRenderer.h"

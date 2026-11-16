@@ -340,3 +340,11 @@ public:
     void Mat3fXVec3f(const float mat[9], const float vec[3], float result[3]);
 
 };
+
+#import "CRenderToTexture.h"
+#import "CRunView.h"
+#import "CArrayList.h"
+#import "CRunApp.h"
+#import "CRunFrame.h"
+#import "CLayer.h"
+#import "CShader.h"

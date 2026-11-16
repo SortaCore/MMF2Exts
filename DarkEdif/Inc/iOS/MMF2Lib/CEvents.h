@@ -2587,3 +2587,5 @@ void actSendClipboard(event* pe, CRun* rhPtr);
 void actClearClipboard(event* pe, CRun* rhPtr);
 void exp_Clipboard(CRun* rhPtr);
 
+#import "CRun.h"
+#import "CObject.h"

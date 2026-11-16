@@ -45,3 +45,9 @@ class CRenderer;
 -(void)initObject:(CObjectCommon*)ocPtr withCOB:(CCreateObjectInfo*)cob;
 
 @end
+
+#import "CSprite.h"
+#import "CDefText.h"
+#import "CFont.h"
+#import "CBitmap.h"
+#import "CRenderer.h"

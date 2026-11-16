@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CRUN : BOucle principale
@@ -432,3 +434,25 @@ class CRenderer;
 -(void)execProgram:(NSString*)path withCmdLineOptions:(NSString*)options andFlags:(int)flags;
 
 @end
+
+#import "CRunApp.h"
+#import "CSpriteGen.h"
+#import "CRunFrame.h"
+#import "CEventProgram.h"
+#import "CFontInfo.h"
+#import "CObjInfo.h"
+#import "CValue.h"
+#import "CObject.h"
+#import "CExtension.h"
+#import "CBkd2.h"
+#import "CBackDraw.h"
+#import "CLayer.h"
+#import "CQuestion.h"
+#import "CBitmap.h"
+#import "CRenderer.h"
+#import "CExtStorage.h"
+#import "CCndExtension.h"
+#import "CActExtension.h"
+#import "CCCA.h"
+#import "ObjectSelection.h"
+#import "CLoop.h"

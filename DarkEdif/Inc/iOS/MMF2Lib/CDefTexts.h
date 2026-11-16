@@ -43,3 +43,6 @@
 -(void)enumElements:(id)enumImages withFont:(id)enumFonts;
 
 @end
+
+#import "CDefText.h"
+#import "CFile.h"

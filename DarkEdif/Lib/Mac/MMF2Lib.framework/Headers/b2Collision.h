@@ -15,6 +15,8 @@
 * misrepresented as being the original software.
 * 3. This notice may not be removed or altered from any source distribution.
 */
+#pragma once
+
 
 #ifndef B2_COLLISION_H
 #define B2_COLLISION_H
@@ -274,3 +276,8 @@ inline bool b2TestOverlap(const b2AABB& a, const b2AABB& b)
 }
 
 #endif
+
+#import "b2Shape.h"
+#import "b2CircleShape.h"
+#import "b2EdgeShape.h"
+#import "b2PolygonShape.h"

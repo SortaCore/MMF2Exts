@@ -93,3 +93,7 @@
 -(float)fillPan:(float)p;
 
 @end
+
+#import "CSoundPlayer.h"
+#import "CFile.h"
+#import "CALPlayer.h"

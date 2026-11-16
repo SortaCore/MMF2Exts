@@ -98,3 +98,14 @@ class CRenderer;
 
 
 @end
+
+#import "CObjectCommon.h"
+#import "CCreateObjectInfo.h"
+#import "CImageBank.h"
+#import "CSprite.h"
+#import "CMask.h"
+#import "CValue.h"
+#import "CFontInfo.h"
+#import "CBitmap.h"
+#import "CRenderer.h"
+#import "CTextSurface.h"

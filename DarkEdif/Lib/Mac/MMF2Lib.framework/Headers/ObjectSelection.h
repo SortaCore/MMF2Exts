@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 #import <Foundation/Foundation.h>
 
 @class CRunApp;
@@ -99,3 +101,10 @@ typedef BOOL(*FilterFunction)(CObject*,CObject*);
 -(int)getNumberOfSelected:(short)OiList;
 
 @end
+
+#import "CRunApp.h"
+#import "CObject.h"
+#import "CObjInfo.h"
+#import "CQualToOiList.h"
+#import "CRun.h"
+#import "CEventProgram.h"

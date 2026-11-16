@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CDEFTEXTS : liste de textes
@@ -42,3 +44,6 @@
 -(void)enumElements:(id)enumImages withFont:(id)enumFonts;
 
 @end
+
+#import "CDefText.h"
+#import "CFile.h"

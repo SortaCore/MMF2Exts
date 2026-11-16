@@ -71,3 +71,5 @@
 -(BOOL)testIt:(short*)dMask withMask:(CMask*)sMask andYBase:(int)yBase andX:(int)xx andY:(int)yy;
 
 @end
+
+#import "CMask.h"

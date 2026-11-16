@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //
 //  CTextSurface.h
 //  RuntimeIPhone
@@ -62,3 +64,8 @@ class CRenderer;
 -(void)manualClear:(int)color;
 
 @end
+
+#import "CBitmap.h"
+#import "CFont.h"
+#import "CImage.h"
+#import "CRenderer.h"

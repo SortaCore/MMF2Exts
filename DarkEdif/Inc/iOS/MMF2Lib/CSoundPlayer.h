@@ -105,3 +105,6 @@ void audioSessionListenerCallback(void* inClientData, UInt32 inInterruptionState
 -(float)getSamplePan:(NSString*)name;
 
 @end
+
+#import "CRunApp.h"
+#import "CSound.h"

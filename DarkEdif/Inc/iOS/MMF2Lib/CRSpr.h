@@ -80,3 +80,11 @@
 -(BOOL)checkEndFadeOut;
 
 @end
+
+#import "CObject.h"
+#import "CSpriteGen.h"
+#import "CObjectCommon.h"
+#import "CCreateObjectInfo.h"
+#import "CSprite.h"
+#import "CTrans.h"
+#import "CFadeSprite.h"

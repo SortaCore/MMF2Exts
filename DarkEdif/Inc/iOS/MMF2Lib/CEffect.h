@@ -68,3 +68,6 @@
 -(CEffectParam**)copyParams;
 @end
 
+#import "CFile.h"
+#import "CRunApp.h"
+#import "CEffectParam.h"

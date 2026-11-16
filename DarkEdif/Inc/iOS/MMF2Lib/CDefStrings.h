@@ -38,3 +38,5 @@
 -(void)load:(CFile*)file;
 
 @end
+
+#import "CFile.h"

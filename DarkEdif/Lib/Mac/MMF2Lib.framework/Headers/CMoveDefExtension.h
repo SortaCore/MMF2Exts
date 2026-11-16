@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CMOVEDEFEXTENSION : donnees d'un movement extension
@@ -40,3 +42,5 @@
 -(void)setModuleName:(NSString*)name withID:(int)id;
 
 @end
+
+#import "CFile.h"

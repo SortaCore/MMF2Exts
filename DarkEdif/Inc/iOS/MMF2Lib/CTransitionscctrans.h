@@ -312,3 +312,7 @@ class CRenderer;
 -(void)end;
 @end
 
+#import "CTransitionData.h"
+#import "CFile.h"
+#import "CRenderer.h"
+#import "CRenderToTexture.h"

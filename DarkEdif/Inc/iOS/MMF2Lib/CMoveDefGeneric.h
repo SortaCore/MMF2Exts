@@ -40,3 +40,5 @@
 -(void)load:(CFile*)file withLength:(int)length;
 
 @end
+
+#import "CFile.h"

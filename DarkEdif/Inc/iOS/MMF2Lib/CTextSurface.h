@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //
 //  CTextSurface.h
 //  RuntimeIPhone
@@ -69,3 +71,8 @@ class CRenderer;
 
 -(CGSize)calculateTextSizeWithString:(NSString*)s andFlags:(short)flags andRect:(CRect)rc andFont:(CFont*)font;
 @end
+
+#import "CBitmap.h"
+#import "CFont.h"
+#import "CImage.h"
+#import "CRenderer.h"

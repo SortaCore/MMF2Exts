@@ -16,6 +16,8 @@
 * misrepresented as being the original software.
 * 3. This notice may not be removed or altered from any source distribution.
 */
+#pragma once
+
 
 #ifndef B2_DISTANCE_H
 #define B2_DISTANCE_H
@@ -139,3 +141,5 @@ inline const b2Vec2& b2DistanceProxy::GetSupportVertex(const b2Vec2& d) const
 }
 
 #endif
+
+#import "b2Shape.h"

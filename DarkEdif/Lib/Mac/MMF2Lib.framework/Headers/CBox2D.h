@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //
 //  CBox2D.h
 //  RuntimeIPhone
@@ -403,3 +405,7 @@ public:
 };
 
 //#endif
+
+#import "CRun.h"
+#import "CObject.h"
+#import "CSprite.h"

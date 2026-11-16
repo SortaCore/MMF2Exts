@@ -15,6 +15,8 @@
 * misrepresented as being the original software.
 * 3. This notice may not be removed or altered from any source distribution.
 */
+#pragma once
+
 
 #ifndef B2_FIXTURE_H
 #define B2_FIXTURE_H
@@ -343,3 +345,10 @@ inline const b2AABB& b2Fixture::GetAABB(int32 childIndex) const
 }
 
 #endif
+
+#import "b2BlockAllocator.h"
+#import "b2Body.h"
+#import "b2BroadPhase.h"
+#import "b2World.h"
+#import "b2Contact.h"
+#import "b2ContactManager.h"

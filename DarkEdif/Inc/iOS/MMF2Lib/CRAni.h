@@ -80,3 +80,7 @@
 -(void)anim_Disappear;
 
 @end
+
+#import "CObject.h"
+#import "CAnim.h"
+#import "CAnimDir.h"

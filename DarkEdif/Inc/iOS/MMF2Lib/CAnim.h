@@ -59,3 +59,6 @@
 -(void)approximate:(int)nAnim;
 
 @end
+
+#import "CFile.h"
+#import "CAnimDir.h"

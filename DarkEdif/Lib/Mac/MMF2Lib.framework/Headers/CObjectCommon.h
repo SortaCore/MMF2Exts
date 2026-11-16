@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // COBJECTCOMMON : Donnees d'un objet normal
@@ -115,3 +117,14 @@
 -(void)enumElements:(id)enumImages withFont:(id)enumFonts;
 
 @end
+
+#import "CFile.h"
+#import "CDefValues.h"
+#import "CDefStrings.h"
+#import "CAnimHeader.h"
+#import "CDefCounters.h"
+#import "CDefObject.h"
+#import "CMoveDefList.h"
+#import "CDefCounter.h"
+#import "CDefTexts.h"
+#import "CTransitionData.h"

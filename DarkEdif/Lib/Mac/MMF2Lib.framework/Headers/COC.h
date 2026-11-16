@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // COC: classe abstraite d'objectsCommon
@@ -24,7 +26,7 @@
 //----------------------------------------------------------------------------------
 #import <Foundation/Foundation.h>
 #import "IEnum.h"
-#import "IDrawable.h"
+#import "IDrawableProtocol.h"
 
 #define OBSTACLE_NONE 0
 #define OBSTACLE_SOLID 1
@@ -61,3 +63,13 @@ class CRenderer;
 -(void)fillEffectData:(COI*)oiPtr;
 
 @end
+
+#import "CFile.h"
+#import "CMask.h"
+#import "CSprite.h"
+#import "CImageBank.h"
+#import "CRunApp.h"
+#import "CEffectEx.h"
+#import "CRenderer.h"
+#import "COI.h"
+#import "IDrawable.h"

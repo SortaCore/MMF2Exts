@@ -41,3 +41,5 @@
 -(id)initWithApp:(CRunApp*)app;
 -(int)getJoystick;
 @end
+
+#import "CRunApp.h"

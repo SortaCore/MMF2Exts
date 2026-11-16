@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CEffectBank: effect bank class
@@ -50,3 +52,7 @@
 -(NSString*)getVertexBlock:(NSString*)block;
 -(NSString*)getFragmentBlock:(NSString*)block;
 @end
+
+#import "CFile.h"
+#import "CRunApp.h"
+#import "CEffect.h"

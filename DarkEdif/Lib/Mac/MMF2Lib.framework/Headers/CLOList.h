@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CLOLIST : liste de levelobjects
@@ -47,3 +49,6 @@
 -(CLO*)first_LevObj;
 
 @end
+
+#import "CRunApp.h"
+#import "CLO.h"

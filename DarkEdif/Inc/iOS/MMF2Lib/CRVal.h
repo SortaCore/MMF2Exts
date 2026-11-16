@@ -50,3 +50,8 @@
 -(void)setString:(int)n withString:(NSString*)s;
 
 @end
+
+#import "CValue.h"
+#import "CObject.h"
+#import "CObjectCommon.h"
+#import "CCreateObjectInfo.h"

@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CRANI gestion des animations
@@ -79,3 +81,7 @@
 -(void)anim_Disappear;
 
 @end
+
+#import "CObject.h"
+#import "CAnim.h"
+#import "CAnimDir.h"

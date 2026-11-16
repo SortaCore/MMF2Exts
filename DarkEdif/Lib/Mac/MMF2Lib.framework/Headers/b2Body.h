@@ -15,6 +15,8 @@
 * misrepresented as being the original software.
 * 3. This notice may not be removed or altered from any source distribution.
 */
+#pragma once
+
 
 #ifndef B2_BODY_H
 #define B2_BODY_H
@@ -844,3 +846,21 @@ inline const b2World* b2Body::GetWorld() const
 }
 
 #endif
+
+#import "b2Fixture.h"
+#import "b2Joint.h"
+#import "b2Contact.h"
+#import "b2World.h"
+#import "b2Island.h"
+#import "b2ContactManager.h"
+#import "b2ContactSolver.h"
+#import "b2DistanceJoint.h"
+#import "b2GearJoint.h"
+#import "b2WheelJoint.h"
+#import "b2MouseJoint.h"
+#import "b2PrismaticJoint.h"
+#import "b2PulleyJoint.h"
+#import "b2RevoluteJoint.h"
+#import "b2WeldJoint.h"
+#import "b2FrictionJoint.h"
+#import "b2RopeJoint.h"

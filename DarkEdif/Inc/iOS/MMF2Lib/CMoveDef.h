@@ -57,3 +57,5 @@
 -(void)setData:(short)t withControl:(short)c andMoveAtStart:(unsigned char)m andDirAtStart:(int)d andOptions:(unsigned char)mo;
 
 @end
+
+#import "CFile.h"

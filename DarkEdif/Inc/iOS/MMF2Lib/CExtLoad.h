@@ -40,3 +40,6 @@
 -(void)loadInfo:(CFile*)file;
 -(void)dealloc;
 @end
+
+#import "CRunExtension.h"
+#import "CFile.h"

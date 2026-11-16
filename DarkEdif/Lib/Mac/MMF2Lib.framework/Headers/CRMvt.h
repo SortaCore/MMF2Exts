@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CRMVT : Donnees de base d'un mouvement
@@ -58,3 +60,9 @@
 -(CMove*)loadMvtExtension:(CObject*)hoPtr withDef:(CMoveDefExtension*)mvDef;
 
 @end
+
+#import "CMove.h"
+#import "CObject.h"
+#import "CObjectCommon.h"
+#import "CCreateObjectInfo.h"
+#import "CMoveDefExtension.h"

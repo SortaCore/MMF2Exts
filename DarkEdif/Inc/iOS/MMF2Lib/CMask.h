@@ -63,3 +63,4 @@ typedef struct tagRM
 	int tick;
 } RotatedMask;
 
+#import "CImage.h"

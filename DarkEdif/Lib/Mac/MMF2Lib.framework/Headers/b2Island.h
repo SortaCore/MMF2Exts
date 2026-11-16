@@ -15,6 +15,8 @@
 * misrepresented as being the original software.
 * 3. This notice may not be removed or altered from any source distribution.
 */
+#pragma once
+
 
 #ifndef B2_ISLAND_H
 #define B2_ISLAND_H
@@ -91,3 +93,8 @@ public:
 };
 
 #endif
+
+#import "b2Contact.h"
+#import "b2Joint.h"
+#import "b2StackAllocator.h"
+#import "b2WorldCallbacks.h"

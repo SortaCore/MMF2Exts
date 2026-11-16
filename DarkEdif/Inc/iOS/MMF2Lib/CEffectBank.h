@@ -48,3 +48,7 @@
 -(NSString*)getVertexBlock:(NSString*)block;
 -(NSString*)getFragmentBlock:(NSString*)block;
 @end
+
+#import "CFile.h"
+#import "CRunApp.h"
+#import "CEffect.h"

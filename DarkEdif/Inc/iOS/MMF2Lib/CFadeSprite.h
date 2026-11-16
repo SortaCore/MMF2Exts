@@ -46,3 +46,11 @@ class CRenderer;
 -(CMask*)spriteGetMask;
 
 @end
+
+#import "CTrans.h"
+#import "CBitmap.h"
+#import "CImageBank.h"
+#import "CMask.h"
+#import "CSprite.h"
+#import "CRenderer.h"
+#import "CRenderToTexture.h"

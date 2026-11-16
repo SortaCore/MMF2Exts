@@ -17,30 +17,11 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
-//----------------------------------------------------------------------------------
-//
-// IDRAWABLE : Interface pour les sprites owner draw
-//
-//----------------------------------------------------------------------------------
+#pragma once
+#import "IDrawableProtocol.h"
 
-@class CSprite;
-@class CImageBank;
-@class CMask;
-@class CBitmap;
-class CRenderer;
-
-struct ReplacedColor
-{
-	unsigned char oR, oG, oB;
-	unsigned char rR, rG, rB;
-	BOOL replaced;
-};
-typedef struct ReplacedColor ReplacedColor;
-
-@protocol IDrawable
-
--(void)spriteDraw:(CRenderer*)renderer withSprite:(CSprite*)spr andImageBank:(CImageBank*)bank andX:(int)x andY:(int)y;
--(void)spriteKill:(CSprite*)spr;
--(CMask*)spriteGetMask;
-
-@end
+#import "CSprite.h"
+#import "CImageBank.h"
+#import "CMask.h"
+#import "CBitmap.h"
+#import "CRenderer.h"

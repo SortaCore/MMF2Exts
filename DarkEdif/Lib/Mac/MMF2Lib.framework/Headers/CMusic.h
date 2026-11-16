@@ -1,3 +1,5 @@
+
+#pragma once
 //
 //  CMusic.h
 //  MacRuntime
@@ -42,3 +44,6 @@
 -(void)cleanMemory;
 
 @end
+
+#import "CMusicPlayer.h"
+#import "CFile.h"

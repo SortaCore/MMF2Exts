@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CSYSEVENT : classe abstraite pour stocker les evenements systeme
@@ -59,3 +61,5 @@
 -(id)initWithMenuID:(int)menuID;
 -(void)execute:(CRun*)rhPtr;
 @end
+
+#import "CRun.h"

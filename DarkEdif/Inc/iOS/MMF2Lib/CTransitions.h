@@ -35,3 +35,6 @@
 -(CTrans*)getTrans:(CTransitionData*)data;
 
 @end
+
+#import "CTrans.h"
+#import "CTransitionData.h"

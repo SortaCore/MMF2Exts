@@ -295,3 +295,25 @@ class CRenderer;
 
 
 @end
+
+#import "CSpriteGen.h"
+#import "CRunFrame.h"
+#import "CEventProgram.h"
+#import "CFontInfo.h"
+#import "CObjInfo.h"
+#import "CArrayList.h"
+#import "CValue.h"
+#import "CObject.h"
+#import "CExtension.h"
+#import "CBkd2.h"
+#import "CBackDraw.h"
+#import "CLayer.h"
+#import "CQuestion.h"
+#import "CBitmap.h"
+#import "CRenderer.h"
+#import "CExtStorage.h"
+#import "CCndExtension.h"
+#import "CActExtension.h"
+#import "CCCA.h"
+#import "ObjectSelection.h"
+#import "CLoop.h"

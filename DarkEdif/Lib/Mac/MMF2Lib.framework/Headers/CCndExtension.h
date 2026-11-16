@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 // ------------------------------------------------------------------------------
 //
 // EXTENSION conditions
@@ -61,3 +63,6 @@
 -(BOOL)compareTime:(CRun*)rhPtr withNum:(int)num andTime:(int)t;
 
 @end
+
+#import "CValue.h"
+#import "CRun.h"

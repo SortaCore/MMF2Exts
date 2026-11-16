@@ -15,6 +15,8 @@
 * misrepresented as being the original software.
 * 3. This notice may not be removed or altered from any source distribution.
 */
+#pragma once
+
 
 #ifndef B2_CONTACT_H
 #define B2_CONTACT_H
@@ -329,3 +331,12 @@ inline void b2Contact::ResetRestitution()
 }
 
 #endif
+
+#import "b2Body.h"
+#import "b2Fixture.h"
+#import "b2World.h"
+#import "b2BlockAllocator.h"
+#import "b2StackAllocator.h"
+#import "b2WorldCallbacks.h"
+#import "b2ContactManager.h"
+#import "b2ContactSolver.h"

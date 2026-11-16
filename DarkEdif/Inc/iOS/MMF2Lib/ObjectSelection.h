@@ -100,3 +100,10 @@ typedef BOOL(*FilterFunction)(CObject*,CObject*);
 -(int)getNumberOfSelected:(short)OiList;
 
 @end
+
+#import "CRunApp.h"
+#import "CObject.h"
+#import "CObjInfo.h"
+#import "CQualToOiList.h"
+#import "CRun.h"
+#import "CEventProgram.h"

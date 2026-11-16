@@ -43,3 +43,11 @@ class CRenderer;
 -(CTrans*)startObjectFade:(CObject*)hoPtr withFlag:(BOOL)bFadeOut;
 
 @end
+
+#import "CRunApp.h"
+#import "CBitmap.h"
+#import "CTrans.h"
+#import "CTransitionData.h"
+#import "CObject.h"
+#import "CRenderer.h"
+#import "CRenderToTexture.h"

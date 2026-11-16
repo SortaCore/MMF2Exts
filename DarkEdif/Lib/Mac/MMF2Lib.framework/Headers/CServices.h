@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //
 //  CServices.h
 //  RuntimeIPhone
@@ -104,3 +106,8 @@ extern NSColor* getNSColor(int rgb);
 
 @end
 
+#import "CFont.h"
+#import "CBitmap.h"
+#import "CRenderToTexture.h"
+#import "CRenderer.h"
+#import "CSprite.h"

@@ -1,3 +1,5 @@
+
+#pragma once
 //
 //  Menus.h
 //  MacRuntime
@@ -84,6 +86,6 @@
 -(void)load:(CFile*)file;
 @end
 
-
-
-
+#import "CArrayList.h"
+#import "CRunApp.h"
+#import "CFile.h"

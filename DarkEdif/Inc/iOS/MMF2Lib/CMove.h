@@ -81,3 +81,6 @@ extern char Joy2Dir[];
 +(int)dummy;
 -(int)getDir;
 @end
+
+#import "CObject.h"
+#import "CMoveDef.h"

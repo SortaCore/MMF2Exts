@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CMOVE : Classe de base des mouvements
@@ -80,3 +82,6 @@ extern char Joy2Dir[];
 +(int)dummy;
 -(int)getDir;
 @end
+
+#import "CObject.h"
+#import "CMoveDef.h"

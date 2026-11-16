@@ -126,3 +126,14 @@ class CRenderer;
 -(int)getNSprites;
 
 @end
+
+#import "CSprite.h"
+#import "CRunFrame.h"
+#import "CRunApp.h"
+#import "CImageBank.h"
+#import "CObject.h"
+#import "CMask.h"
+#import "CArrayList.h"
+#import "CBitmap.h"
+#import "CPSCM.h"
+#import "CRenderer.h"

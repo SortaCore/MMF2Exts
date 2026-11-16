@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CSOUND : un echantillon
@@ -120,3 +122,7 @@ long   vorbisTell(void *datasource);
 -(float)fillPan:(float)p;
 
 @end
+
+#import "CSoundPlayer.h"
+#import "CFile.h"
+#import "CALPlayer.h"

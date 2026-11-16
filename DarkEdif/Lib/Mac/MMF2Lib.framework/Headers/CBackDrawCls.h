@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 // -----------------------------------------------------------------------------
 //
 // CBACKDRAWCLS effacement du fond de l'ecran
@@ -35,3 +37,6 @@
 }
 -(void)execute:(CRun*)rhPtr withBitmap:(CBitmap*)g2;
 @end
+
+#import "CRun.h"
+#import "CBitmap.h"

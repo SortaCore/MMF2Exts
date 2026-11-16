@@ -51,3 +51,6 @@
 -(void)load:(CFile*)file;
 
 @end
+
+#import "CSprite.h"
+#import "CFile.h"

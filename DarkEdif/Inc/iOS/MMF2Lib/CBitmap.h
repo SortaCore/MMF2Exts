@@ -89,3 +89,5 @@ enum
 -(void)fade:(CBitmap*)source withCoef:(int)coef;
 
 @end
+
+#import "CImage.h"

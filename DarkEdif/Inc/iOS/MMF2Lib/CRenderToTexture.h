@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //
 //  CRenderToTexture.h
 //  RuntimeIPhone
@@ -102,3 +104,9 @@ class CRenderer;
 - (BOOL)isRGBA;
 - (UIImage*)readFBO;
 @end
+
+#import "CBitmap.h"
+#import "CFont.h"
+#import "CImage.h"
+#import "CRenderer.h"
+#import "CRunApp.h"

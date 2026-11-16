@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CEffect: effect code
@@ -66,3 +68,6 @@
 -(CEffectParam**)copyParams;
 @end
 
+#import "CFile.h"
+#import "CRunApp.h"
+#import "CEffectParam.h"

@@ -24,6 +24,7 @@
 //----------------------------------------------------------------------------------
 #pragma once
 #import <Foundation/Foundation.h>
+#import "ImageInfo.h"
 
 #define GLES_SILENCE_DEPRECATION
 #define GL_SILENCE_DEPRECATION
@@ -44,17 +45,7 @@
 
 #define MAX_ROTATEDMASKS 10
 
-struct ImageInfo
-{
-	BOOL isFound;
-	short width;
-	short height;
-	short xSpot;
-	short ySpot;
-	short xAP;
-	short yAP;
-};
-typedef struct ImageInfo ImageInfo;
+
 
 @interface CImage : CTexture
 {
@@ -164,3 +155,8 @@ static inline bool pixelIsSolid(CImage* img, int x, int y)
 	}
 }
 
+#import "CFile.h"
+#import "CMask.h"
+#import "CBitmap.h"
+#import "CRunApp.h"
+#import "CArrayList.h"

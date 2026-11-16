@@ -155,3 +155,10 @@
 -(void)killSpriteZone;
 
 @end
+
+#import "CImageBank.h"
+#import "CMask.h"
+#import "CObject.h"
+#import "CArrayList.h"
+#import "CBitmap.h"
+#import "CImage.h"

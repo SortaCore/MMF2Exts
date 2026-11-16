@@ -17,13 +17,15 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // COBJECT : Classe de base d'un objet'
 //
 //----------------------------------------------------------------------------------
 #import <Foundation/Foundation.h>
-#import "IDrawable.h"
+#import "IDrawableProtocol.h"
 #import "CRect.h"
 #import "CoreMath.h"
 
@@ -154,3 +156,21 @@ class CRenderer;
 -(void)fillEffectData;
 
 @end
+
+#import "CRun.h"
+#import "CRCom.h"
+#import "CRAni.h"
+#import "CRMvt.h"
+#import "CRVal.h"
+#import "CRSpr.h"
+#import "CObjInfo.h"
+#import "CArrayList.h"
+#import "CObjectCommon.h"
+#import "CMask.h"
+#import "CSprite.h"
+#import "CImageBank.h"
+#import "CCreateObjectInfo.h"
+#import "CBitmap.h"
+#import "CEffectEx.h"
+#import "CRenderer.h"
+#import "IDrawable.h"

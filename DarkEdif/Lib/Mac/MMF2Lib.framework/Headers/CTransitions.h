@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CTRANSITIONS : interface avec la dll
@@ -34,3 +36,6 @@
 -(CTrans*)getTrans:(CTransitionData*)data;
 
 @end
+
+#import "CTrans.h"
+#import "CTransitionData.h"

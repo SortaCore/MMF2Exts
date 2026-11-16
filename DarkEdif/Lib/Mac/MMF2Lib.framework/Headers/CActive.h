@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CACTIVE : Objets actifs
@@ -51,3 +53,11 @@ class CRenderer;
 -(void)ReplaceActiveObjectImage:(NSString*)pFilename andAnim:(int)nAnim andDir:(int)nDir andFrame:(int)nFrame andXSpot:(int)xHS andYSpot:(int)yHS andXAction:(int)xAP andYAction:(int)yAP andTransparentColor:(int)trspColor;
 
 @end
+
+#import "CObjectCommon.h"
+#import "CCreateObjectInfo.h"
+#import "CImageBank.h"
+#import "CSprite.h"
+#import "CMask.h"
+#import "CBitmap.h"
+#import "CRenderer.h"

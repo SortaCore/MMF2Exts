@@ -78,3 +78,5 @@
 -(BOOL)hasActiveGameControllerConnected;
 -(BOOL)hasAnyGameControllerConnected;
 @end
+
+#import "CRunApp.h"

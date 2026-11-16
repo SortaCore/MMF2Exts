@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CLO : un levobj
@@ -51,3 +53,6 @@
 -(void)load:(CFile*)file;
 
 @end
+
+#import "CSprite.h"
+#import "CFile.h"

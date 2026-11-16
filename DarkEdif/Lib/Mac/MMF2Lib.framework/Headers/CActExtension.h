@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 // -----------------------------------------------------------------------------
 //
 // CACTEXTENSION
@@ -64,3 +66,7 @@
 -(short*)getParamZone:(CRun*)rhPtr withNum:(int)num;
 
 @end
+
+#import "CValue.h"
+#import "CRun.h"
+#import "CFile.h"

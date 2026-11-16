@@ -40,3 +40,6 @@
 -(void)enumElements:(id)enumImages;
 
 @end
+
+#import "CFile.h"
+#import "CAnim.h"

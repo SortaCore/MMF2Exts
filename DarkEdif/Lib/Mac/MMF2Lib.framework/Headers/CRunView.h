@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //
 //  CRunView.h
 //  RuntimeIPhone
@@ -107,3 +109,8 @@ class CRenderer;
 -(void)mouseExited:(NSEvent *)theEvent;
 
 @end
+
+#import "CRunApp.h"
+#import "CRenderer.h"
+#import "KeyStateWrapper.h"
+#import "CRenderToTexture.h"

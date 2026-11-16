@@ -1,3 +1,5 @@
+
+#pragma once
 //----------------------------------------------------------------------------------
 //
 // CEVENTS : actions, conditions et expressions
@@ -2632,3 +2634,6 @@ void REXP_EXTGETNAME(CRun* rhPtr);
 void actExtraAction(event* pe, CRun* rhPtr);
 
 void AddPhysicsAttractor(CRun* rhPtr, CObject* pObject);
+
+#import "CRun.h"
+#import "CObject.h"

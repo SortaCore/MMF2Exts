@@ -17,12 +17,15 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CIMAGEBANK : Stockage des images
 //
 //----------------------------------------------------------------------------------
 #import <Foundation/Foundation.h>
+#import "ImageInfo.h"
 #import "IEnum.h"
 #import "CImage.h"
 #import "map"
@@ -70,3 +73,5 @@ public:
 -(unsigned short)addImageFromFile:(NSString*)filename withXSpot:(int)xSpot andYSpot:(int)ySpot andXAP:(int)xAP andYAP:(int)yAP andTransparentColor:(int)trspColor;
 
 @end
+
+#import "CRunApp.h"

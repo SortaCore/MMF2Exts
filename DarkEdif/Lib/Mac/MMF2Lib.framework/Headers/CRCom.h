@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CRCOM : Structure commune aux objets animes
@@ -65,3 +67,5 @@
 -(void)kill:(BOOL)bFast;
 
 @end
+
+#import "CSprite.h"

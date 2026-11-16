@@ -35,3 +35,5 @@
 }
 
 @end
+
+#import "CMask.h"

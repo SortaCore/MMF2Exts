@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CEVENTPROGRAM : Programme des evenements
@@ -194,3 +196,12 @@ int forEachLoopIDToConditionCode(int type, int forEachID);
 
 
 @end
+
+#import "CRunApp.h"
+#import "CLoadQualifiers.h"
+#import "CQualToOiList.h"
+#import "CObject.h"
+#import "CObjInfo.h"
+#import "CArrayList.h"
+#import "CRun.h"
+#import "CSoundBank.h"

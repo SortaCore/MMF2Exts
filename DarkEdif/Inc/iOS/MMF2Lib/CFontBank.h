@@ -58,3 +58,8 @@
 -(short)enumerate:(short)num;
 
 @end
+
+#import "CRunApp.h"
+#import "CFont.h"
+#import "CFontInfo.h"
+#import "CFile.h"

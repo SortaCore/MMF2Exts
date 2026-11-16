@@ -53,3 +53,5 @@
 -(void)deleteGroup:(NSString*)groupName;
 
 @end
+
+#import "CArrayList.h"

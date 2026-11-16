@@ -1,3 +1,5 @@
+
+#pragma once
 //
 //  KeyStateWrapper.h
 //  MacRuntime
@@ -34,3 +36,5 @@
 -(NSString*)nameForWindowsKey:(short)key;
 
 @end
+
+#import "CRunApp.h"

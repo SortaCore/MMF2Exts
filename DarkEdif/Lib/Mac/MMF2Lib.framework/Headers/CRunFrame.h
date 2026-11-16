@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CRUNFRAME : contenu d'une frame
@@ -152,3 +154,13 @@
 -(NSString*)description;
 
 @end
+
+#import "CRunApp.h"
+#import "CRun.h"
+#import "CLayer.h"
+#import "CLOList.h"
+#import "CEventProgram.h"
+#import "CColMask.h"
+#import "CSprite.h"
+#import "CTransitionData.h"
+#import "CTrans.h"

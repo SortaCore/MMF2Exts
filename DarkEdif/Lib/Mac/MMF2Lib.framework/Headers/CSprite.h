@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CSPRITE : Un sprite
@@ -154,3 +156,10 @@
 -(void)killSpriteZone;
 
 @end
+
+#import "CImageBank.h"
+#import "CMask.h"
+#import "CObject.h"
+#import "CArrayList.h"
+#import "CBitmap.h"
+#import "CImage.h"

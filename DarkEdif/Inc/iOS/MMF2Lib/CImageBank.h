@@ -24,6 +24,7 @@
 //----------------------------------------------------------------------------------
 #pragma once
 #import <Foundation/Foundation.h>
+#import "ImageInfo.h"
 #import "IEnum.h"
 #import "CImage.h"
 
@@ -64,3 +65,5 @@
 -(ImageInfo)getImageInfoEx:(short)nImage withAngle:(float)nAngle andScaleX:(float)fScaleX andScaleY:(float)fScaleY;
 
 @end
+
+#import "CRunApp.h"

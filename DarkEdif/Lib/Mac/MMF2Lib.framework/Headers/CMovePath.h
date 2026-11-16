@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CMOVEPATH : Mouvement enregistre
@@ -72,3 +74,7 @@
 -(void)setMaxSpeed:(int)speed;
 
 @end
+
+#import "CObject.h"
+#import "CMoveDef.h"
+#import "CMoveDefPath.h"

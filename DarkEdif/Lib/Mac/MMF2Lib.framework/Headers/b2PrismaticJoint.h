@@ -15,6 +15,8 @@
 * misrepresented as being the original software.
 * 3. This notice may not be removed or altered from any source distribution.
 */
+#pragma once
+
 
 #ifndef B2_PRISMATIC_JOINT_H
 #define B2_PRISMATIC_JOINT_H
@@ -194,3 +196,6 @@ inline float32 b2PrismaticJoint::GetMotorSpeed() const
 }
 
 #endif
+
+#import "b2Joint.h"
+#import "b2GearJoint.h"

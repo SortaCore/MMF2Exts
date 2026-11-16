@@ -123,3 +123,8 @@
 -(int)checkOrCreateEffectIfNeeded:(CRunApp*)app andName:(NSString*)name;
 
 @end
+
+#import "CFile.h"
+#import "CArrayList.h"
+#import "CRun.h"
+#import "CRunFrame.h"

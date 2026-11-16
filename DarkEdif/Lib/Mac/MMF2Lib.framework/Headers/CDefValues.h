@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CDEF : DonnÈes d'un objet normal
@@ -38,3 +40,5 @@
 -(void)load:(CFile*)file withInitFlags:(BOOL)initFlag;
 
 @end
+
+#import "CFile.h"

@@ -62,3 +62,9 @@
 -(void)fillEffectData:(COI*)oiPtr;
 
 @end
+
+#import "CRun.h"
+#import "CRunApp.h"
+#import "COI.h"
+#import "CSprite.h"
+#import "CEffectEx.h"

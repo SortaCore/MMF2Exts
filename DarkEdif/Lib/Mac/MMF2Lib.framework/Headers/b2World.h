@@ -15,6 +15,8 @@
 * misrepresented as being the original software.
 * 3. This notice may not be removed or altered from any source distribution.
 */
+#pragma once
+
 
 #ifndef B2_WORLD_H
 #define B2_WORLD_H
@@ -347,3 +349,9 @@ inline const b2Profile& b2World::GetProfile() const
 }
 
 #endif
+
+#import "b2Body.h"
+#import "b2Draw.h"
+#import "b2Fixture.h"
+#import "b2Joint.h"
+#import "b2ContactManager.h"

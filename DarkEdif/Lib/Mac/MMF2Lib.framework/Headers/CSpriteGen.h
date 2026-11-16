@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CSPRITEGEN : Generateur de sprites
@@ -126,3 +128,14 @@ class CRenderer;
 -(int)getNSprites;
 
 @end
+
+#import "CSprite.h"
+#import "CRunFrame.h"
+#import "CRunApp.h"
+#import "CImageBank.h"
+#import "CObject.h"
+#import "CMask.h"
+#import "CArrayList.h"
+#import "CBitmap.h"
+#import "CPSCM.h"
+#import "CRenderer.h"

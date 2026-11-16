@@ -51,3 +51,6 @@
 -(void)set8Dirs:(int)dirs;
 
 @end
+
+#import "CObject.h"
+#import "CMoveDef.h"

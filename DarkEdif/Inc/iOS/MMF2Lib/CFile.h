@@ -77,3 +77,5 @@
 -(BOOL)IsEOF;
 
 @end
+
+#import "CFontInfo.h"

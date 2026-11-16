@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CLAYER : classe layer
@@ -126,3 +128,8 @@
 -(int)checkOrCreateEffectIfNeeded:(CRunApp*)app;
 -(int)checkOrCreateEffectIfNeeded:(CRunApp*)app andName:(NSString*)name;
 @end
+
+#import "CFile.h"
+#import "CArrayList.h"
+#import "CRun.h"
+#import "CRunFrame.h"

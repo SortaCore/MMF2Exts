@@ -42,3 +42,5 @@
 - (id)initWithApp:(CRunApp*)pApp;
 
 @end
+
+#import "CRunApp.h"

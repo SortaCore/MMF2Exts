@@ -56,3 +56,6 @@
 -(void)cleanMemory;
 
 @end
+
+#import "CRunApp.h"
+#import "CSound.h"

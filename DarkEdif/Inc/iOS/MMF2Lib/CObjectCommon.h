@@ -116,3 +116,13 @@
 -(void)enumElements:(id)enumImages withFont:(id)enumFonts;
 
 @end
+
+#import "CFile.h"
+#import "CDefValues.h"
+#import "CDefStrings.h"
+#import "CAnimHeader.h"
+#import "CDefCounters.h"
+#import "CDefObject.h"
+#import "CDefCounter.h"
+#import "CDefTexts.h"
+#import "CTransitionData.h"

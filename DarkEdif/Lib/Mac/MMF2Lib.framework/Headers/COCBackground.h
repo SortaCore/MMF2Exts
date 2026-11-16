@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // COCBACKGROUND : un objet dÈcor normal
@@ -46,3 +48,8 @@
 -(CMask*)spriteGetMask;
 
 @end
+
+#import "CFile.h"
+#import "CSprite.h"
+#import "CImageBank.h"
+#import "COI.h"

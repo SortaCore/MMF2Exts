@@ -62,3 +62,6 @@
 -(BOOL)compareTime:(CRun*)rhPtr withNum:(int)num andTime:(int)t;
 
 @end
+
+#import "CValue.h"
+#import "CRun.h"

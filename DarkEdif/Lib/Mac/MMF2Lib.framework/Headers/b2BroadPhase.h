@@ -15,6 +15,8 @@
 * misrepresented as being the original software.
 * 3. This notice may not be removed or altered from any source distribution.
 */
+#pragma once
+
 
 #ifndef B2_BROAD_PHASE_H
 #define B2_BROAD_PHASE_H
@@ -246,3 +248,5 @@ inline void b2BroadPhase::RayCast(T* callback, const b2RayCastInput& input) cons
 }
 
 #endif
+
+#import "b2DynamicTree.h"

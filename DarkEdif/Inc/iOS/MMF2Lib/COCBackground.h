@@ -47,3 +47,8 @@
 -(CMask*)spriteGetMask;
 
 @end
+
+#import "CFile.h"
+#import "CSprite.h"
+#import "CImageBank.h"
+#import "COI.h"

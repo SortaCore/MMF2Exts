@@ -17,6 +17,8 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
+#pragma once
+
 //----------------------------------------------------------------------------------
 //
 // CRUNAPP : Classe Application
@@ -360,3 +362,33 @@ enum {
 
 -(void)loadFonts;
 @end
+
+#import "CArrayList.h"
+#import "CRunView.h"
+#import "COIList.h"
+#import "CImageBank.h"
+#import "CFontBank.h"
+#import "CSoundBank.h"
+#import "CSoundPlayer.h"
+#import "CMusicBank.h"
+#import "CMusicPlayer.h"
+#import "CEffectBank.h"
+#import "CRunFrame.h"
+#import "CEmbeddedFile.h"
+#import "CTransitionManager.h"
+#import "CValue.h"
+#import "CFile.h"
+#import "CRun.h"
+#import "CExtLoader.h"
+#import "CEventProgram.h"
+#import "CBitmap.h"
+#import "CRenderer.h"
+#import "CRenderToTexture.h"
+#import "CMask.h"
+#import "CCCA.h"
+#import "CObject.h"
+#import "KeyStateWrapper.h"
+#import "CALPlayer.h"
+#import "CExtension.h"
+#import "Menus.h"
+#import "CRunViewController.h"

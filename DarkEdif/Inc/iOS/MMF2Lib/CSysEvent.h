@@ -33,3 +33,5 @@
 -(void)execute:(CRun*)rhPtr;
 
 @end
+
+#import "CRun.h"

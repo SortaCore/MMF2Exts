@@ -39,3 +39,5 @@
 -(void)execute:(CRun*)rhPtr withBitmap:(CBitmap*)g2;
 
 @end
+
+#import "CBitmap.h"

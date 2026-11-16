@@ -1,3 +1,5 @@
+
+#pragma once
 //
 //  CMusicBank.h
 //  MacRuntime
@@ -31,3 +33,6 @@
 -(CMusic*)getMusicFromIndex:(short)index;
 -(void)cleanMemory;
 @end
+
+#import "CRunApp.h"
+#import "CMusic.h"
