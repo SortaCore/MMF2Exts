@@ -1020,6 +1020,16 @@ https://forums.developer.apple.com/forums/thread/113746?answerId=349757022#34975
 		</ItemGroup>
 	</Target>
 
+	<!-- iOS: Include all MMF2Lib header files to copy to remote.
+		 Wildcard project items are supported in MSBuild but not VS.
+		 Mac already copies the entire MMF2Lib folder, as its MMF2Lib is differently structured. -->
+	<Target Name="DarkEdifIncludeIOSRuntimeHeaders" BeforeTargets="GenerateXCodeProj;ClCompile"
+			Condition="'$(_TargetPlatInclMac)'=='iOS'">
+		<ItemGroup>
+			<ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\iOS\MMF2Lib\**\*.h" Exclude="@(ClInclude)" />
+		</ItemGroup>
+	</Target>
+
 	<!-- After building x86_64, i386, or ARM64, build the Simulator variant of the same.
 		 Note that armv7/armv7s are not simulator arches. -->
 	<Target Name="iOS build device and simulator together" Condition="'$(_TargetPlatInclMac)'=='iOS' AND $(iOSSimulatorBuild)!=1 AND !$(TargetArch.StartsWith('armv'))" AfterTargets="Build;Rebuild">
