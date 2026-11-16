@@ -821,7 +821,7 @@ RunObjectMultiPlatPtr Edif::Runtime::RunObjPtrFromFixed(int fixedvalue)
 {
 	int index = fixedvalue & 0x0000FFFF;
 
-	if (index < 0 || (size_t)index >= hoPtr->get_AdRunHeader()->get_MaxObjects())
+	if ((size_t)index >= hoPtr->get_AdRunHeader()->get_MaxObjects())
 		return NULL;
 
 	auto theObject = hoPtr->get_AdRunHeader()->GetObjectListOblOffsetByIndex(index);
@@ -919,15 +919,16 @@ objectsList* RunHeader::get_ObjectList() {
 }
 objInfoList* RunHeader::GetOIListByIndex(std::size_t index)
 {
-	if ((std::size_t)rhNumberOi <= index)
+	if (index >= GetNumberOi())
 	{
 		LOGE(_T("RunHeader::GetOIListByIndex() was passed invalid OIList index %zu, are you passing a OI instead?\n"), index);
 		return nullptr;
 	}
 
 	assert(DarkEdif::ObjectSelection::oiListItemSize != 0 || index == 0); // first time is index 0
-	assert((std::size_t)rhNumberOi > index); // invalid OI
 
+	// rhOiList is sparse, and AllOiListIterator may search by index, so finding a null oiList is allowed
+	// Some rhOiList is -1 instead of null
 	return (objInfoList*)(((std::uint8_t*)rhOiList) + DarkEdif::ObjectSelection::oiListItemSize * index);
 }
 event2* RunHeader::GetRH4ActionStart() {
@@ -951,9 +952,13 @@ qualToOi* RunHeader::GetQualToOiListByOffset(std::size_t offset) {
 	// Windows edits the offset calculation if the app setting "Fix qualifier limit error" is on.
 	// Since CF2.5 296.06, you can read the offset of 1 or 8 from rhQualToOiListSize;
 	// prior to that, it's always 1-byte.
+	if (!rhQualToOiList)
+		return nullptr;
 	return (qualToOi*)(((std::uint8_t*)rhQualToOiList) + ((offset & 0x7FFF) * std::max(1U, rhQualToOiListSize)));
 }
 RunObjectMultiPlatPtr RunHeader::GetObjectListOblOffsetByIndex(std::size_t index) {
+	if (index >= get_MaxObjects())
+		return nullptr;
 	return rhObjectList[index].oblOffset;
 }
 
@@ -1221,8 +1226,10 @@ void objInfoList::set_EventCountOR(int ec) {
 	oilEventCountOR = ec;
 }
 short objInfoList::get_QualifierByIndex(const std::size_t index) {
-	if (index > 7) // unsigned
-		LOGF(_T("Invalid qualifier index read: expected 0 to 7, got %zu.\n"), index);
+	if (index >= MAX_QUALIFIERS) {
+		LOGE(_T("Invalid qualifier index read: expected 0 to 7, got %zu.\n"), index);
+		return -1;
+	}
 	return oilQualifiers[index];
 }
 CreateObjectInfo::Flags CreateObjectInfo::get_flags() const {
@@ -2543,9 +2550,12 @@ qualToOi *RunHeader::GetQualToOiListByOffset(std::size_t index) {
 		auto evp = this->get_EventProgram();
 		jfieldID fieldID = threadEnv->GetFieldID(evp->meClass, "qualToOiList", "[LEvents/CQualToOiList;");
 		JNIExceptionCheck();
-		QualToOiList = global((jobjectArray)threadEnv->GetObjectField(evp->me, fieldID),
-			"RunHeader::GetQualToOiListByIndex's QualToOiList");
+		jobjectArray list = (jobjectArray)threadEnv->GetObjectField(evp->me, fieldID);
 		JNIExceptionCheck();
+		if (!list)
+			return nullptr;
+		QualToOiList = global(list, "RunHeader::GetQualToOiListByIndex's QualToOiList");
+		threadEnv->DeleteLocalRef(list);
 		// can't look up from OiList, that's the class of array, not array element
 		QualToOiClass = global(threadEnv->FindClass("Events/CQualToOiList"), "RunHeader::GetQualToOiListByIndex's QualToOiList class");
 		JNIExceptionCheck();
@@ -2554,16 +2564,11 @@ qualToOi *RunHeader::GetQualToOiListByOffset(std::size_t index) {
 
 		for (std::size_t i = 0; i < QualToOiListLength; ++i)
 		{
-			jobject thisParam = threadEnv->GetObjectArrayElement(QualToOiList, index);
+			jobject thisParam = threadEnv->GetObjectArrayElement(QualToOiList, i);
 			JNIExceptionCheck();
 			QualToOiListArray.emplace_back(qualToOi(this, i, thisParam, runtime));
 		}
 	}
-
-#ifdef _DEBUG
-	if (*(long *)&index < 0)
-		raise(SIGTRAP);
-#endif
 
 	if (index >= QualToOiListLength)
 		return nullptr;
@@ -4253,10 +4258,17 @@ std::size_t RunHeader::GetNumberOi() {
 	return ((CRun*)this)->rhMaxOI;
 }
 qualToOi* RunHeader::GetQualToOiListByOffset(std::size_t byteOffset) {
+	CEventProgram* const evp = ((CRun*)this)->rhEvtProg;
 	// Not initialized during start of frame's CreateRunObject; the qualToOiList is null here (not just its [0])
-	return (qualToOi*)((((CRun*)this)->rhEvtProg->qualToOiList)[byteOffset & 0x7FFF]);
+	// Unlike Windows' packed byte-offset table, Apple exposes an array and its count.
+	const std::size_t index = byteOffset & 0x7FFF;
+	if (!evp->qualToOiList || index >= (std::size_t)evp->nQualifiers)
+		return nullptr;
+	return (qualToOi*)evp->qualToOiList[index];
 }
 RunObjectMultiPlatPtr RunHeader::GetObjectListOblOffsetByIndex(std::size_t index) {
+	if (index >= get_MaxObjects())
+		return nullptr;
 	return (RunObjectMultiPlatPtr)((CRun*)this)->rhObjectList[index];
 }
 
@@ -4446,7 +4458,7 @@ AltVals* RunObject::get_rov() {
 	return (AltVals*)((CObject*)this)->rov;
 }
 RunObjectMultiPlatPtr objectsList::GetOblOffsetByIndex(std::size_t index) {
-	return (RunObjectMultiPlatPtr)((CObjInfo**)this)[index];
+	return (RunObjectMultiPlatPtr)((CObject**)this)[index];
 }
 
 int objInfoList::get_EventCount() const {

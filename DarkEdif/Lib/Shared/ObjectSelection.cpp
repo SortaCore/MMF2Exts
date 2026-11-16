@@ -315,9 +315,15 @@ void ObjectIterator::GetNext()
 		{
 			if (qualOiList.size() > qualOiListAt) {
 				curOiList = qualOiList[qualOiListAt++];
+				curHo = nullptr;
+				curRo = nullptr;
 				oil = rhPtr->GetOIListByIndex(curOiList);
 
 				const bool ecMatch = oil->get_EventCount() == rhPtr->GetRH2EventCount();
+				// If explicit selection, the EventCount must match, or no object is selected
+				if (select == Selection::Explicit && !ecMatch)
+					continue;
+
 				nextObjNum = select == Selection::All ? oil->get_Object() : oil->get_ListSelected();
 
 				// If implicit selection and no condition-selection, select first OI in general
@@ -399,7 +405,13 @@ void QualifierOIListIterator::GetNext()
 	{
 		curOiList = qualOiList[qualOiListAt++]; // always increment; end iterator is indicated by == length
 		oil = rhPtr->GetOIListByIndex(curOiList);
+		assert(oil != nullptr);
 		const bool ecMatch = oil->get_EventCount() == rhPtr->GetRH2EventCount();
+
+		// If explicit selection, the EventCount must match, or no object is selected
+		if (select == Selection::Explicit && !ecMatch)
+			continue;
+
 		firstOi = select == Selection::All ? oil->get_Object() : oil->get_ListSelected();
 
 		// If implicit selection and no condition-selection, select first OI in general
@@ -471,17 +483,23 @@ AllOIListIterator::AllOIListIterator(RunHeader* rhPtr, bool) :
 AllOIListIterator::AllOIListIterator(RunHeader* rhPtr) :
 	rhPtr(rhPtr), numOI(rhPtr->GetNumberOi())
 {
-	if (numOI > 0)
-		oil = rhPtr->GetOIListByIndex(0);
+	// Skip any null entries in rhOiList, as it's sparse
+	for (; oiListAt < numOI; ++oiListAt) {
+		oil = rhPtr->GetOIListByIndex(oiListAt);
+		if (oil)
+			break;
+	}
 }
 
 AllOIListIterator& AllOIListIterator::operator++() {
 	if (oil == nullptr)
 		return *this;
-	if (++oiListAt == numOI)
-		oil = nullptr;
-	else
+	while (++oiListAt < numOI) {
 		oil = rhPtr->GetOIListByIndex(oiListAt);
+		if (oil)
+			return *this;
+	}
+	oil = nullptr;
 	return *this;
 }
 // x++, instead of ++x
