@@ -484,7 +484,8 @@
 		<PlatformToolset Condition="$(WindowsXPCompatibility)==1">v141_xp</PlatformToolset>
 		<!-- Prevent Windows XP not-being-supported-later warnings -->
 		<XPDeprecationWarning Condition="$(WindowsXPCompatibility)==1">false</XPDeprecationWarning>
-		<MSBuildWarningsAsMessages Condition="$(WindowsXPCompatibility)==1">MSB8012;$(MSBuildWarningsAsMessages)</MSBuildWarningsAsMessages>
+		<!-- Hide MFX/MOX doesn't match DLL warning -->
+		<MSBuildWarningsAsMessages>MSB8012;$(MSBuildWarningsAsMessages)</MSBuildWarningsAsMessages>
 
 		<!-- If not XP, then use the latest compiler. $(PlatformToolsetVersion) is not available,
 			 so the following "check for toolset" are copied from Microsoft.Cpp.Defaults.props;
