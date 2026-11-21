@@ -3,7 +3,12 @@
 #ifdef __ANDROID__
 #include <android/sensor.h>
 #endif
+#ifdef _WIN32
+#include <intrin.h>
+#  define __builtin_popcount __popcnt
+#endif
 #include <optional>
+
 ///
 /// EXTENSION CONSTRUCTOR/DESTRUCTOR
 ///
@@ -75,6 +80,8 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const 
 	LinkExpression(26, GetNetworkType);
 
 #ifdef _WIN32
+
+#if 0
 #if WINVER < _WIN32_WINNT_WIN8
 	_Struct_size_bytes_(Size) struct _SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX {
 		LOGICAL_PROCESSOR_RELATIONSHIP Relationship;
@@ -202,6 +209,7 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const 
 		macOS/iOS: Prefer the undocumented hw.perflevel*.physicalcpu and hw.perflevel*.logicalcpu sysctls when available,
 			falling back to just total physical / logical core counts if they aren't present.
 	*/
+#endif // 0
 
 #elif defined(__ANDROID__)
 	do {
@@ -357,14 +365,14 @@ void Extension::GetFrameNames()
 #define DieWithError(cond, closeIt, doThis) { \
 		if (cond) \
 		{ \
-			MakeError(_T("") "FrameName collector: Line %i: Failed to "##doThis##", %u.", __LINE__, GetLastError()); \
+			MakeError(_T("FrameName collector: Line %i: Failed to ") doThis _T(", %u."), __LINE__, GetLastError()); \
 			if constexpr(closeIt) \
 				goto safeExit; \
 			else \
 				return; \
 		} \
 	}
-	DieWithError(lA == INVALID_SET_FILE_POINTER, false, "get frame pointer");
+	DieWithError(lA == INVALID_SET_FILE_POINTER, false, _T("get frame pointer"));
 
 
 	for (std::size_t i = 0; i < numFrames; ++i)

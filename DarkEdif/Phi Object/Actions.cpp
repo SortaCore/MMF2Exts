@@ -283,7 +283,7 @@ bool Extension::Sub_BuildTrusteeAndAccessPerms(std::tstring & sidOrAcc, std::str
 		// Allow none in case you can set access to none, thereby revoking inherited perms?
 		if (argPermList != "none"sv && !argPermList.empty())
 		{
-			for each (const std::string & p in permList2)
+			for (const std::string & p : permList2)
 			{
 				auto accessPermIt = accessMaskList.find(p);
 				if (accessPermIt == accessMaskList.cend())
@@ -532,7 +532,7 @@ void Extension::AddNewDACLPermToSystemObject(const TCHAR * sidOrAccPtr, const TC
 					" See help file for specifics."), argInheritList.c_str());
 		}
 		// We could check for duplicates, but meh, it's a bitmask, so that'll be meaningless in practice.
-		for each (const std::string & i in argInheritList2)
+		for (const std::string & i : argInheritList2)
 		{
 			auto inheritIt = inheritList.find(i);
 			if (inheritIt == inheritList.cend())
@@ -632,7 +632,7 @@ std::vector<int> memfind(void * startV, size_t size, void* lookFor, size_t lookF
 #include <iomanip>
 void Dump(std::stringstream &str2, void * v, size_t s)
 {
-	std::map<char, char*> unprintable{
+	std::map<char, const char*> unprintable{
 		{ '\0', "NUL"},
 		{ 1, "SOH", },
 		{ 2, "STX", },
