@@ -1755,12 +1755,20 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _expressionJ
 #endif
 
 	if (Edif::SDK->ExpressionFunctions.size() < (unsigned int)ID)
-		return params.SetValue((int)ext->UnlinkedExpression(ID));
+	{
+		const long result = ext->UnlinkedExpression(ID);
+		params.SetReturnType(ExpReturnType::Integer);
+		return params.SetValue((int)result);
+	}
 
 	void * Function = Edif::SDK->ExpressionFunctions[ID];
 
 	if (!Function)
-		return params.SetValue((int)ext->UnlinkedExpression(ID));
+	{
+		const long result = ext->UnlinkedExpression(ID);
+		params.SetReturnType(ExpReturnType::Integer);
+		return params.SetValue((int)result);
+	}
 
 	const ACEInfo * info = Edif::SDK->ExpressionInfos[ID];
 	ExpReturnType ExpressionRet = info->Flags.ef;
