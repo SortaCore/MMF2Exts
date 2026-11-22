@@ -38,7 +38,7 @@ ObjectSelection::ObjectSelection(RunHeader * rhPtr)
 	// You can loop all object instances with oiList->oilObject and curHo->hoNumNext,
 	// and loop selected with oiList->oilListSelected and curHo->hoNextSelected;
 	// those variables reflect the index in rhObjectList.
-	OiList = rhPtr->GetOIListByIndex(0);
+	OiList = rhPtr->rhOiList;
 
 	// Fusion qualifer array; static
 	// Qualifier -> OiList[] - static, one per qualifier, but any number of OiList

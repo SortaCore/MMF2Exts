@@ -946,7 +946,20 @@ EventGroupMP * RunHeader::get_EventGroup() {
 	return rhEventGroup;
 }
 std::size_t RunHeader::GetNumberOi() {
-	return rhNumberOi - 1; // Windows runtime includes an invalid Oi at the end of list as part of count
+	// Windows runtime includes one invalid Oi at the end of list as part of count,
+	// but may in fact include several invalid at the end!
+	// Not sure how these happen or if they're cross-platform problems.
+	// I've reproduced in the example EXE, but reproducing didn't work.
+	// I inspected platform incompatible exts,
+	// exts that have MFX but refuse to load, global events, global objects,
+	// copy-pasted objects from another frame, etc.
+	// I have yet to find invalids midway in the list though, just extra at end.
+	std::size_t numOi = rhNumberOi - 1;
+
+	// Don't use GetOIListByIndex(), it'd recurse back here
+	while (numOi > 0 && ((objInfoList *) ((char *)rhOiList) + (DarkEdif::ObjectSelection::oiListItemSize * (numOi - 1)))->oilOi < 0)
+		--numOi;
+	return numOi;
 }
 qualToOi* RunHeader::GetQualToOiListByOffset(std::size_t offset) {
 	// Windows edits the offset calculation if the app setting "Fix qualifier limit error" is on.
