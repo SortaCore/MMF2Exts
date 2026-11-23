@@ -430,13 +430,6 @@
 			<!-- Not including ProjectDir causes includes of "Common.hpp" from the DarkEdif SDK to fail.
 				 OpenCV's projects are in an addition layer of subfolders. -->
 			<AdditionalIncludeDirectories>$(ProjectDir.TrimEnd('\'));$(SDKRootFolder)\Inc\$(_TargetPlatInclMac);$(SDKRootFolder)\Inc\Shared;$(SolutionDir)Temp\$(ExtName);$(SDKRootFolder)\Inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-			<!-- Enforces standard C++ rules for reference binding, string literal conversions,
-				 rvalue casts, ternary operand types, extern "C" parameters, goto scoping,
-				 hidden friends, and static_assert handling. -->
-			<ConformanceMode>true</ConformanceMode>
-			<!-- Enables better C/C++ standards, enabled for C11, C++20 standard files,
-				 but not C++17 files by default. #if _MSVC_TRADITIONAL == 0 when active. -->
-			<UseStandardPreprocessor>true</UseStandardPreprocessor>
 		</ClCompile>
 		<Link>
 			<AdditionalLibraryDirectories>$(ProjectDir.TrimEnd('\'));$(SDKRootFolder)\Lib\$(_TargetPlat)\$(TargetArch);$(SDKRootFolder)\Lib\$(_TargetPlat);$(SDKRootFolder)\Lib\Shared;$(SolutionDir)Temp\$(ExtName);$(SDKRootFolder)\Lib;%(AdditionalLibraryDirectories);</AdditionalLibraryDirectories>
@@ -563,6 +556,15 @@
 				 that spawn at the same time. To conditionally write code for this, see __cpp_threadsafe_static_init or ThreadSafeStaticInitIsSafe. -->
 			<AdditionalOptions Condition="$(WindowsXPCompatibility)==1">/Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
 			<AdditionalOptions Condition="$(WindowsXPCompatibility)==0">/DThreadSafeStaticInitIsSafe=1 %(AdditionalOptions)</AdditionalOptions>
+
+			<!-- Enforces standard C++ rules for reference binding, string literal conversions,
+				 rvalue casts, ternary operand types, extern "C" parameters, goto scoping,
+				 hidden friends, and static_assert handling. -->
+			<ConformanceMode>true</ConformanceMode>
+
+			<!-- Enables better C/C++ standards, enabled for C11, C++20 standard files,
+				 but not C++17 files by default. #if _MSVC_TRADITIONAL == 0 when active. -->
+			<UseStandardPreprocessor>true</UseStandardPreprocessor>
 		</ClCompile>
 		<Link>
 			<!-- Windows subsystem. Required to prevent a warning message -->
@@ -760,12 +762,11 @@
 	</PropertyGroup>
 	<ItemDefinitionGroup Label="Configuration" Condition="'$(_TargetPlat)'=='Android'">
 		<ClCompile>
-			<!-- Use C++17, and C11, latest finalised standards. -->
+			<!-- Use C++17, and C11, latest finalised standards.
+				 We don't set LanguageStandard as IntelliSense gets upset, see Google.Android.Cpp.DesignTime.targets -->
 			<CppLanguageStandard>c++1z</CppLanguageStandard>
 			<CppLanguageStandardNumber>17</CppLanguageStandardNumber>
 			<CLanguageStandard>c11</CLanguageStandard>
-			<LanguageStandard>c++1z</LanguageStandard>
-			<LanguageStandard_C>c11</LanguageStandard_C>
 
 			<!-- Make it easier to do a call stack trace; also, smaller files. -->
 			<FunctionLevelLinking>true</FunctionLevelLinking>
