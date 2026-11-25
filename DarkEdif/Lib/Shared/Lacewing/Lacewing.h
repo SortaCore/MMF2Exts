@@ -105,7 +105,7 @@
 #include <stdexcept>
 
 // std::string_view requires C++17
-#if (__cplusplus < 201703L && _MSVC_LANG < 201703L) || (defined(__clang__) && !__has_include(<string_view>))
+#if (__cplusplus < 201703L && _MSVC_LANG < 201703L) || (defined(__has_include) && !__has_include(<string_view>))
 	#error C++17 std::string_view not available, check what C++ standard your project is using
 #endif
 #include <string_view>

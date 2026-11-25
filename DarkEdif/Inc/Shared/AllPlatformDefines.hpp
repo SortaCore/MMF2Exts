@@ -101,7 +101,7 @@ using namespace std::string_view_literals;
 	// @param formatParamIndex 1-based index of format string parameter
 	// @param dotsParamIndex 1-based index of first variadic parameter; if va_list style, put 0
 	#define PrintFHintAfter(formatParamIndex,dotsParamIndex)
-#elif defined(__clang__) && !defined (__INTELLISENSE__)
+#elif defined(__GNUC__) && !defined (__INTELLISENSE__)
 	#define PrintFHintInside /* no op */
 	// Defined after a C printf-style function declaration to allow code analysers to check the %x are correct type
 	#define PrintFHintAfter(formatParamIndex,dotsParamIndex) __attribute__((format(printf, formatParamIndex, dotsParamIndex)))
@@ -368,53 +368,53 @@ namespace DarkEdif {
 #if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_VERBOSE)
 	// Logs with verbose level severity to debugger output window or Android logcat.
 	// Intended for high-volume logging only during extreme debugging scenarios.
-	#define LOGV(x,...) DarkEdif::Log(DARKEDIF_LOG_VERBOSE, x, ##__VA_ARGS__)
+	#define LOGV(...) DarkEdif::Log(DARKEDIF_LOG_VERBOSE, __VA_ARGS__)
 #else
 	// Logs with verbose level severity. (verbose level is disabled in current project config)
 	// Intended for high-volume logging only during extreme debugging scenarios.
-	#define LOGV(x,...) (void)0
+	#define LOGV(...) (void)0
 #endif
 #if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_DEBUG)
 	// Logs with debug level severity to debugger's output window or Android logcat.
 	// Intended for logging that is only relevant in debugging, not notable during release builds.
-	#define LOGD(x,...) DarkEdif::Log(DARKEDIF_LOG_DEBUG, x, ##__VA_ARGS__)
+	#define LOGD(...) DarkEdif::Log(DARKEDIF_LOG_DEBUG, __VA_ARGS__)
 #else
 	// Logs with debug level severity. (debug level is disabled in current project config)
 	// Intended for logging that is only relevant in debugging, not notable during release builds.
-	#define LOGD(x,...) (void)0
+	#define LOGD(...) (void)0
 #endif
 #if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_INFO)
 	// Logs with information level severity to debugger's output window or Android logcat.
 	// Intended for logging that is relevant in debugging or release builds.
-	#define LOGI(x,...) DarkEdif::Log(DARKEDIF_LOG_INFO, x, ##__VA_ARGS__)
+	#define LOGI(...) DarkEdif::Log(DARKEDIF_LOG_INFO, __VA_ARGS__)
 #else
 	// Logs with information level severity. (information level is disabled in current project config)
 	// Intended for logging that is relevant in debugging or release builds.
-	#define LOGI(x,...) (void)0
+	#define LOGI(...) (void)0
 #endif
 #if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_WARN)
 	// Logs with warning level severity to debugger's output window or Android logcat.
 	// Intended for scenarios that MAY indicate an error or bad state.
-	#define LOGW(x,...) DarkEdif::Log(DARKEDIF_LOG_WARN, x, ##__VA_ARGS__)
+	#define LOGW(...) DarkEdif::Log(DARKEDIF_LOG_WARN, __VA_ARGS__)
 #else
 	// Logs with warning level severity. (warning level is disabled in current project config)
 	// Intended for scenarios that MAY indicate an error or bad state.
-	#define LOGW(x,...) (void)0
+	#define LOGW(...) (void)0
 #endif
 #if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_ERROR)
 	// Logs with error level severity to debugger's output window or Android logcat.
 	// Intended for scenarios that indicate a non-fatal error.
-	#define LOGE(x,...) DarkEdif::Log(DARKEDIF_LOG_ERROR, x, ##__VA_ARGS__)
+	#define LOGE(...) DarkEdif::Log(DARKEDIF_LOG_ERROR, __VA_ARGS__)
 #else
 	// Logs with error level severity. (error level is disabled in current project config)
 	// Intended for scenarios that indicate a non-fatal error.
-	#define LOGE(x,...) (void)0
+	#define LOGE(...) (void)0
 #endif
 
 // Logs with fatal level severity to debugger's output window or Android logcat,
 // then aborts the app. Does not return to caller.
 // On Windows, creates a modal message box between logging and app quit.
-#define LOGF(x, ...) DarkEdif::LOGFInternal(x, ##__VA_ARGS__)
+#define LOGF(...) DarkEdif::LOGFInternal(__VA_ARGS__)
 
 // Tells the compiler not to generate any default constructor/destructor for this class
 #define NO_DEFAULT_CTORS_OR_DTORS(className) \
