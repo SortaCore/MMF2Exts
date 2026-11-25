@@ -75,7 +75,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)Expressions.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Extension.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)LacewingFunctions.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)Runtime.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)..\..\cpp.hint" />

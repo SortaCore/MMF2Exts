@@ -53,6 +53,7 @@ public:
 	struct GlobalInfo;
 	GlobalInfo * globals;
 	static void ObjectDestroyTimeoutFunc(GlobalInfo* G);
+	static void EndOfApp(CRunAppMultiPlat* app, bool isSubApp);
 
 
 	// This allows prettier and more readable access while maintaining global variables.
@@ -537,9 +538,7 @@ struct Extension::GlobalInfo final
 	AutoResponse autoResponse_MessageChannel = AutoResponse::Approve_Quiet;
 	AutoResponse autoResponse_MessageServer = AutoResponse::WaitForFusion;
 
-
 	// Constructor and destructor
-
 	GlobalInfo(Extension * e, const EDITDATA * const edPtr);
 
 	// Due to Runtime.WriteGlobal() not working if there's no Extension,

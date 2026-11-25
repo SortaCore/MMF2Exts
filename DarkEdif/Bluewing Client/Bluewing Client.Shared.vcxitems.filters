@@ -63,9 +63,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)LacewingFunctions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)Runtime.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\error.c">
       <Filter>Source Files\Lacewing\src</Filter>
     </ClCompile>

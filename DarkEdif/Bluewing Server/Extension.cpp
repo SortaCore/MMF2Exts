@@ -428,6 +428,9 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const 
 			writeTo = _T("(no selected client)"sv);
 	};
 	FusionDebugger.AddItemToDebugger(_T("> Channel count: "sv), NULL, selClientNumChannelsDebugItemReader, NULL, 100, NULL);
+
+	// Subscribe to end of app so we can shut down the networking
+	DarkEdif::EndAppCallback = Extension::EndOfApp;
 }
 
 void Extension::LacewingLoopThread(Extension * ext)
@@ -477,6 +480,13 @@ void Extension::LacewingLoopThread(Extension * ext)
 #endif
 
 	LOGV(_T("" PROJECT_NAME " - LacewingLoopThread has exited.\n"));
+}
+
+void Extension::EndOfApp(CRunAppMultiPlat *, bool isSubApp)
+{
+	LOGV(_T("" PROJECT_NAME " - EndOfApp called, isSubApp = %s.\n"), isSubApp ? _T("yes") : _T("no"));
+	if (!isSubApp)
+		Extension::AppWasClosed = true;
 }
 
 Extension::GlobalInfo::GlobalInfo(Extension * e, const EDITDATA * const edPtr)

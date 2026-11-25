@@ -261,6 +261,9 @@ public:
 	const TCHAR* NetScan_ServerVersion();
 	const TCHAR* NetScan_ServerWelcomeMessage();
 
+	// End of app notifier
+	static void EndOfApp(CRunAppMultiPlat* app, bool isSubApp);
+
 	struct GlobalInfo final
 	{
 		// Lacewing event queue and ticker

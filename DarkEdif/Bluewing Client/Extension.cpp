@@ -419,6 +419,9 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const 
 			writeTo = _T("(none)"sv);
 	};
 	FusionDebugger.AddItemToDebugger(_T("Selected peer: "sv), NULL, selectedPeerDebugItemReader, NULL, 100, NULL);
+
+	// Subscribe to end of app so we can shut down the networking
+	DarkEdif::EndAppCallback = Extension::EndOfApp;
 }
 
 void Extension::LacewingLoopThread(void * thisExt)
@@ -1147,6 +1150,14 @@ long Extension::UnlinkedExpression(int ID)
 	if ((size_t)ID < Edif::SDK->ExpressionInfos.size() && Edif::SDK->ExpressionInfos[ID]->Flags.ef == ExpReturnType::String)
 		return (long)Runtime.CopyString(_T(""));
 	return 0;
+}
+
+// End of app notifier
+void Extension::EndOfApp(CRunAppMultiPlat*, bool isSubApp)
+{
+	LOGV(_T("" PROJECT_NAME " - EndOfApp called, isSubApp = %s.\n"), isSubApp ? _T("yes") : _T("no"));
+	if (!isSubApp)
+		Extension::AppWasClosed = true;
 }
 
 Extension::GlobalInfo::GlobalInfo(Extension * e, const EDITDATA* const edPtr)

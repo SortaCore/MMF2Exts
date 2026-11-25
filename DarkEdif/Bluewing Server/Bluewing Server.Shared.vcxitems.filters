@@ -177,9 +177,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\udp2.cc">
       <Filter>Source Files\Lacewing\src\cxx</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)Runtime.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\DarkEdif.cpp">
       <Filter>Global to all extensions\Edif</Filter>
     </ClCompile>
