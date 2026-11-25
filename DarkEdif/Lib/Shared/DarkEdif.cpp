@@ -7785,8 +7785,8 @@ DWORD WINAPI DarkEdifUpdateThread(void * pIsUniVer)
 	}
 
 	// Use RAII to auto-close the opened resource writing when this update thread exits
-	auto CloseHandle = [](HANDLE *h) { EndUpdateResource(*h, TRUE); *h = NULL; return; };
-	std::unique_ptr<HANDLE, std::function<void(HANDLE*)>> resHandleHolder(&resHandle, CloseHandle);
+	std::unique_ptr<HANDLE, std::function<void(HANDLE*)>> resHandleHolder(&resHandle,
+		[](HANDLE* h) { EndUpdateResource(*h, TRUE); *h = NULL; return; });
 
 	// Users have access to registry of local machine, albeit read-only, so this should not fail.
 	// Note: we always use the wide version of registry as it's always stored as UTF-16, and we
