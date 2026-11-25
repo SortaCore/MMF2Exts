@@ -5640,6 +5640,7 @@ bool DarkEdif::IsFusion25;
 // True if angle variables are degrees as floats, false if they are ints.
 // Ints are used in MMF2 non-Direct3D display modes.
 bool DarkEdif::IsHWAFloatAngles;
+float DarkEdif::FusionBuild;
 bool DarkEdif::Windows::IsRunningUnderWine;
 bool DarkEdif::Windows::IsRunningInReactOS;
 DarkEdif::Windows::WinOSVersion DarkEdif::Windows::OSVersion;
@@ -7011,7 +7012,12 @@ postLoop:
 	}
 	return error;
 }
-#endif // _WIN32
+
+#endif // _WIN32, !NOPROPS
+
+#ifdef _WIN32
+#pragma comment (lib, "Version.lib")
+#endif
 
 static bool didLateInit = false;
 void DarkEdif::LateInit(Extension* ext)
@@ -7057,17 +7063,54 @@ void DarkEdif::LateInit(Extension* ext)
 				// It's a tiny 0-image app anyway. Log so ext dev knows if they are reliant on CF2.5+.
 				if (!IsFusion25Plus)
 					LOGW(_T("App has no images; can't check for CF2.5+ DLC reliably. Add an Active. Assuming not CF2.5+.\n"));
-				return;
 			}
-
-			// Otherwise, some other error happened and Fusion refused to give us the image. Hard fail.
-			// No actual error info available from what I know.
-			LOGF(_T("Failed to read image bank; unknown error.\n"));
+			else
+			{
+				// Otherwise, some other error happened and Fusion refused to give us the image. Hard fail.
+				// No actual error info available from what I know.
+				LOGF(_T("Failed to read image bank; unknown error.\n"));
+			}
 		}
-
-		// If LZX compression was used, then it's CF2.5+; if not, it's not
-		IsFusion25Plus = (firstImg.imgFlags & Img::Flags::LZX) == Img::Flags::LZX;
+		else
+		{
+			// If LZX compression was used, then it's CF2.5+; if not, it's not
+			IsFusion25Plus = (firstImg.imgFlags & Img::Flags::LZX) == Img::Flags::LZX;
+		}
 	}
+
+	FusionBuild = (float)(Edif::SDK->mV->mvGetVersion() & MMFBUILD_MASK);
+	{
+		LPBYTE adfifo;
+		VS_FIXEDFILEINFO* lpVfifo;
+		DWORD dwHnd = 0;
+		// Read the sub-build from Fusion mmfs2.dll at runtime; this expects that mmfs2.dll
+		// is in same folder as MFX, which is true for all built EXEs, but not
+		std::tstring fileToVerRead;
+		if (RunMode == MFXRunMode::BuiltEXE)
+		{
+			fileToVerRead = DarkEdif::GetMFXRelativeFolder(DarkEdif::GetFusionFolderType::MFXLocation);
+			fileToVerRead += _T("mmfs2.dll"sv);
+		}
+		else // Otherwise use the running EXE; it's either mmf2[u] or edrt
+			fileToVerRead = DarkEdif::GetRunningApplicationPath(DarkEdif::GetRunningApplicationPathType::FullPath);
+
+		unsigned int lsize = GetFileVersionInfoSize(fileToVerRead.c_str(), &dwHnd);
+		if (lsize != 0 && (adfifo = (LPBYTE)malloc(lsize)) != NULL)
+		{
+			if (GetFileVersionInfo(fileToVerRead.c_str(), dwHnd, lsize, adfifo) &&
+				VerQueryValue(adfifo, _T("\\"), (void**)&lpVfifo, &lsize))
+			{
+				// mmfs2.dll major version doesn't match mvGetVersion()
+				assert(HIWORD(lpVfifo->dwFileVersionLS) == (int)FusionBuild);
+
+				FusionBuild += ((float)LOWORD(lpVfifo->dwFileVersionLS)) / 100.0f;
+			}
+			free(adfifo);
+		}
+	}
+
+
+	assert(FusionBuild > 200.0f);
 #else
 	// I have not seen any non-Windows runtime code that indicates it checks for CF2.5+ at all.
 	// In Android, the chunk 0x224F is not read, the sample channel count is hardcoded to 48,
