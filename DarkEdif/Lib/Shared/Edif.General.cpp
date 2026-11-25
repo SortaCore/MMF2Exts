@@ -301,7 +301,7 @@ std::int16_t FusionAPI DestroyRunObject(RUNDATA * rdPtr, long fast)
 		DarkEdif::MsgBox::Error(_T("DarkEdif - RUNDATA error"), _T("Expected RUNDATA::pExtension at %p, but was not present. Is RUNDATA in the wrong arrangement?"),
 			((RunObject*)rdPtr)->GetExtension());
 #endif
-	ext->Runtime.curCall = Edif::RuntimeToExtCall::Destroy;
+	ext->Runtime.PreDestroy(); // sets Runtime.curCall
 	delete ext;
 	ForbiddenInternals2::SetExtension((RunObject*)rdPtr, nullptr);
 
@@ -437,7 +437,7 @@ ProjectFunc void destroyRunObject(JNIEnv *, jobject, jlong ext, jboolean fast)
 {
 	JNIExceptionCheck();
 	LOGV("Running " PROJECT_NAME " extension dtor in destroyRunObject...\n");
-	((Extension*)ext)->Runtime.curCall = Edif::RuntimeToExtCall::Destroy;
+	((Extension*)ext)->Runtime.PreDestroy();
 	delete ((Extension *)ext);
 	JNIExceptionCheck();
 	LOGV("Ran " PROJECT_NAME " extension dtor OK.\n");
@@ -893,7 +893,7 @@ ProjectFunc short PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _handleRunO
 }
 ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _destroyRunObject)(void * cppExt, bool bFast)
 {
-	((Extension*)cppExt)->Runtime.curCall = Edif::RuntimeToExtCall::Destroy;
+	((Extension*)cppExt)->Runtime.PreDestroy();
 	delete ((Extension *)cppExt);
 }
 #if PAUSABLE_EXTENSION

@@ -7016,6 +7016,12 @@ postLoop:
 #endif // _WIN32, !NOPROPS
 
 #ifdef _WIN32
+// Used in event generation; indicates CF 296.09+
+extern bool windowsRuntimeSavesActionContext;
+// True if build 292.02+, where CF2.5+ was released.
+// Whether that build has the rhChildEventToExecute variable is not proven yet.
+extern bool windowsRuntimeHasChildEvents;
+// For GetFileVersionInfo
 #pragma comment (lib, "Version.lib")
 #endif
 
@@ -7109,6 +7115,10 @@ void DarkEdif::LateInit(Extension* ext)
 		}
 	}
 
+	// TODO: Confirm earliest build when context was saved; it's in 296.09, not in MMF2's 258.2
+	windowsRuntimeSavesActionContext = FusionBuild >= 296.09f;
+	// IsFusion25Plus is a little risky for zero-image apps, but we'll assume non-production
+	windowsRuntimeHasChildEvents = FusionBuild >= 292.02f && DarkEdif::IsFusion25Plus;
 
 	assert(FusionBuild > 200.0f);
 #else

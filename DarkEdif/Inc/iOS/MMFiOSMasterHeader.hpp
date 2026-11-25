@@ -134,10 +134,21 @@ inline namespace FusionInternals
 		short get_ListSelected() const;
 		int get_NumOfSelected() const;
 		short get_Oi() const;
-		short GetOiListIndex(RunHeader*);
 		int get_NObjects() const;
 		short get_Object() const;
 		const TCHAR* get_name();
+		int get_oilNext() const;
+		bool get_oilNextFlag() const;
+		int get_oilCurrentRoutine() const;
+		int get_oilCurrentOi() const;
+		int get_oilActionCount() const;
+		int get_oilActionLoopCount() const;
+		void set_oilNext(int);
+		void set_oilNextFlag(bool);
+		void set_oilCurrentRoutine(int);
+		void set_oilCurrentOi(int);
+		void set_oilActionCount(int);
+		void set_oilActionLoopCount(int);
 		void set_NumOfSelected(int);
 		void set_ListSelected(short);
 		void set_EventCount(int);
@@ -148,6 +159,22 @@ inline namespace FusionInternals
 	};
 	struct qualToOi {
 		NO_DEFAULT_CTORS_OR_DTORS(qualToOi);
+		int get_qoiCurrentOi() const;
+		void set_qoiCurrentOi(int);
+		int get_qoiNext() const;
+		void set_qoiNext(int);
+		int get_qoiActionPos() const;
+		void set_qoiActionPos(int);
+		int get_qoiCurrentRoutine() const;
+		void set_qoiCurrentRoutine(int);
+		int get_qoiActionCount() const;
+		void set_qoiActionCount(int);
+		int get_qoiActionLoopCount() const;
+		void set_qoiActionLoopCount(int);
+		bool get_qoiNextFlag() const;
+		void set_qoiNextFlag(bool);
+		bool get_qoiSelectedFlag() const;
+		void set_qoiSelectedFlag(bool);
 		short get_Oi(std::size_t idx);
 		short get_OiList(std::size_t idx);
 		// Returns all OiList from internal array, used for looping through a qualifier's object IDs
@@ -186,29 +213,6 @@ inline namespace FusionInternals
 		event2* Next();
 		int GetIndex();
 	};
-	// Was EVGFLAGS_**
-	enum class EventGroupFlags : unsigned short
-	{
-		Once = 0x1,
-		NotAlways = 0x2,
-		Repeat = 0x4,
-		NoMore = 0x8,
-		Shuffle = 0x10,
-		EditorMark = 0x20,
-		UndoMark = 0x40,
-		ComplexGroup = 0x80,
-		Breakpoint = 0x100,
-		AlwaysClean = 0x200,
-		OrInGroup = 0x400,
-		StopInGroup = 0x800,
-		OrLogical = 0x1000,
-		Grouped = 0x2000,
-		Inactive = 0x4000,
-		NoGood = 0x8000,
-		Limited = Shuffle | NotAlways | Repeat | NoMore,
-		DefaultMask = Breakpoint | Grouped
-	};
-	enum_class_is_a_bitmask(EventGroupFlags);
 
 	struct EventGroupMP {
 		NO_DEFAULT_CTORS_OR_DTORS(EventGroupMP);
@@ -223,6 +227,7 @@ inline namespace FusionInternals
 
 	struct CRunFrameMultiPlat {
 		const TCHAR * get_name();
+		RunHeader * get_rhPtr();
 	};
 	struct CRunAppMultiPlat {
 		NO_DEFAULT_CTORS(CRunAppMultiPlat);
@@ -247,6 +252,11 @@ inline namespace FusionInternals
 		void SetRH2EventCount(int newEventCount);
 		// Gets the EventCountOR, used in object selection in OR-related events. DarkEdif-added function for cross-platform.
 		int GetRH4EventCountOR();
+		void SetRH4EventCountOR(int);
+		int GetRH2ActionCount();
+		int GetRH2ActionLoopCount();
+		void SetRH2ActionCount(int);
+		void SetRH2ActionLoopCount(int);
 		// Reads the rh2.rh2ActionOn variable, used to indicate actions are being run (as opposed to conditions, or Handle, etc).
 		bool GetRH2ActionOn();
 		// Sets the rh2.rh2ActionOn variable, used in an action to affect selection
@@ -279,6 +289,11 @@ inline namespace FusionInternals
 		RunHeader* get_AdRunHeader();
 		bool get_SelectedInOR();
 		HeaderObjectFlags get_Flags();
+		void set_Flags(HeaderObjectFlags);
+		int get_EventNumber() const;
+		void set_EventNumber(int);
+		int get_CurrentParam() const;
+		void set_CurrentParam(int);
 		int	get_X() const;
 		int get_Y() const;
 		int get_ImgWidth() const;

@@ -1920,8 +1920,8 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _expressionJ
 endFunc:
 	// Must set return type after the expression func is evaluated, as sub-expressions inside the
 	// expression func (e.g. from generating events) could change it to something else
-	params.SetReturnType(ExpressionRet);
 	LOGV(PROJECT_NAME _T(" Expression ID %i end.\n"), ID);
+	params.SetReturnType(ExpressionRet);
 	ext->Runtime.curCall = lastCall;
 	return Result;
 

@@ -173,37 +173,6 @@ enum class FILEINFO {
 };
 class CImageFilterMgr;
 
-#define CNC_GetParameter(hoPtr)							{ }
-#define CNC_GetIntParameter(hoPtr)						CallRunTimeFunction(hoPtr, RFUNCTION::GET_PARAM, 0, 0)
-#define CNC_GetStringParameter(hoPtr)					CallRunTimeFunction(hoPtr, RFUNCTION::GET_PARAM, 0xFFFFFFFF, 0)
-#define CNC_GetFloatValue(hoPtr, par)					CallRunTimeFunction(hoPtr, RFUNCTION::GET_PARAM_FLOAT, par, 0)
-
-
-// Was EVGFLAGS_**
-enum class EventGroupFlags : unsigned short
-{
-	Once = 0x1,
-	NotAlways = 0x2,
-	Repeat = 0x4,
-	NoMore = 0x8,
-	Shuffle = 0x10,
-	EditorMark = 0x20,
-	UndoMark = 0x40,
-	ComplexGroup = 0x80,
-	Breakpoint = 0x100,
-	AlwaysClean = 0x200,
-	OrInGroup = 0x400,
-	StopInGroup = 0x800,
-	OrLogical = 0x1000,
-	Grouped = 0x2000,
-	Inactive = 0x4000,
-	NoGood = 0x8000,
-	Limited = Shuffle | NotAlways | Repeat | NoMore,
-	DefaultMask = Breakpoint | Grouped
-};
-enum_class_is_a_bitmask(EventGroupFlags);
-
-
 // Converts u8str to UTF-8-Modified str. Expects no embedded nulls
 jstring CStrToJStr(const char* u8str);
 // Converts std::thread::id to a std::string
@@ -433,17 +402,22 @@ struct objInfoList {
 	short get_ListSelected();
 	int get_NumOfSelected();
 	short get_Oi();
-	short GetOiListIndex(RunHeader*);
 	int get_NObjects();
 	short get_Object();
 	const TCHAR* get_name();
 	short get_QualifierByIndex(std::size_t);
-	int get_oilNext();
-	bool get_oilNextFlag();
-	int get_oilCurrentRoutine();
-	int get_oilCurrentOi();
-	int get_oilActionCount();
-	int get_oilActionLoopCount();
+	int get_oilNext() const;
+	bool get_oilNextFlag() const;
+	int get_oilCurrentRoutine() const;
+	int get_oilCurrentOi() const;
+	int get_oilActionCount() const;
+	int get_oilActionLoopCount() const;
+	void set_oilNext(int);
+	void set_oilNextFlag(bool);
+	void set_oilCurrentRoutine(int);
+	void set_oilCurrentOi(int);
+	void set_oilActionCount(int);
+	void set_oilActionLoopCount(int);
 	void set_NumOfSelected(int);
 	void set_ListSelected(short);
 	void set_EventCount(int);
@@ -462,7 +436,7 @@ protected:
 							ListSelected,	 // First selection
 							Type,			 // Type of the object
 							Object;			 // First objects in the game
-	std::optional<short>	EventCount,
+	std::optional<int>	EventCount,
 							EventCountOR,
 							NumOfSelected;
 
@@ -523,6 +497,22 @@ enum_class_is_a_bitmask(CreateObjectInfo::Flags);
 
 struct qualToOi {
 	// returns the object in this qualifier
+	int get_qoiCurrentOi() const;
+	void set_qoiCurrentOi(int);
+	int get_qoiNext() const;
+	void set_qoiNext(int);
+	int get_qoiActionPos() const;
+	void set_qoiActionPos(int);
+	int get_qoiCurrentRoutine() const;
+	void set_qoiCurrentRoutine(int);
+	int get_qoiActionCount() const;
+	void set_qoiActionCount(int);
+	int get_qoiActionLoopCount() const;
+	void set_qoiActionLoopCount(int);
+	bool get_qoiNextFlag() const;
+	void set_qoiNextFlag(bool);
+	bool get_qoiSelectedFlag() const;
+	void set_qoiSelectedFlag(bool);
 	short get_Oi(std::size_t idx);
 	short get_OiList(std::size_t idx);
 	qualToOi(RunHeader* rh, int index, jobject me, Edif::Runtime * runtime);
@@ -580,6 +570,16 @@ private:
 struct CEventProgram {
 	NO_DEFAULT_CTORS(CEventProgram);
 
+	// Private qualifier traversal cursors preserved around generated events.
+	int get_qualOilPtr() const;
+	void set_qualOilPtr(int);
+	int get_qualOilPos() const;
+	void set_qualOilPos(int);
+	int get_qualOilPtr2() const;
+	void set_qualOilPtr2(int);
+	int get_qualOilPos2() const;
+	void set_qualOilPos2(int);
+
 	int get_rh2EventCount();
 	void set_rh2EventCount(int eventCount);
 
@@ -596,14 +596,6 @@ struct CEventProgram {
 	// Sets the rh2.rh2ActionLoopCount variable, used in a fastloop to loop the actions.
 	void set_rh2ActionLoopCount(int newActLoopCount);
 
-	// Gets the current expression token number.
-	int get_rh4CurToken();
-	// Sets the current expression token number.
-	void set_rh4CurToken(int newCurToken);
-	// Gets the current expression token array; relevant in Android only.
-	jobject get_rh4Tokens();
-	// Sets the current expression token array; relevant in Android only.
-	void set_rh4Tokens(jobject newTokensArray);
 
 	EventGroupMP* get_eventGroup();
 	// true: actions are being executed. False: conditions. Neither: undefined
@@ -618,8 +610,8 @@ protected:
 	friend Edif::Runtime;
 	friend struct RunHeader;
 
-	// invalidated by new event: eventGrp, rh2EventCount, rh4EventCountOr, rh2ActionOn
-	// invalidated by new condition: rh4EventCountOr, rh2ActionOn
+	// Invalidated by new event: eventGrp, event/OR counts and action/loop counts.
+	// rh2ActionOn is read directly, not cached.
 
 	std::unique_ptr<EventGroupMP> eventGrp;
 	std::optional<int> rh2EventCount, rh4EventCountOR;
@@ -642,6 +634,7 @@ struct CRunFrameMultiPlat {
 
 	CEventProgram* get_eventProgram();
 	const TCHAR * get_name();
+	RunHeader * get_rhPtr();
 
 	CRunFrameMultiPlat(jobject app, Edif::Runtime* runtime);
 protected:
@@ -657,7 +650,9 @@ protected:
 
 struct CRunAppMultiPlat {
 	NO_DEFAULT_CTORS(CRunAppMultiPlat);
+	// Gets the Fusion frame number; -1 during DarkEdif::EndAppCallback
 	int get_nCurrentFrame();
+	// Gets the frame; not usable during DarkEdif::EndAppCallback
 	CRunFrameMultiPlat * get_Frame();
 	CRunAppMultiPlat * get_ParentApp();
 	std::size_t GetNumFusionFrames();
@@ -693,6 +688,7 @@ struct RunHeader {
 	void SetRH2EventCount(int newEventCount);
 	// Gets the EventCountOR, used in object selection in OR-related events. DarkEdif-added function for cross-platform.
 	int GetRH4EventCountOR();
+	void SetRH4EventCountOR(int);
 	event2* GetRH4ActionStart();
 
 	// Reads the rh2.rh2ActionCount variable, used in an action with multiple instances selected, to repeat one action.
@@ -701,9 +697,6 @@ struct RunHeader {
 	int GetRH2ActionLoopCount();
 	// Reads the current expression token index, used in the middle of expression evaluation.
 	int GetRH4CurToken();
-	// Reads the current expression token array, used in the middle of expression evaluation. Relevant in Android only.
-	// Local JNI reference, can be null, e.g. during Handle().
-	jobjectArray GetRH4Tokens();
 	// Reads the rh2.rh2ActionOn variable, used to indicate actions are being run (as opposed to conditions, or Handle, etc).
 	bool GetRH2ActionOn();
 
@@ -713,8 +706,6 @@ struct RunHeader {
 	void SetRH2ActionLoopCount(int newActLoopCount);
 	// Sets the current expression token index, used in the middle of expression evaluation.
 	void SetRH4CurToken(int newCurToken);
-	// Sets the current expression token array, used in the middle of expression evaluation. Relevant in Android only.
-	void SetRH4Tokens(jobjectArray newTokensArray);
 	// Sets the rh2.rh2ActionOn variable, used in an action to affect selection
 	void SetRH2ActionOn(bool newActOn);
 
@@ -770,13 +761,18 @@ protected:
 	// Called for getting the whole array during a oi find
 	jobjectArray GetOiList();
 
-	static jfieldID rh4TokensFieldID, rh4CurTokenFieldID, eventProgramFieldID, oiListFieldID;
+	static jfieldID rh4CurTokenFieldID, eventProgramFieldID, oiListFieldID;
 };
 
 typedef jobject CCndExtension;
 typedef jobject CActExtension;
 typedef jobject CNativeExpInstance;
 struct HeaderObject {
+	int get_EventNumber() const;
+	void set_EventNumber(int);
+	int get_CurrentParam() const;
+	void set_CurrentParam(int);
+	void set_Flags(HeaderObjectFlags);
 	short get_NextSelected();
 	unsigned short get_CreationId();
 	short get_Number();

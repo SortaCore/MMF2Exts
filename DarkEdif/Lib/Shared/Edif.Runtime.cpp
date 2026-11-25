@@ -4,14 +4,20 @@
 #include "Edif.hpp"
 #include "DarkEdif.hpp"
 #include "ObjectSelection.hpp"
-#include <tuple>
 #include <functional>
 #ifdef __APPLE__
+#if MacBuild
+#include "MMF2Lib/MMF2Runtime.h"
+#endif // MacBuild
 #include "MMF2Lib/CQualToOiList.h"
 #include "MMF2Lib/CRunApp.h"
 #include "MMF2Lib/CRCom.h"
 #include "MMF2Lib/CRSpr.h"
 #include "MMF2Lib/CRunFrame.h"
+#include "MMF2Lib/CEventProgram.h"
+#include "MMF2Lib/CObjInfo.h"
+#include "MMF2Lib/CValue.h"
+extern "C" void DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, generateEvent)(void*, int, int);
 #endif
 
 struct EdifGlobal
@@ -133,6 +139,18 @@ const TCHAR * CRunFrameMultiPlat::get_name()
 		frameName = std::string(javaFrameName.str());
 	}
 	return frameName.c_str();
+#else
+#error Unexpected platform
+#endif
+}
+RunHeader * CRunFrameMultiPlat::get_rhPtr()
+{
+#ifdef _WIN32
+	return rhPtr;
+#elif defined(__APPLE__)
+	return (RunHeader *)((CRunFrame*)this)->app->run;
+#elif defined(__ANDROID__)
+	return this->runtime->ext->rhPtr;
 #else
 #error Unexpected platform
 #endif
@@ -301,9 +319,6 @@ const TCHAR * CRunAppMultiPlat::get_targetFileName()
 }
 
 
-// Static definition
-int Edif::Runtime::actionLoopIncrement = 0;
-
 #if TEXT_OEFLAG_EXTENSION
 std::uint32_t Edif::Runtime::GetRunObjectTextColor() const
 {
@@ -347,6 +362,630 @@ void Edif::Runtime::SetSurfaceWithSize(int width, int height)
 #endif
 
 #ifdef _WIN32
+// Inited in DarkEdif ctor; true if 296.09
+bool windowsRuntimeSavesActionContext;
+// True if build 292.02+, where CF2.5+ was released. Whether that build has the child event variable is not proven yet.
+bool windowsRuntimeHasChildEvents;
+#endif
+
+void Edif::Runtime::GenerateEvent(int EventID)
+{
+	DarkEdif::DieIfCallerIsNotMainThread("Runtime.GenerateEvent");
+
+	RunHeader* const rh = ObjectSelection.rhPtr;
+#ifdef _WIN32
+	RunHeader2& rh2 = rh->rh2;
+#elif defined(__APPLE__)
+	CRun* const run = (CRun*)rh;
+	CEventProgram* const evp = run->rhEvtProg;
+#elif defined(__ANDROID__)
+	CEventProgram* const evp = rh->get_EventProgram();
+#else
+	#error Unknown platform
+#endif
+
+	// I don't think exts should ever do it; the runtime barely expects generated events, and even with
+	// this new event context and object-selection preserving, it's still not intended usage.
+	// Handle is the best place to run something if Display or another thread needs to generate it.
+#ifndef DARKEDIF_DISABLE_GENERATE_EVENT_CALL_CHECK
+	if (curCall != (curCall & (RuntimeToExtCall::Action | RuntimeToExtCall::Condition | RuntimeToExtCall::Expression | RuntimeToExtCall::Handle)))
+		return LOGF(_T("Running events in unexpected runtime call %d. Expecting event generating from A/C/E or Handle only.\n"), (int)curCall);
+#endif // DARKEDIF_DISABLE_GENERATE_EVENT_CALL_CHECK
+
+	// As an example of why you don't generate in CreateRunObject: the runtime hasn't finished loading all events and exts yet.
+#ifdef __APPLE__
+	if (!run->runtimeIsReady)
+		return LOGE(_T("Can't generate events yet, runtime is not ready."));
+#endif // Apple
+
+	// While you can use EventID 0x8000 to store two longs in param0/1, that sort of hack isn't really necessary
+	// when you can just save them in the ext and read them back in the condition function.
+	if ((EventID & 0x7FFF) != EventID|| (std::size_t)EventID > SDK->ConditionFunctions.size())
+		return LOGF(_T("Generating invalid event ID %i. Max condition ID is %zu.\n"), EventID, SDK->ConditionFunctions.size() - 1);
+
+	const RuntimeToExtCall lastCall = curCall;
+
+	// Re-entrant/recursion check
+	if (++generatingEventsCounter > 125)
+	{
+		LOGE(_T("Generating events has recursed into stack overflow territory. %s is generating event ID %hu.\n"),
+			hoPtr->get_OiList()->get_name(), (std::uint16_t)(EventID & 0x7FFF));
+	}
+
+	// The recorded A/C phase covers expressions nested within this instance's A/C.
+	// An expression called by another object has no recorded parent phase here;
+	// only that case needs the runtime's action/condition distinction.
+
+	RuntimeToExtCall curCall = this->curCall;
+	// If running an action in this ext, or running an expression and rh2ActionOn shows it is within an action,
+	// then we must save action context; ditto for conditions
+	if ((curCall & (RuntimeToExtCall::Action | RuntimeToExtCall::Condition | RuntimeToExtCall::Expression)) == RuntimeToExtCall::Expression)
+		curCall |= rh->GetRH2ActionOn() ? RuntimeToExtCall::Action : RuntimeToExtCall::Condition;
+	const bool preserveActions = (curCall & RuntimeToExtCall::Action) != RuntimeToExtCall::Unset;
+	const bool preserveConditions = (curCall & RuntimeToExtCall::Condition) != RuntimeToExtCall::Unset;
+#if defined(_WIN32) || defined(__APPLE__)
+	EventGroupMP* const group = curCall != RuntimeToExtCall::Handle ? rh->get_EventGroup() : nullptr;
+	const bool preserveOR = preserveConditions && group &&
+		(rh->GetEVGFlags() & EventGroupFlags::OrInGroup) != EventGroupFlags::None;
+	const int oldEventCount = rh->GetRH2EventCount(),
+		oldORCount = rh->GetRH4EventCountOR(),
+		oldActionCount = rh->GetRH2ActionCount();
+#elif !defined(__ANDROID__)
+	#error Unknown platform
+#endif
+	const long oldParam1 = param1, oldParam2 = param2;
+	const int oldEventNumber = hoPtr->get_EventNumber();
+	const HeaderObjectFlags oldTrueEvent = hoPtr->get_Flags() & HeaderObjectFlags::TrueEvent;
+	const auto oldCurrentParam = hoPtr->get_CurrentParam();
+
+#ifdef _DEBUG
+	// Check the current flag for repeat isn't reset unexpectedly; a condition/action that has REPEAT on
+	// shouldn't resume with it off or vice versa.
+	event2* const callerAction = preserveActions ? rh->GetRH4ActionStart() : nullptr;
+	const bool callerActionRepeat = callerAction && (callerAction->get_evtFlags() & ACTFLAGS_REPEAT) != 0;
+#endif
+
+#if defined(_WIN32) || defined(__APPLE__)
+	struct Context {
+		int code;
+		short oi;
+		bool enablePick;
+#ifdef __APPLE__
+		int param;
+#endif
+	};
+	struct ActionState { bool loop; int pass; } actionState;
+	struct ConditionState {
+#ifdef _WIN32
+		struct Cursors {
+			qualToOi* qualifier;
+			HeaderObject* object;
+			objInfoList* oiList;
+			objInfoList* previous;
+		} cursors;
+		short conditionsFalse;
+		char stop;
+#elif defined(__APPLE__)
+		void* qualifier;
+		int qualifierPos;
+		CObject* object;
+		int oiList;
+		CObject* previous;
+		CObjInfo* previousOi;
+		BOOL conditionsFalse, stop;
+		int qualifierIndices[4];
+#endif
+		short type;
+		std::uint32_t picks[4];
+	};
+	struct Pending {
+#ifdef _WIN32
+		struct Shuffle {
+			HeaderObject** buffer;
+			HeaderObject** position;
+			int count;
+		} shuffle;
+		void (*endRoutine)();
+		void* forEach;
+#elif defined(__APPLE__)
+		CArrayList* shuffle;
+		BOOL endForEach;
+		LPFOREACH forEach;
+		event* child;
+#endif
+	} pending;
+#endif
+
+#ifdef _WIN32
+	// Fusion 296.9 GenerateEvent saves/restores some fields, namely
+	// rh4ActionStart, rh4ExpToken and rh2ActionOn.
+	// MMF2 and earlier runtimes don't save them.
+	// We indicate with windowsRuntimeSavesActionContext.
+	const bool actionOn = !windowsRuntimeSavesActionContext && rh->GetRH2ActionOn();
+	EventGroupMP* const oldGroup = group;
+	event2* const oldActionStart = preserveActions && !windowsRuntimeSavesActionContext ? rh->rh4.rh4ActionStart : nullptr;
+	expression* const oldToken = ((lastCall & (RuntimeToExtCall::Action | RuntimeToExtCall::Condition | RuntimeToExtCall::Expression)) != RuntimeToExtCall::Unset) && !windowsRuntimeSavesActionContext ? rh->rh4.rh4ExpToken : nullptr;
+	EventParam* const oldParamZero = ParamZero;
+	const Context context = { rh->rhCurCode, rh->rhCurOi, rh2.rh2EnablePick };
+	if (preserveActions)
+		actionState = { rh2.rh2ActionLoop, rh2.rh2ActionLoopCount };
+	ConditionState* const conditionState = preserveConditions ?
+		static_cast<ConditionState*>(_alloca(sizeof(ConditionState))) : nullptr;
+	static_assert(sizeof(ConditionState::Cursors) == offsetof(RunHeader2, rh2EventPrev) +
+		sizeof(rh2.rh2EventPrev) - offsetof(RunHeader2, rh2EventQualPos), "Condition cursor layout changed");
+	static_assert(offsetof(RunHeader4, rh4PickFlags3) + sizeof(std::uint32_t) -
+		offsetof(RunHeader4, rh4PickFlags0) == sizeof(conditionState->picks), "Pick flag layout changed");
+	if (preserveConditions) {
+		// Shallow pointer values only; the objects and OIs they refer to are not copied.
+		std::memcpy(&conditionState->cursors, &rh2.rh2EventQualPos, sizeof(conditionState->cursors));
+		conditionState->type = rh2.rh2EventType;
+		conditionState->conditionsFalse = rh->rh4.rh4ConditionsFalse;
+		conditionState->stop = rh->rh3.rh3DoStop;
+		std::memcpy(conditionState->picks, &rh->rh4.rh4PickFlags0, sizeof(conditionState->picks));
+	}
+	static_assert(sizeof(Pending::Shuffle) == offsetof(RunHeader2, rh2ShuffleNumber) +
+		sizeof(rh2.rh2ShuffleNumber) - offsetof(RunHeader2, rh2ShuffleBuffer), "Shuffle layout changed");
+	pending.endRoutine = rh2.rh2ActionEndRoutine;
+	std::memcpy(&pending.shuffle, &rh2.rh2ShuffleBuffer, sizeof(pending.shuffle));
+	pending.forEach = rh->rh4.rh4ForEachs;
+	event2* const child = windowsRuntimeSavesActionContext && DarkEdif::IsFusion25Plus ? rh->rhChildEventToExecute : nullptr;
+	const std::size_t valuesSize = 2 * sizeof(CValueMultiPlat);
+	unsigned char* const values = !((lastCall & (RuntimeToExtCall::Action | RuntimeToExtCall::Condition | RuntimeToExtCall::Expression)) != RuntimeToExtCall::Unset) ? nullptr : static_cast<unsigned char*>(_alloca(valuesSize));
+	static_assert(offsetof(RunHeader4, rh4ExpValue2) - offsetof(RunHeader4, rh4ExpValue1) ==
+		sizeof(CValueMultiPlat), "Parameter cache layout changed");
+	if (((lastCall & (RuntimeToExtCall::Action | RuntimeToExtCall::Condition | RuntimeToExtCall::Expression)) != RuntimeToExtCall::Unset))
+		// The runtime's two adjacent caches contain non-owning forceValue records.
+		std::memcpy(values, &rh->rh4.rh4ExpValue1, valuesSize);
+#elif defined(__APPLE__)
+	// At some point in CF2.5 before the checked 296.9 beta runtimes,
+	// iOS/Mac added group/actionOn/expression-token preservation to generateEvent.
+	// Both now stack those fields and param[0]; the early iOS snapshot only
+	// stacked param[0]. Do not duplicate those saves for current Apple runtimes.
+	// All pointer members below are shallow.
+	const Context context = { evp->rhCurCode, evp->rhCurOi, evp->rh2EnablePick != NO,
+		evp->rhCurParam[1] };
+	const int oldTempBase = run->rhBaseTempValues, oldTempValue = run->rhCurTempValue;
+	if (preserveActions)
+		actionState = { evp->rh2ActionLoop != NO, evp->rh2ActionLoopCount };
+	ConditionState* const conditionState = preserveConditions ?
+		static_cast<ConditionState*>(__builtin_alloca(sizeof(ConditionState))) : nullptr;
+	if (preserveConditions) {
+		conditionState->qualifier = evp->rh2EventQualPos;
+		conditionState->qualifierPos = evp->rh2EventQualPosNum;
+		conditionState->object = evp->rh2EventPos;
+		conditionState->oiList = evp->rh2EventPosOiList;
+		conditionState->previous = evp->rh2EventPrev;
+		conditionState->previousOi = evp->rh2EventPrevOiList;
+		conditionState->type = evp->rh2EventType;
+		conditionState->conditionsFalse = evp->rh4ConditionsFalse;
+		conditionState->stop = evp->rh3DoStop;
+		std::memcpy(conditionState->qualifierIndices, &evp->qualOilPtr, sizeof(conditionState->qualifierIndices));
+		std::memcpy(conditionState->picks, evp->rh4PickFlags, sizeof(conditionState->picks));
+	}
+	pending = { evp->rh2ShuffleBuffer, evp->bEndForEach,
+		run->rh4ForEachs, run->rhChildEventToExecute };
+	const int oldTokenIndex = !((lastCall & (RuntimeToExtCall::Action | RuntimeToExtCall::Condition | RuntimeToExtCall::Expression)) != RuntimeToExtCall::Unset) ? 0 : run->rh4CurToken;
+	CValue* value1 = !((lastCall & (RuntimeToExtCall::Action | RuntimeToExtCall::Condition | RuntimeToExtCall::Expression)) != RuntimeToExtCall::Unset) ? nil : [[CValue alloc] initWithValue:run->rh4ExpValue1];
+	CValue* value2 = !((lastCall & (RuntimeToExtCall::Action | RuntimeToExtCall::Condition | RuntimeToExtCall::Expression)) != RuntimeToExtCall::Unset) ? nil : [[CValue alloc] initWithValue:run->rh4ExpValue2];
+	void* const oldCEvent = curCEvent;
+#elif defined(__ANDROID__)
+	// These four condition cursors are package-private, so they require JNI access.
+	// The Java guard also preserves OI/qualifier cursors and object selection,
+	// avoiding JNI calls inside the object and OI loops.
+	int qualifierIndices[4];
+	if (preserveConditions) {
+		qualifierIndices[0] = evp->get_qualOilPtr();
+		qualifierIndices[1] = evp->get_qualOilPos();
+		qualifierIndices[2] = evp->get_qualOilPtr2();
+		qualifierIndices[3] = evp->get_qualOilPos2();
+	}
+	// Keep this wrapper alive while the Java group is natively stacked. Its action
+	// wrappers refer to it; invalidation must not destroy it midway through the call.
+	std::unique_ptr<EventGroupMP> groupWrapper = std::move(evp->eventGrp);
+	std::unique_ptr<event2> actionWrapper = std::move(rh->rh4ActStart);
+	global<jobject> oldCEvent = curCEvent.swap_out();
+	global<jobject> oldActStart = curRH4ActStart.swap_out();
+	jobject const oldActBasedOnEvent = curRH4ActBasedOnCEventOnly;
+#else
+	#error Unknown platform
+#endif
+
+#if defined(_WIN32) || defined(__APPLE__)
+	struct SelectionState { objInfoList* oil; std::size_t first, count; };
+	struct OrMark { int fixed; bool selected; };
+	std::vector<SelectionState> selections;
+	std::vector<int> selected;
+	std::vector<objInfoList*> orOils;
+	std::vector<OrMark> orMarks;
+	struct OiCursor {
+		objInfoList* oil;
+		decltype(std::declval<objInfoList&>().get_oilCurrentRoutine()) routine;
+		int current, next, loop;
+		bool nextFlag;
+	};
+	struct QualCursor {
+		qualToOi* qoi;
+		decltype(std::declval<qualToOi&>().get_qoiCurrentRoutine()) routine;
+		int current, next, pos, loop;
+		bool nextFlag, selectedFlag;
+	};
+	std::vector<OiCursor> oiCursors;
+	std::vector<QualCursor> qualCursors;
+#ifdef _WIN32
+	std::vector<objInfoList*> modifiedOils;
+	if (preserveOR && windowsRuntimeSavesActionContext && rh->rhModifiedOiList)
+		modifiedOils.assign(rh->rhModifiedOiList, rh->rhModifiedOiListEnd);
+#endif // _WIN32
+
+	// Preserve object selection only when returning to an A/C/E, not Handle
+	if (((lastCall & (RuntimeToExtCall::Action | RuntimeToExtCall::Condition | RuntimeToExtCall::Expression)) != RuntimeToExtCall::Unset))
+	{
+		for (objInfoList* oil : DarkEdif::AllOIListIterator(rh))
+		{
+			const short oiList = rh->GetOIListIndexFromOi(oil->get_Oi());
+			if (preserveActions)
+			{
+				if (oil->get_oilActionCount() == oldActionCount)
+				{
+					oiCursors.push_back({ oil, oil->get_oilCurrentRoutine(), oil->get_oilCurrentOi(),
+						oil->get_oilNext(), oil->get_oilActionLoopCount(), oil->get_oilNextFlag() });
+				}
+				for (std::size_t i = 0; i < MAX_QUALIFIERS; ++i) {
+					const short qualifier = oil->get_QualifierByIndex(i);
+					if (qualifier == -1)
+						break;
+					qualToOi* qoi = rh->GetQualToOiListByOffset((std::uint16_t)qualifier);
+					if (!qoi)
+						continue;
+					if (std::any_of(qualCursors.begin(), qualCursors.end(), [qoi](const QualCursor& c) { return c.qoi == qoi; })) continue;
+					if (qoi->get_qoiActionCount() == oldActionCount)
+						qualCursors.push_back({ qoi, qoi->get_qoiCurrentRoutine(), qoi->get_qoiCurrentOi(),
+							qoi->get_qoiNext(), qoi->get_qoiActionPos(), qoi->get_qoiActionLoopCount(),
+							qoi->get_qoiNextFlag(), qoi->get_qoiSelectedFlag() });
+				}
+			}
+
+			// Save all selected in event, including all instances and those explicitly set to zero instances,
+			// which may happen with qualifiers
+			if (oil->get_EventCount() == oldEventCount) {
+				selections.push_back({ oil, selected.size(), 0 });
+				for (RunObjectMultiPlatPtr ro : DarkEdif::ObjectIterator(rh, oiList, DarkEdif::Selection::Explicit, true))
+					selected.push_back(ro->get_rHo()->GetFixedValue());
+				selections.back().count = selected.size() - selections.back().first;
+			}
+			if (preserveOR && oil->get_EventCountOR() == oldORCount) {
+				orOils.push_back(oil);
+				for (RunObjectMultiPlatPtr ro : DarkEdif::ObjectIterator(rh, oiList, DarkEdif::Selection::All, true))
+					orMarks.push_back({ ro->get_rHo()->GetFixedValue(), ro->get_rHo()->get_SelectedInOR() });
+			}
+		}
+	}
+
+#endif // Windows/Apple selection snapshot
+
+	// Nested callbacks must not inherit the caller's phase on this instance.
+	curCall = RuntimeToExtCall::Unset;
+
+	// Detach this event's queued actions before generating, so the generated event doesn't inherit them
+	// and run them as it closes
+#ifdef _WIN32
+	rh2.rh2ActionEndRoutine = nullptr;
+	std::memset(&rh2.rh2ShuffleBuffer, 0, sizeof(pending.shuffle));
+	rh->rh4.rh4ForEachs = nullptr;
+	if (windowsRuntimeHasChildEvents)
+		rh->rhChildEventToExecute = nullptr;
+	if (!windowsRuntimeSavesActionContext && actionOn)
+		rh2.rh2ActionOn = false;
+	CallRunTimeFunction2(hoPtr, RFUNCTION::GENERATE_EVENT, EventID, 0);
+#elif defined(__APPLE__)
+	evp->bEndForEach = NO;
+	evp->rh2ShuffleBuffer = nil;
+	run->rh4ForEachs = nullptr;
+	run->rhChildEventToExecute = nullptr;
+	// computeEventList resets the temporary-value cursor to this base. Keep
+	// nested events above the caller's live CValues rather than overwriting them.
+	run->rhBaseTempValues = oldTempValue;
+	DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, generateEvent)(objCExtPtr, EventID, 0);
+#elif defined(__ANDROID__)
+	rh->InvalidatedByNewGeneratedEvent();
+	hoPtr->InvalidatedByNewGeneratedEvent();
+	threadEnv->CallVoidMethod(javaExtPtr, generateEventMethodID, EventID, (jboolean)preserveActions, (jboolean)preserveConditions);
+	JNIExceptionCheck();
+	// Invalidate again in case the generated event re-entered into this ext and set them
+	rh->InvalidatedByNewGeneratedEvent();
+	hoPtr->InvalidatedByNewGeneratedEvent();
+#else
+	#error Unknown platform
+#endif
+#if defined(_WIN32) || defined(__APPLE__)
+	const int eventCount = std::max(oldEventCount, rh->GetRH2EventCount()) + 1;
+	const int orCount = preserveOR ? std::max(oldORCount, rh->GetRH4EventCountOR()) + 1 : rh->GetRH4EventCountOR();
+	const int actionCount = preserveActions ? std::max(oldActionCount, rh->GetRH2ActionCount()) + 1 : rh->GetRH2ActionCount();
+#endif
+
+#if defined(_WIN32)
+	rh->rhCurCode = context.code;
+	rh->rhCurOi = context.oi;
+	rh2.rh2EnablePick = context.enablePick;
+	rh2.rh2ActionEndRoutine = pending.endRoutine;
+	std::memcpy(&rh2.rh2ShuffleBuffer, &pending.shuffle, sizeof(pending.shuffle));
+	rh->rh4.rh4ForEachs = pending.forEach;
+	if (preserveActions) {
+		rh2.rh2ActionLoop = actionState.loop;
+		rh2.rh2ActionLoopCount = actionState.pass;
+	}
+	if (preserveConditions) {
+		std::memcpy(&rh2.rh2EventQualPos, &conditionState->cursors, sizeof(conditionState->cursors));
+		rh2.rh2EventType = conditionState->type;
+		rh->rh4.rh4ConditionsFalse = conditionState->conditionsFalse;
+		rh->rh3.rh3DoStop = conditionState->stop;
+		std::memcpy(&rh->rh4.rh4PickFlags0, conditionState->picks, sizeof(conditionState->picks));
+	}
+	if (windowsRuntimeHasChildEvents)
+		rh->rhChildEventToExecute = child;
+	rh->rhEventGroup = oldGroup;
+	if (!windowsRuntimeSavesActionContext) {
+		rh2.rh2ActionOn = actionOn;
+		if (preserveActions)
+			rh->rh4.rh4ActionStart = oldActionStart;
+		if (((lastCall & (RuntimeToExtCall::Action | RuntimeToExtCall::Condition | RuntimeToExtCall::Expression)) != RuntimeToExtCall::Unset))
+			rh->rh4.rh4ExpToken = oldToken;
+	}
+	if (((lastCall & (RuntimeToExtCall::Action | RuntimeToExtCall::Condition | RuntimeToExtCall::Expression)) != RuntimeToExtCall::Unset))
+		std::memcpy(&rh->rh4.rh4ExpValue1, values, valuesSize);
+	if (preserveOR && windowsRuntimeHasChildEvents && rh->rhModifiedOiList) {
+		std::copy(modifiedOils.begin(), modifiedOils.end(), rh->rhModifiedOiList);
+		rh->rhModifiedOiListEnd = rh->rhModifiedOiList + modifiedOils.size();
+	}
+#elif defined(__APPLE__)
+	run->rhBaseTempValues = oldTempBase;
+	run->rhCurTempValue = oldTempValue;
+	evp->rhCurCode = context.code;
+	evp->rhCurOi = context.oi;
+	evp->rh2EnablePick = context.enablePick;
+	evp->rhCurParam[1] = context.param;
+	evp->bEndForEach = pending.endForEach;
+	evp->rh2ShuffleBuffer = pending.shuffle;
+	run->rh4ForEachs = pending.forEach;
+	run->rhChildEventToExecute = pending.child;
+	if (preserveActions) {
+		evp->rh2ActionLoop = actionState.loop;
+		evp->rh2ActionLoopCount = actionState.pass;
+	}
+	if (preserveConditions) {
+		evp->rh2EventQualPos = (CQualToOiList *)conditionState->qualifier;
+		evp->rh2EventQualPosNum = conditionState->qualifierPos;
+		evp->rh2EventPos = conditionState->object;
+		evp->rh2EventPosOiList = conditionState->oiList;
+		evp->rh2EventPrev = conditionState->previous;
+		evp->rh2EventPrevOiList = conditionState->previousOi;
+		evp->rh2EventType = conditionState->type;
+		evp->rh4ConditionsFalse = conditionState->conditionsFalse;
+		evp->rh3DoStop = conditionState->stop;
+		std::memcpy(&evp->qualOilPtr, conditionState->qualifierIndices, sizeof(conditionState->qualifierIndices));
+		std::memcpy(evp->rh4PickFlags, conditionState->picks, sizeof(conditionState->picks));
+	}
+	if (((lastCall & (RuntimeToExtCall::Action | RuntimeToExtCall::Condition | RuntimeToExtCall::Expression)) != RuntimeToExtCall::Unset)) {
+		run->rh4CurToken = oldTokenIndex;
+		[run->rh4ExpValue1 forceValue:value1];
+		[run->rh4ExpValue2 forceValue:value2];
+	}
+	[value1 release];
+	[value2 release];
+#elif defined(__ANDROID__)
+	if (preserveConditions) {
+		evp->set_qualOilPtr(qualifierIndices[0]);
+		evp->set_qualOilPos(qualifierIndices[1]);
+		evp->set_qualOilPtr2(qualifierIndices[2]);
+		evp->set_qualOilPos2(qualifierIndices[3]);
+	}
+	// Refresh wrappers after nested execution and restoration, including action counts.
+	rh->InvalidatedByNewGeneratedEvent();
+	hoPtr->InvalidatedByNewGeneratedEvent();
+	evp->eventGrp = std::move(groupWrapper);
+	rh->rh4ActStart = std::move(actionWrapper);
+	curCEvent = oldCEvent.swap_out();
+	curRH4ActStart = oldActStart.swap_out();
+	curRH4ActBasedOnCEventOnly = oldActBasedOnEvent;
+#else
+	#error Unknown platform
+#endif
+#if defined(_WIN32) || defined(__APPLE__)
+	rh->SetRH2ActionCount(actionCount);
+	rh->SetRH4EventCountOR(orCount);
+	rh->SetRH2EventCount(eventCount);
+	for (const OiCursor& c : oiCursors) {
+		c.oil->set_oilCurrentRoutine(c.routine);
+		c.oil->set_oilCurrentOi(c.current);
+		c.oil->set_oilNext(c.next);
+		c.oil->set_oilActionLoopCount(c.loop);
+		c.oil->set_oilNextFlag(c.nextFlag);
+		c.oil->set_oilActionCount(actionCount);
+	}
+	for (const QualCursor& c : qualCursors) {
+		c.qoi->set_qoiCurrentRoutine(c.routine);
+		c.qoi->set_qoiCurrentOi(c.current);
+		c.qoi->set_qoiNext(c.next);
+		c.qoi->set_qoiActionPos(c.pos);
+		c.qoi->set_qoiActionLoopCount(c.loop);
+		c.qoi->set_qoiNextFlag(c.nextFlag);
+		c.qoi->set_qoiSelectedFlag(c.selectedFlag);
+		c.qoi->set_qoiActionCount(actionCount);
+	}
+#endif // Windows/Apple action cursors
+#ifdef _DEBUG
+	// Re-entry may touch this action record, but its per-instance repeat policy
+	// is expected to be stable. Diagnose a change rather than restoring it.
+	if (callerAction)
+		assert(((callerAction->get_evtFlags() & ACTFLAGS_REPEAT) != 0) == callerActionRepeat);
+#endif
+#if defined(_WIN32) || defined(__APPLE__)
+	for (const SelectionState& s : selections) {
+		s.oil->SelectNone(ext->rhPtr);
+		RunObjectMultiPlatPtr previous = nullptr;
+		int count = 0;
+		for (std::size_t i = s.first; i < s.first + s.count; ++i) {
+			RunObjectMultiPlatPtr ro = RunObjPtrFromFixed(selected[i]);
+			if (!ro)
+				continue;
+			if (previous)
+				previous->get_rHo()->set_NextSelected(selected[i] & 0xFFFF);
+			else
+				s.oil->set_ListSelected(selected[i] & 0xFFFF);
+			previous = ro;
+			++count;
+		}
+		if (previous)
+			previous->get_rHo()->set_NextSelected(-1);
+		s.oil->set_NumOfSelected(count);
+	}
+	for (objInfoList* oil : orOils) {
+		for (RunObjectMultiPlatPtr ro : DarkEdif::ObjectIterator(rh, rh->GetOIListIndexFromOi(oil->get_Oi()), DarkEdif::Selection::All, true))
+			ro->get_rHo()->set_SelectedInOR(false);
+		oil->set_EventCountOR(orCount);
+	}
+	for (const OrMark& mark : orMarks) {
+		RunObjectMultiPlatPtr ro = RunObjPtrFromFixed(mark.fixed);
+		if (ro)
+			ro->get_rHo()->set_SelectedInOR(mark.selected);
+	}
+
+#endif // Windows/Apple selection restore
+
+	hoPtr->set_EventNumber(oldEventNumber);
+	hoPtr->set_CurrentParam(oldCurrentParam);
+	hoPtr->set_Flags((hoPtr->get_Flags() & ~HeaderObjectFlags::TrueEvent) | oldTrueEvent);
+
+#ifdef _WIN32
+	ParamZero = oldParamZero;
+#elif defined(__APPLE__)
+	curCEvent = oldCEvent;
+#elif defined(__ANDROID__)
+	// Java event wrappers were restored above.
+#else
+	#error Unknown platform
+#endif
+
+	param1 = oldParam1;
+	param2 = oldParam2;
+	curCall = lastCall;
+
+	// Don't think this can ever happen, but it's worth checking
+	if (--generatingEventsCounter < 0)
+	{
+		LOGF(_T("Generating events has lost track of a generated event. %s just finished generating event ID %hu.\n"),
+			hoPtr->get_OiList()->get_name(), (std::uint16_t)(EventID & 0x7FFF));
+	}
+}
+
+void Edif::Runtime::PreDestroy()
+{
+	// This function executes directly before DestroyRunObject.
+	// Note that recovery if saved event state or other runtime is going to be murdered is not possible,
+	// we'll have to remake this object instantly with all its saved settings after telling the runtime it destroyed it,
+	// which becomes unintended lingering behaviour.
+	// Incidentally, while DestroyRunObject is short return on Windows, the runtime ignores the return code.
+	// In theory a Destroy action should not be instant, but instead queue for rh4DestroyList to run at end of tick,
+	// marking HeaderObjectFlags::Destroyed.
+	if (curCall != RuntimeToExtCall::Unset)
+		LOGF(_T("Cannot destroy this \"%s\" object, currently within its own call.\n"), ext->rdPtr->get_rHo()->get_OiList()->get_name());
+
+	ext->Runtime.curCall = Edif::RuntimeToExtCall::Destroy;
+
+	if (generatingEventsCounter != 0)
+		LOGF(_T("Cannot destroy this \"%s\" object when it is midway through generating events.\n"),
+			ext->rdPtr->get_rHo()->get_OiList()->get_name());
+}
+
+
+void HeaderObject::Destroy()
+{
+	if ((get_Flags() & HeaderObjectFlags::Destroyed) != HeaderObjectFlags::None)
+		return;
+
+#ifdef _WIN32
+	// Use the exported action dispatcher, so the runtime owns disappearance movement,
+	// sprite collision changes and fade transitions.
+	// The returned descriptor and its dispatchers are retained for this DLL's lifetime.
+	static CallTables* const tables = reinterpret_cast<CallTables*>(
+		CallRunTimeFunction2(this, RFUNCTION::GET_CALL_TABLES, 0, 0));
+	RunHeader* const rh = this->get_AdRunHeader();
+	objInfoList* const oil = this->get_OiList();
+	const int oldActionCount = oil->get_oilActionCount(),
+		oldActionPass = oil->get_oilActionLoopCount(),
+		oldCurrent = oil->get_oilCurrentOi();
+	const bool oldNextFlag = oil->get_oilNextFlag(), oldEnablePick = rh->rh2.rh2EnablePick,
+		oldActionLoop = rh->rh2.rh2ActionLoop;
+
+	// Matching generations make get_ActionObjects return this current instance
+	// without initializing or advancing the caller's selection/action chains.
+	oil->set_oilActionCount(rh->GetRH2ActionCount());
+	oil->set_oilActionLoopCount(rh->GetRH2ActionLoopCount());
+	oil->set_oilCurrentOi(this->get_Number());
+	oil->set_oilNextFlag(false);
+
+	alignas(event2) unsigned char actionStorage[sizeof(event2)] = {};
+	event2* const action = reinterpret_cast<event2*>(actionStorage);
+	action->evtSize = ACT_SIZE;
+	action->evtType = this->hoType;
+	action->evtNum = 24; // Common Destroy (ACT_EXTDESTROY).
+	action->evtOi = this->get_Oi();
+	action->evtOiList = (short)rh->GetOIListIndexFromOi(action->evtOi);
+	// Dispatch slot is object type + NUMBEROF_SYSTEMTYPES: Active = 2 + 7.
+	// Its first 80 actions are the common actions, shared with extensions.
+	tables->pActions[9](action);
+
+	oil->set_oilActionCount(oldActionCount);
+	oil->set_oilActionLoopCount(oldActionPass);
+	oil->set_oilCurrentOi(oldCurrent);
+	oil->set_oilNextFlag(oldNextFlag);
+	rh->rh2.rh2EnablePick = oldEnablePick;
+	rh->rh2.rh2ActionLoop = oldActionLoop;
+#elif defined(__APPLE__)
+	CObject* const object = (CObject*)this;
+	CRun* const run = object->hoAdRunHeader;
+	CEventProgram* const evp = run->rhEvtProg;
+	CObjInfo* const oil = object->hoOiList;
+	const int oldActionCount = oil->oilActionCount, oldActionPass = oil->oilActionLoopCount,
+		oldCurrent = oil->oilCurrentOi;
+	const BOOL oldNextFlag = oil->oilNextFlag, oldEnablePick = evp->rh2EnablePick,
+		oldActionLoop = evp->rh2ActionLoop, oldRepeat = evp->repeatFlag;
+	event action = {};
+	action.evtSize = ACT_SIZE;
+	action.evtCode.evtSCode.evtType = object->hoType;
+	action.evtCode.evtSCode.evtNum = 24; // Common Destroy (ACT_EXTDESTROY).
+	action.evtOi = object->hoOi;
+	action.evtOiList = (short)get_AdRunHeader()->GetOIListIndexFromOi(object->hoOi);
+	@try {
+		oil->oilActionCount = evp->rh2ActionCount;
+		oil->oilActionLoopCount = evp->rh2ActionLoopCount;
+		oil->oilCurrentOi = object->hoNumber;
+		oil->oilNextFlag = NO;
+		actDisappear(&action, run);
+	}
+	@finally {
+		oil->oilActionCount = oldActionCount;
+		oil->oilActionLoopCount = oldActionPass;
+		oil->oilCurrentOi = oldCurrent;
+		oil->oilNextFlag = oldNextFlag;
+		evp->rh2EnablePick = oldEnablePick;
+		evp->rh2ActionLoop = oldActionLoop;
+		evp->repeatFlag = oldRepeat;
+	}
+#elif defined(__ANDROID__)
+	// The Java helper receives the target, not the extension that owns this wrapper.
+	const jmethodID method = threadEnv->GetStaticMethodID(runtime->javaExtPtrClass,
+		"darkedif_jni_destroyObject", "(LObjects/CObject;)V");
+	JNIExceptionCheck();
+	threadEnv->CallStaticVoidMethod(runtime->javaExtPtrClass, method, me);
+	JNIExceptionCheck();
+	Flags.reset(); // HeaderObjectFlags::Destroy is now set
+#else
+	#error Unrecognized platform
+#endif
+}
+
+#ifdef _WIN32
 Edif::Runtime::Runtime(Extension * ext) : hoPtr(ext->rdPtr->get_rHo()), ext(ext),
 	ObjectSelection(hoPtr->get_AdRunHeader())
 {
@@ -363,51 +1002,10 @@ void Edif::Runtime::Rehandle()
 	CallRunTimeFunction2(hoPtr, RFUNCTION::REHANDLE, 0, 0);
 }
 
-void Edif::Runtime::GenerateEvent(int EventID)
-{
-	auto rhPtr = hoPtr->hoAdRunHeader;
-	// If there is a fastloop in progress, generating an event inside an action will alter
-	// Action Count, making it smaller. Thus Action Count constantly decrementing will create
-	// an infinite loop, as Action Count never reaches the maximum needed to end the loop.
-	// This bug usually shows when creating 2+ of an object inside a fastloop when the fastloop runs 3+ times.
-	const int oldActionCount = rhPtr->GetRH2ActionCount();
-	const int oldActionLoopCount = rhPtr->GetRH2ActionLoopCount();
-
-	// This action count won't be reset, so to allow multiple of the same event with different object selection,
-	// we change the count every time, and in an increasing manner.
-	rhPtr->SetRH2ActionCount(oldActionCount + (++actionLoopIncrement));
-	rhPtr->SetRH2ActionLoopCount(0);
-
-	// Saving tokens allows events to be run from inside expressions
-	// https://community.clickteam.com/forum/thread/108993-application-crashed-in-some-cases-when-calling-an-event-via-expression/?postID=769763#post769763
-	// As of CF2.5 build 293.9, this is done by runtime anyway, but if you want to
-	// support Fusion 2.0, and you're generating events from expressions, you should include this
-	expression* const saveExpToken = rhPtr->rh4.rh4ExpToken;
-	// Fix event group being incorrect after event finishes.
-	// This being incorrect doesn't have any major effects, as the event parsing part of
-	// runtime sets rhEventGroup based on a local variable evgPtr, which it relies on instead
-	EventGroupMP* const evg = rhPtr->rhEventGroup;
-	int curEvent = hoPtr->hoEventNumber;
-
-	// Fix rh2ActionOn - affects whether object selection is modified by expressions, or used
-	const bool rh2ActOn = rhPtr->rh2.rh2ActionOn;
-	if (rh2ActOn)
-		rhPtr->rh2.rh2ActionOn = false;
-
-	// It may be necessary to save + restore hoCurrentParam in some scenarios;
-	// for now, the edits to use GetFloatValue if params <= 2 may suffice
-
-	CallRunTimeFunction2(hoPtr, RFUNCTION::GENERATE_EVENT, EventID, 0);
-
-	rhPtr->rh2.rh2ActionOn = rh2ActOn;
-	rhPtr->rhEventGroup = evg;
-	rhPtr->rh4.rh4ExpToken = saveExpToken;
-	rhPtr->SetRH2ActionCount(oldActionCount);
-	rhPtr->SetRH2ActionLoopCount(oldActionLoopCount);
-}
-
 void Edif::Runtime::PushEvent(int EventID)
 {
+	DarkEdif::DieIfCallerIsNotMainThread("Runtime.PushEvent");
+
 	CallRunTimeFunction2(hoPtr, RFUNCTION::PUSH_EVENT, EventID, 0);
 }
 
@@ -891,6 +1489,10 @@ int RunHeader::GetRH4EventCountOR()
 {
 	return this->rh4.rh4EventCountOR;
 }
+void RunHeader::SetRH4EventCountOR(int value) {
+	rh4.rh4EventCountOR = value;
+}
+
 
 // Reads the rh2.rh2ActionCount variable, used in a fastloop to loop the actions.
 int RunHeader::GetRH2ActionCount()
@@ -971,7 +1573,7 @@ qualToOi* RunHeader::GetQualToOiListByOffset(std::size_t offset) {
 }
 RunObjectMultiPlatPtr RunHeader::GetObjectListOblOffsetByIndex(std::size_t index) {
 	if (index >= get_MaxObjects())
-		return nullptr;
+		LOGF(_T("Invalid object index dereferenced: %zu is not a valid index in rhObjectList."), index);
 	return rhObjectList[index].oblOffset;
 }
 
@@ -1017,6 +1619,21 @@ bool HeaderObject::get_SelectedInOR() {
 }
 HeaderObjectFlags HeaderObject::get_Flags() {
 	return this->hoFlags;
+}
+void HeaderObject::set_Flags(HeaderObjectFlags value) {
+	hoFlags = value;
+}
+int HeaderObject::get_EventNumber() const {
+	return hoEventNumber;
+}
+EventParam* HeaderObject::get_CurrentParam() const {
+	return hoCurrentParam;
+}
+void HeaderObject::set_EventNumber(int value) {
+	hoEventNumber = value;
+}
+void HeaderObject::set_CurrentParam(EventParam* value) {
+	hoCurrentParam = value;
 }
 RunHeader* HeaderObject::get_AdRunHeader() {
 	return hoAdRunHeader;
@@ -1190,6 +1807,9 @@ RunObjectMultiPlatPtr objectsList::GetOblOffsetByIndex(std::size_t index) {
 int objInfoList::get_EventCount() {
 	return oilEventCount;
 }
+int objInfoList::get_EventCountOR() {
+	return oilEventCountOR;
+}
 short objInfoList::get_ListSelected() {
 	return oilListSelected;
 }
@@ -1208,24 +1828,36 @@ short objInfoList::get_Object() {
 const TCHAR* objInfoList::get_name() {
 	return oilName;
 }
-int objInfoList::get_oilNext() {
+int objInfoList::get_oilNext() const {
 	return oilNext;
 }
-bool objInfoList::get_oilNextFlag() {
+void objInfoList::set_oilNext(int value) { oilNext = value; }
+
+bool objInfoList::get_oilNextFlag() const {
 	return oilNextFlag;
 }
-decltype(objInfoList::oilCurrentRoutine) objInfoList::get_oilCurrentRoutine() {
+void objInfoList::set_oilNextFlag(bool value) { oilNextFlag = value; }
+
+decltype(objInfoList::oilCurrentRoutine) objInfoList::get_oilCurrentRoutine() const {
 	return oilCurrentRoutine;
 }
-int objInfoList::get_oilCurrentOi() {
+void objInfoList::set_oilCurrentRoutine(decltype(objInfoList::oilCurrentRoutine) value) { oilCurrentRoutine = value; }
+
+int objInfoList::get_oilCurrentOi() const {
 	return oilCurrentOi;
 }
-int objInfoList::get_oilActionCount() {
+void objInfoList::set_oilCurrentOi(int value) { oilCurrentOi = value; }
+
+int objInfoList::get_oilActionCount() const {
 	return oilActionCount;
 }
-int objInfoList::get_oilActionLoopCount() {
+void objInfoList::set_oilActionCount(int value) { oilActionCount = value; }
+
+int objInfoList::get_oilActionLoopCount() const {
 	return oilActionLoopCount;
 }
+void objInfoList::set_oilActionLoopCount(int value) { oilActionLoopCount = value; }
+
 void objInfoList::set_NumOfSelected(int ns) {
 	oilNumOfSelected = ns;
 }
@@ -1272,6 +1904,23 @@ std::int32_t CreateObjectInfo::get_layer() const {
 std::int32_t CreateObjectInfo::get_ZOrder() const {
 	return cobZOrder;
 }
+
+int qualToOi::get_qoiCurrentOi() const { return CurrentOi; }
+void qualToOi::set_qoiCurrentOi(int value) { CurrentOi = (short)value; }
+int qualToOi::get_qoiNext() const { return Next; }
+void qualToOi::set_qoiNext(int value) { Next = (short)value; }
+int qualToOi::get_qoiActionPos() const { return ActionPos; }
+void qualToOi::set_qoiActionPos(int value) { ActionPos = value; }
+decltype(qualToOi::CurrentRountine) qualToOi::get_qoiCurrentRoutine() const { return CurrentRountine; }
+void qualToOi::set_qoiCurrentRoutine(decltype(qualToOi::CurrentRountine) value) { CurrentRountine = value; }
+int qualToOi::get_qoiActionCount() const { return ActionCount; }
+void qualToOi::set_qoiActionCount(int value) { ActionCount = value; }
+int qualToOi::get_qoiActionLoopCount() const { return ActionLoopCount; }
+void qualToOi::set_qoiActionLoopCount(int value) { ActionLoopCount = value; }
+bool qualToOi::get_qoiNextFlag() const { return NextFlag; }
+void qualToOi::set_qoiNextFlag(bool value) { NextFlag = value; }
+bool qualToOi::get_qoiSelectedFlag() const { return SelectedFlag; }
+void qualToOi::set_qoiSelectedFlag(bool value) { SelectedFlag = value; }
 short qualToOi::get_Oi(std::size_t idx) {
 	return OiAndOiList[idx * 2];
 }
@@ -1435,6 +2084,8 @@ void * Edif::Runtime::GetRunObjectFont() const
 
 #if defined(__ANDROID__)
 
+jmethodID Edif::Runtime::generateEventMethodID;
+
 Edif::Runtime::Runtime(Extension* ext, jobject javaExtPtr2) : ext(ext),
 	javaExtPtr(javaExtPtr2, "Edif::Runtime::javaExtPtr from Edif::Runtime ctor"), ObjectSelection(NULL)
 {
@@ -1470,6 +2121,11 @@ Edif::Runtime::Runtime(Extension* ext, jobject javaExtPtr2) : ext(ext),
 		LOGE("Could not find javaCEventClass method, got exception %s.\n", exc.c_str());
 	}
 
+	if (!generateEventMethodID) {
+		generateEventMethodID = threadEnv->GetMethodID(javaExtPtrClass, "darkedif_jni_generateEvent", "(IZZ)V");
+		JNIExceptionCheck();
+	}
+
 	ext->rdPtr = std::make_shared<RunObject>(javaHoObject.ref, javaHoClass.ref, this);
 	ext->rdPtr->Init(ext->rdPtr);
 	this->hoPtr = ext->rdPtr->get_rHo();
@@ -1502,63 +2158,6 @@ void Edif::Runtime::Rehandle()
 	static jmethodID javaMethodID = threadEnv->GetMethodID(javaHoClass.ref, "reHandle", "()V");
 	threadEnv->CallVoidMethod(javaHoObject.ref, javaMethodID);
 	// GenEdifFunction reHandle
-}
-
-void Edif::Runtime::GenerateEvent(int EventID)
-{
-	const auto& rhPtr = this->ObjectSelection.pExtension->rhPtr;
-
-	// If there is a fastloop in progress, generating an event inside an action will alter
-	// Action Count, making it smaller. Thus Action Count constantly decrementing will create
-	// an infinite loop, as Action Count is kept lower than its maximum.
-	// This bug usually shows when creating 2+ of an object inside a fastloop when the fastloop runs 3+ times.
-	const int oldActionCount = rhPtr->GetRH2ActionCount();
-	const int oldActionLoopCount = rhPtr->GetRH2ActionLoopCount();
-
-	// This action count won't be reset, so to allow multiple of the same event with different object selection,
-	// we change the count every time, and in an increasing manner.
-	rhPtr->SetRH2ActionCount(oldActionCount + (++actionLoopIncrement));
-	rhPtr->SetRH2ActionLoopCount(0);
-
-	// In older Fusion builds, the expression token became invalidated and that was the only problem.
-	// In Windows GenerateEvent, you can see the workaround of saving and restoring the pointer to old expression.
-	// Android also swaps out the underlying array when it changes expression, so we have to restore the array too.
-	// Due to Android's JVM use of references, this is efficient as we don't have to do a full array clone.
-
-	const bool rh2ActionOn = rhPtr->get_EventProgram()->GetRH2ActionOn();
-	const int rh4CurToken = rhPtr->GetRH4CurToken();
-	jobjectArray rh4Tokens = rhPtr->GetRH4Tokens();
-	if (rh4Tokens)
-		rh4Tokens = (jobjectArray)threadEnv->NewGlobalRef(rh4Tokens);
-	// We are starting a new condition, so we're not in actions anymore
-	if (rh2ActionOn)
-		rhPtr->get_EventProgram()->SetRH2ActionOn(false);
-
-	// Fix event group being incorrect after event finishes.
-	// This being incorrect doesn't have any major effects, as the event parsing part of
-	// runtime sets this rhEventGroup based on a local variable evgPtr, which it relies on instead
-	// We won't be using this while we're off running this event, so we can swap the reference out to a local
-	std::unique_ptr<EventGroupMP> evg = rhPtr->eventProgram ? std::move(rhPtr->eventProgram->eventGrp) : nullptr;
-
-	// Cached variables to do with object selection will be invalidated by this new event
-	rhPtr->InvalidatedByNewGeneratedEvent();
-	hoPtr->InvalidatedByNewGeneratedEvent();
-
-	static jmethodID javaMethodID = threadEnv->GetMethodID(javaHoClass.ref, "generateEvent", "(II)V");
-	threadEnv->CallVoidMethod(javaHoObject, javaMethodID, EventID, 0);
-
-	if (rh2ActionOn)
-		rhPtr->SetRH2ActionOn(true);
-
-	rhPtr->SetRH2ActionCount(oldActionCount);
-	rhPtr->SetRH2ActionLoopCount(oldActionLoopCount);
-	rhPtr->SetRH4CurToken(rh4CurToken);
-	rhPtr->SetRH4Tokens(rh4Tokens);
-	rhPtr->get_EventProgram()->SetRH2ActionOn(rh2ActionOn);
-	if (rh4Tokens)
-		threadEnv->DeleteGlobalRef(rh4Tokens);
-	if (evg)
-		rhPtr->eventProgram->eventGrp = std::move(evg); // and swap it back in
 }
 
 void Edif::Runtime::PushEvent(int EventID)
@@ -2094,6 +2693,10 @@ int RunHeader::GetRH4EventCountOR()
 	// CEventProgram rh4EventCountOR
 	return get_EventProgram()->get_rh4EventCountOR();
 }
+void RunHeader::SetRH4EventCountOR(int value) {
+	get_EventProgram()->set_rh4EventCountOR(value);
+}
+
 
 // Reads the rh2.rh2ActionCount variable, used in a fastloop to loop the actions.
 int RunHeader::GetRH2ActionCount()
@@ -2138,22 +2741,6 @@ void RunHeader::SetRH4CurToken(int newCurToken)
 {
 	LOGV(_T("Running %s(%i).\n"), _T(__FUNCTION__), newCurToken);
 	threadEnv->SetIntField(crun, rh4CurTokenFieldID, newCurToken);
-	JNIExceptionCheck();
-}
-
-// Gets the current expression token array; relevant in Android only.
-jobjectArray RunHeader::GetRH4Tokens()
-{
-	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
-	jobjectArray ptr = (jobjectArray)threadEnv->GetObjectField(crun, rh4TokensFieldID);
-	JNIExceptionCheck();
-	return ptr;
-}
-// Sets the current expression token array; relevant in Android only.
-void RunHeader::SetRH4Tokens(jobjectArray newTokensArray)
-{
-	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
-	threadEnv->SetObjectField(crun, rh4TokensFieldID, newTokensArray);
 	JNIExceptionCheck();
 }
 
@@ -2279,11 +2866,8 @@ CEventProgram* RunHeader::get_EventProgram() {
 RunHeader::RunHeader(jobject me, jclass meClass, Edif::Runtime* runtime) :
 	crun(me, "RunHeader's CRun"), crunClass(meClass, "RunHeader's CRun class"), runtime(runtime)
 {
-	if (rh4TokensFieldID == nullptr)
+	if (rh4CurTokenFieldID == nullptr)
 	{
-		rh4TokensFieldID = threadEnv->GetFieldID(crunClass, "rh4Tokens", "[LExpressions/CExp;");
-		JNIExceptionCheck();
-
 		// CEventProgram rh4CurToken
 		rh4CurTokenFieldID = threadEnv->GetFieldID(crunClass, "rh4CurToken", "I");
 		JNIExceptionCheck();
@@ -2297,11 +2881,12 @@ RunHeader::RunHeader(jobject me, jclass meClass, Edif::Runtime* runtime) :
 	}
 }
 // Static definitions - default inited to zero
-jfieldID RunHeader::rh4TokensFieldID, RunHeader::rh4CurTokenFieldID,
+jfieldID RunHeader::rh4CurTokenFieldID,
 	RunHeader::eventProgramFieldID, RunHeader::oiListFieldID;
 
 void RunHeader::InvalidatedByNewGeneratedEvent()
 {
+	rh4ActStart.reset();
 	if (evntGroup)
 		evntGroup.reset();
 	if (eventProgram)
@@ -2385,6 +2970,8 @@ void CEventProgram::InvalidatedByNewGeneratedEvent()
 {
 	rh2EventCount.reset();
 	rh4EventCountOR.reset();
+	rh2ActionCount.reset();
+	rh2ActionLoopCount.reset();
 	// rh2ActionOn.reset(); // currently not cached
 	if (eventGrp)
 		eventGrp.reset();
@@ -2399,6 +2986,59 @@ void CEventProgram::SetEventGroup(jobject grp)
 	runtime->ObjectSelection.pExtension->rhPtr->evntGroup = grp ? eventGrp.get() : nullptr;
 }
 
+
+int CEventProgram::get_qualOilPtr() const {
+	static jfieldID id = threadEnv->GetFieldID(meClass, "qualOilPtr", "I");
+	JNIExceptionCheck();
+	const jint value = threadEnv->GetIntField(me, id);
+	JNIExceptionCheck();
+	return value;
+}
+void CEventProgram::set_qualOilPtr(int value) {
+	static jfieldID id = threadEnv->GetFieldID(meClass, "qualOilPtr", "I");
+	JNIExceptionCheck();
+	threadEnv->SetIntField(me, id, value);
+	JNIExceptionCheck();
+}
+int CEventProgram::get_qualOilPos() const {
+	static jfieldID id = threadEnv->GetFieldID(meClass, "qualOilPos", "I");
+	JNIExceptionCheck();
+	const jint value = threadEnv->GetIntField(me, id);
+	JNIExceptionCheck();
+	return value;
+}
+void CEventProgram::set_qualOilPos(int value) {
+	static jfieldID id = threadEnv->GetFieldID(meClass, "qualOilPos", "I");
+	JNIExceptionCheck();
+	threadEnv->SetIntField(me, id, value);
+	JNIExceptionCheck();
+}
+int CEventProgram::get_qualOilPtr2() const {
+	static jfieldID id = threadEnv->GetFieldID(meClass, "qualOilPtr2", "I");
+	JNIExceptionCheck();
+	const jint value = threadEnv->GetIntField(me, id);
+	JNIExceptionCheck();
+	return value;
+}
+void CEventProgram::set_qualOilPtr2(int value) {
+	static jfieldID id = threadEnv->GetFieldID(meClass, "qualOilPtr2", "I");
+	JNIExceptionCheck();
+	threadEnv->SetIntField(me, id, value);
+	JNIExceptionCheck();
+}
+int CEventProgram::get_qualOilPos2() const {
+	static jfieldID id = threadEnv->GetFieldID(meClass, "qualOilPos2", "I");
+	JNIExceptionCheck();
+	const jint value = threadEnv->GetIntField(me, id);
+	JNIExceptionCheck();
+	return value;
+}
+void CEventProgram::set_qualOilPos2(int value) {
+	static jfieldID id = threadEnv->GetFieldID(meClass, "qualOilPos2", "I");
+	JNIExceptionCheck();
+	threadEnv->SetIntField(me, id, value);
+	JNIExceptionCheck();
+}
 int CEventProgram::get_rh2EventCount() {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!rh2EventCount.has_value())
@@ -2669,6 +3309,34 @@ int RunHeader::get_WindowY() const {
 	return windowY;
 }
 
+
+int HeaderObject::get_EventNumber() const {
+	static jfieldID id = threadEnv->GetFieldID(meClass, "hoEventNumber", "I");
+	JNIExceptionCheck();
+	const int value = threadEnv->GetIntField(me, id);
+	JNIExceptionCheck();
+	return value;
+}
+void HeaderObject::set_EventNumber(int value) {
+	static jfieldID id = threadEnv->GetFieldID(meClass, "hoEventNumber", "I");
+	JNIExceptionCheck();
+	threadEnv->SetIntField(me, id, value);
+	JNIExceptionCheck();
+	EventNumber.reset();
+}
+int HeaderObject::get_CurrentParam() const {
+	static jfieldID id = threadEnv->GetFieldID(meClass, "hoCurrentParam", "I");
+	JNIExceptionCheck();
+	const int value = threadEnv->GetIntField(me, id);
+	JNIExceptionCheck();
+	return value;
+}
+void HeaderObject::set_CurrentParam(int value) {
+	static jfieldID id = threadEnv->GetFieldID(meClass, "hoCurrentParam", "I");
+	JNIExceptionCheck();
+	threadEnv->SetIntField(me, id, value);
+	JNIExceptionCheck();
+}
 short HeaderObject::get_NextSelected() {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!NextSelected.has_value())
@@ -2777,6 +3445,14 @@ HeaderObjectFlags HeaderObject::get_Flags() {
 	}
 	return Flags.value();
 }
+void HeaderObject::set_Flags(HeaderObjectFlags value) {
+	static jfieldID id = threadEnv->GetFieldID(meClass, "hoFlags", "S");
+	JNIExceptionCheck();
+	threadEnv->SetShortField(me, id, (jshort)value);
+	JNIExceptionCheck();
+	Flags = value;
+}
+
 RunHeader* HeaderObject::get_AdRunHeader() {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!AdRunHeader)
@@ -3589,6 +4265,10 @@ void objInfoList::set_EventCountOR(int ec) {
 	JNIExceptionCheck();
 }
 short objInfoList::get_QualifierByIndex(std::size_t index) {
+	if (index >= MAX_QUALIFIERS) {
+		LOGE(_T("Invalid qualifier index read: expected 0 to 7, got %zu.\n"), index);
+		return -1;
+	}
 	if (!QualifiersLoaded)
 	{
 		jshortArray list = (jshortArray)threadEnv->GetObjectField(me, qualifiersFieldID);
@@ -3604,46 +4284,78 @@ short objInfoList::get_QualifierByIndex(std::size_t index) {
 }
 
 // When an ActionLoop is active, this is the next object number in the loop.
-int objInfoList::get_oilNext() {
+int objInfoList::get_oilNext() const {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const int oilNext = threadEnv->GetIntField(me, nextFieldID);
 	JNIExceptionCheck();
 	return oilNext;
 }
+void objInfoList::set_oilNext(int value) {
+	threadEnv->SetIntField(me, nextFieldID, value);
+	JNIExceptionCheck();
+}
+
 // When an ActionLoop is active, this is whether to iterate further or not.
-bool objInfoList::get_oilNextFlag() {
+bool objInfoList::get_oilNextFlag() const {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const bool oilNextFlag = threadEnv->GetBooleanField(me, nextFlagFieldID);
 	JNIExceptionCheck();
 	return oilNextFlag;
 }
-int objInfoList::get_oilCurrentRoutine() {
+void objInfoList::set_oilNextFlag(bool value) {
+	threadEnv->SetBooleanField(me, nextFlagFieldID, value);
+	JNIExceptionCheck();
+}
+
+int objInfoList::get_oilCurrentRoutine() const {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const int oilCurrentRoutine = threadEnv->GetIntField(me, currentRoutineFieldID);
 	JNIExceptionCheck();
 	return oilCurrentRoutine;
 }
+void objInfoList::set_oilCurrentRoutine(int value) {
+	threadEnv->SetIntField(me, currentRoutineFieldID, value);
+	JNIExceptionCheck();
+}
+
 // When an Action is active, this specifies which object is currently being iterated. -1 if invalid.
-int objInfoList::get_oilCurrentOi() {
+int objInfoList::get_oilCurrentOi() const {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const int oilCurrentOi = threadEnv->GetIntField(me, currentOiFieldID);
 	JNIExceptionCheck();
 	return oilCurrentOi;
 }
+void objInfoList::set_oilCurrentOi(int value) {
+	threadEnv->SetIntField(me, currentOiFieldID, value);
+	JNIExceptionCheck();
+}
+
 // When an Action is active, this applies oilCurrentRountine
-int objInfoList::get_oilActionCount() {
+int objInfoList::get_oilActionCount() const {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const int oilActionCount = threadEnv->GetIntField(me, actionCountFieldID);
 	JNIExceptionCheck();
 	return oilActionCount;
 }
+void objInfoList::set_oilActionCount(int value) {
+	threadEnv->SetIntField(me, actionCountFieldID, value);
+	JNIExceptionCheck();
+	ActionCount = value;
+}
+
 // When an ActionLoop is active (Action repeating in a fastloop), this applies oilCurrentRountine
-int objInfoList::get_oilActionLoopCount() {
+int objInfoList::get_oilActionLoopCount() const {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const int oilActionLoopCount = threadEnv->GetIntField(me, actionLoopCountFieldID);
 	JNIExceptionCheck();
 	return oilActionLoopCount;
 }
+void objInfoList::set_oilActionLoopCount(int value) {
+	threadEnv->SetIntField(me, actionLoopCountFieldID, value);
+	JNIExceptionCheck();
+	ActionLoopCount = value;
+}
+
 
 // static definition
 jfieldID objInfoList::eventCountFieldID, objInfoList::actionLoopCountFieldID, objInfoList::objectFieldID,
@@ -3733,6 +4445,7 @@ void objInfoList::InvalidatedByNewGeneratedEvent()
 	ListSelected.reset();
 	Object.reset();
 	EventCount.reset();
+	EventCountOR.reset();
 	NumOfSelected.reset();
 	NObjects.reset();
 	ActionCount.reset();
@@ -3807,6 +4520,111 @@ std::int32_t CreateObjectInfo::get_ZOrder() const {
 	return cobZOrder;
 }
 
+
+int qualToOi::get_qoiCurrentOi() const {
+	static jfieldID fieldID = threadEnv->GetFieldID(rh->QualToOiClass, "qoiCurrentOi", "S");
+	JNIExceptionCheck();
+	const jshort value = threadEnv->GetShortField(me, fieldID);
+	JNIExceptionCheck();
+	return value;
+}
+void qualToOi::set_qoiCurrentOi(int value) {
+	static jfieldID fieldID = threadEnv->GetFieldID(rh->QualToOiClass, "qoiCurrentOi", "S");
+	JNIExceptionCheck();
+	threadEnv->SetShortField(me, fieldID, (jshort)value);
+	JNIExceptionCheck();
+}
+int qualToOi::get_qoiNext() const {
+	static jfieldID fieldID = threadEnv->GetFieldID(rh->QualToOiClass, "qoiNext", "S");
+	JNIExceptionCheck();
+	const jshort value = threadEnv->GetShortField(me, fieldID);
+	JNIExceptionCheck();
+	return value;
+}
+void qualToOi::set_qoiNext(int value) {
+	static jfieldID fieldID = threadEnv->GetFieldID(rh->QualToOiClass, "qoiNext", "S");
+	JNIExceptionCheck();
+	threadEnv->SetShortField(me, fieldID, (jshort)value);
+	JNIExceptionCheck();
+}
+int qualToOi::get_qoiActionPos() const {
+	static jfieldID fieldID = threadEnv->GetFieldID(rh->QualToOiClass, "qoiActionPos", "S");
+	JNIExceptionCheck();
+	const jshort value = threadEnv->GetShortField(me, fieldID);
+	JNIExceptionCheck();
+	return value;
+}
+void qualToOi::set_qoiActionPos(int value) {
+	static jfieldID fieldID = threadEnv->GetFieldID(rh->QualToOiClass, "qoiActionPos", "S");
+	JNIExceptionCheck();
+	threadEnv->SetShortField(me, fieldID, (jshort)value);
+	JNIExceptionCheck();
+}
+int qualToOi::get_qoiCurrentRoutine() const {
+	static jfieldID fieldID = threadEnv->GetFieldID(rh->QualToOiClass, "qoiCurrentRoutine", "I");
+	JNIExceptionCheck();
+	const jint value = threadEnv->GetIntField(me, fieldID);
+	JNIExceptionCheck();
+	return value;
+}
+void qualToOi::set_qoiCurrentRoutine(int value) {
+	static jfieldID fieldID = threadEnv->GetFieldID(rh->QualToOiClass, "qoiCurrentRoutine", "I");
+	JNIExceptionCheck();
+	threadEnv->SetIntField(me, fieldID, value);
+	JNIExceptionCheck();
+}
+int qualToOi::get_qoiActionCount() const {
+	static jfieldID fieldID = threadEnv->GetFieldID(rh->QualToOiClass, "qoiActionCount", "I");
+	JNIExceptionCheck();
+	const jint value = threadEnv->GetIntField(me, fieldID);
+	JNIExceptionCheck();
+	return value;
+}
+void qualToOi::set_qoiActionCount(int value) {
+	static jfieldID fieldID = threadEnv->GetFieldID(rh->QualToOiClass, "qoiActionCount", "I");
+	JNIExceptionCheck();
+	threadEnv->SetIntField(me, fieldID, value);
+	JNIExceptionCheck();
+}
+int qualToOi::get_qoiActionLoopCount() const {
+	static jfieldID fieldID = threadEnv->GetFieldID(rh->QualToOiClass, "qoiActionLoopCount", "I");
+	JNIExceptionCheck();
+	const jint value = threadEnv->GetIntField(me, fieldID);
+	JNIExceptionCheck();
+	return value;
+}
+void qualToOi::set_qoiActionLoopCount(int value) {
+	static jfieldID fieldID = threadEnv->GetFieldID(rh->QualToOiClass, "qoiActionLoopCount", "I");
+	JNIExceptionCheck();
+	threadEnv->SetIntField(me, fieldID, value);
+	JNIExceptionCheck();
+}
+bool qualToOi::get_qoiNextFlag() const {
+	static jfieldID fieldID = threadEnv->GetFieldID(rh->QualToOiClass, "qoiNextFlag", "Z");
+	JNIExceptionCheck();
+	const jboolean value = threadEnv->GetBooleanField(me, fieldID);
+	JNIExceptionCheck();
+	return value;
+}
+void qualToOi::set_qoiNextFlag(bool value) {
+	static jfieldID fieldID = threadEnv->GetFieldID(rh->QualToOiClass, "qoiNextFlag", "Z");
+	JNIExceptionCheck();
+	threadEnv->SetBooleanField(me, fieldID, value);
+	JNIExceptionCheck();
+}
+bool qualToOi::get_qoiSelectedFlag() const {
+	static jfieldID fieldID = threadEnv->GetFieldID(rh->QualToOiClass, "qoiSelectedFlag", "Z");
+	JNIExceptionCheck();
+	const jboolean value = threadEnv->GetBooleanField(me, fieldID);
+	JNIExceptionCheck();
+	return value;
+}
+void qualToOi::set_qoiSelectedFlag(bool value) {
+	static jfieldID fieldID = threadEnv->GetFieldID(rh->QualToOiClass, "qoiSelectedFlag", "Z");
+	JNIExceptionCheck();
+	threadEnv->SetBooleanField(me, fieldID, value);
+	JNIExceptionCheck();
+}
 short qualToOi::get_Oi(std::size_t i) {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	// Update internal list
@@ -3997,34 +4815,6 @@ extern "C" void DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, reHandle)(
 void Edif::Runtime::Rehandle()
 {
 	DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, reHandle)(this->objCExtPtr);
-}
-
-void Edif::Runtime::GenerateEvent(int EventID)
-{
-	// During creating objects on start of frame, all exts might not be created yet,
-	// and it is unsafe to generate events for them.
-	// runtimeIsReady indicates that on iOS/Mac, but there is no mechanism on Windows/Android.
-	// Safest place to generate events is in A/C/E, or HandleRunObject, i.e. Extension::Handle().
-	if (((CObject *)this->objCExtPtr)->hoAdRunHeader->runtimeIsReady == NO) {
-		return LOGE(_T("Can't generate events yet, runtime is not ready."));
-	}
-
-	// Fix event group being incorrect after event finishes.
-	// This being incorrect doesn't have any major effects, as the event parsing part of
-	// runtime sets rhEventGroup based on a local variable evgPtr, which it relies on instead
-	auto evp = ((CRun*)ObjectSelection.rhPtr)->rhEvtProg;
-	auto evg = evp->rhEventGroup;
-
-	// Fix rh2ActionOn - affects whether object selection is modified by expressions, or used
-	const bool rh2ActOn = evp->rh2ActionOn;
-	if (rh2ActOn)
-		evp->rh2ActionOn = false;
-
-	DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, generateEvent)(this->objCExtPtr, EventID, 0);
-
-	// Restore both saved
-	evp->rhEventGroup = evg;
-	evp->rh2ActionOn = rh2ActOn;
 }
 
 void Edif::Runtime::PushEvent(int EventID)
@@ -4234,6 +5024,14 @@ int RunHeader::GetRH4EventCountOR()
 {
 	return ((CRun*)this)->rhEvtProg->rh4EventCountOR;
 }
+void RunHeader::SetRH4EventCountOR(int value) {
+	((CRun*)this)->rhEvtProg->rh4EventCountOR = value;
+}
+int RunHeader::GetRH2ActionCount() { return ((CRun*)this)->rhEvtProg->rh2ActionCount; }
+int RunHeader::GetRH2ActionLoopCount() { return ((CRun*)this)->rhEvtProg->rh2ActionLoopCount; }
+void RunHeader::SetRH2ActionCount(int value) { ((CRun*)this)->rhEvtProg->rh2ActionCount = value; }
+void RunHeader::SetRH2ActionLoopCount(int value) { ((CRun*)this)->rhEvtProg->rh2ActionLoopCount = value; }
+
 
 objectsList* RunHeader::get_ObjectList() {
 	return (objectsList*)((CRun*)this)->rhObjectList;
@@ -4324,6 +5122,21 @@ bool HeaderObject::get_SelectedInOR() {
 }
 HeaderObjectFlags HeaderObject::get_Flags() {
 	return (HeaderObjectFlags)((CObject*)this)->hoFlags;
+}
+void HeaderObject::set_Flags(HeaderObjectFlags value) {
+	((CObject*)this)->hoFlags = (short)value;
+}
+int HeaderObject::get_EventNumber() const {
+	return ((const CObject*)this)->hoEventNumber;
+}
+int HeaderObject::get_CurrentParam() const {
+	return ((const CObject*)this)->hoCurrentParam;
+}
+void HeaderObject::set_EventNumber(int value) {
+	((CObject*)this)->hoEventNumber = value;
+}
+void HeaderObject::set_CurrentParam(int value) {
+	((CObject*)this)->hoCurrentParam = value;
 }
 RunHeader* HeaderObject::get_AdRunHeader() {
 	return (RunHeader*)((CObject*)this)->hoAdRunHeader;
@@ -4500,6 +5313,19 @@ short objInfoList::get_Object() const {
 const TCHAR* objInfoList::get_name() {
 	return [((CObjInfo*)this)->oilName UTF8String];
 }
+
+int objInfoList::get_oilNext() const { return ((CObjInfo*)this)->oilNext; }
+void objInfoList::set_oilNext(int value) { ((CObjInfo*)this)->oilNext = value; }
+bool objInfoList::get_oilNextFlag() const { return ((CObjInfo*)this)->oilNextFlag; }
+void objInfoList::set_oilNextFlag(bool value) { ((CObjInfo*)this)->oilNextFlag = value; }
+int objInfoList::get_oilCurrentRoutine() const { return ((CObjInfo*)this)->oilCurrentRoutine; }
+void objInfoList::set_oilCurrentRoutine(int value) { ((CObjInfo*)this)->oilCurrentRoutine = value; }
+int objInfoList::get_oilCurrentOi() const { return ((CObjInfo*)this)->oilCurrentOi; }
+void objInfoList::set_oilCurrentOi(int value) { ((CObjInfo*)this)->oilCurrentOi = value; }
+int objInfoList::get_oilActionCount() const { return ((CObjInfo*)this)->oilActionCount; }
+void objInfoList::set_oilActionCount(int value) { ((CObjInfo*)this)->oilActionCount = value; }
+int objInfoList::get_oilActionLoopCount() const { return ((CObjInfo*)this)->oilActionLoopCount; }
+void objInfoList::set_oilActionLoopCount(int value) { ((CObjInfo*)this)->oilActionLoopCount = value; }
 void objInfoList::set_NumOfSelected(int ns) {
 	((CObjInfo*)this)->oilNumOfSelected = ns;
 }
@@ -4513,8 +5339,29 @@ void objInfoList::set_EventCountOR(int ec) {
 	((CObjInfo*)this)->oilEventCountOR = ec;
 }
 short objInfoList::get_QualifierByIndex(std::size_t index) const {
+	if (index >= MAX_QUALIFIERS) {
+		LOGE(_T("Invalid qualifier index read: expected 0 to 7, got %zu.\n"), index);
+		return -1;
+	}
 	return ((CObjInfo*)this)->oilQualifiers[index];
 }
+int qualToOi::get_qoiCurrentOi() const { return ((CQualToOiList*)this)->qoiCurrentOi; }
+void qualToOi::set_qoiCurrentOi(int value) { ((CQualToOiList*)this)->qoiCurrentOi = (short)value; }
+int qualToOi::get_qoiNext() const { return ((CQualToOiList*)this)->qoiNext; }
+void qualToOi::set_qoiNext(int value) { ((CQualToOiList*)this)->qoiNext = (short)value; }
+int qualToOi::get_qoiActionPos() const { return ((CQualToOiList*)this)->qoiActionPos; }
+void qualToOi::set_qoiActionPos(int value) { ((CQualToOiList*)this)->qoiActionPos = (short)value; }
+int qualToOi::get_qoiCurrentRoutine() const { return ((CQualToOiList*)this)->qoiCurrentRoutine; }
+void qualToOi::set_qoiCurrentRoutine(int value) { ((CQualToOiList*)this)->qoiCurrentRoutine = value; }
+int qualToOi::get_qoiActionCount() const { return ((CQualToOiList*)this)->qoiActionCount; }
+void qualToOi::set_qoiActionCount(int value) { ((CQualToOiList*)this)->qoiActionCount = value; }
+int qualToOi::get_qoiActionLoopCount() const { return ((CQualToOiList*)this)->qoiActionLoopCount; }
+void qualToOi::set_qoiActionLoopCount(int value) { ((CQualToOiList*)this)->qoiActionLoopCount = value; }
+bool qualToOi::get_qoiNextFlag() const { return ((CQualToOiList*)this)->qoiNextFlag; }
+void qualToOi::set_qoiNextFlag(bool value) { ((CQualToOiList*)this)->qoiNextFlag = value; }
+bool qualToOi::get_qoiSelectedFlag() const { return ((CQualToOiList*)this)->qoiSelectedFlag; }
+void qualToOi::set_qoiSelectedFlag(bool value) { ((CQualToOiList*)this)->qoiSelectedFlag = value; }
+
 CreateObjectInfo::Flags CreateObjectInfo::get_flags() const {
 	return (CreateObjectInfo::Flags)(((CCreateObjectInfo*)this)->cobFlags);
 }

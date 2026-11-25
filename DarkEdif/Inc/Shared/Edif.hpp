@@ -192,6 +192,7 @@ namespace Edif
 	protected:
 		friend RunHeader;
 		friend DarkEdif::Surface;
+		friend CRunFrameMultiPlat;
 
 		HeaderObject* hoPtr;
 		Extension* ext;
@@ -206,6 +207,7 @@ namespace Edif
 		global<jclass> javaCEventClass;
 		global<jobject> javaRhObject;
 		global<jclass> javaCRunClass;
+		static jmethodID generateEventMethodID;
 #elif defined(__APPLE__)
 		void * objCExtPtr;
 #endif
@@ -223,6 +225,14 @@ namespace Edif
 
 		// Used to optimize event generating
 		RuntimeToExtCall curCall = RuntimeToExtCall::Create;
+
+		// Stores events being generated; not pushed, as they may not execute.
+		// A counter as generated events may be nested.
+		std::int8_t generatingEventsCounter = 0;
+
+		// Verifies that destroying this ext is not going to result in terrible destruction,
+		// e.g. this ext is currently generating events.
+		void PreDestroy();
 
 #ifdef _WIN32
 		Runtime(Extension * ext);
@@ -273,9 +283,10 @@ namespace Edif
 		// That breaks the 2nd+ generated event's selection, so instead we increase rhActionCount by 1, 2, etc.
 		static int actionLoopIncrement;
 
-		// Immediately creates an event, calling that condition ID in this object, and invalidating object selection.
+		// Immediately calls this object's condition ID. Preserves this call's event
+		// context and object selection.
 		void GenerateEvent(int EventID);
-		// Queues an event to run at the end of the actions, which will ccall this condition ID.
+		// Queues an event to run at the end of the actions, which will call this condition ID.
 		void PushEvent(int EventID);
 
 		void * Allocate(std::size_t);

@@ -708,62 +708,6 @@ struct EventBlockType {
 	DWORD blockOffset;
 };
 
-// Fusion event's header flags.
-// @remarks Despite being named Event Group Flags, in Fusion user terms, it is an event.
-//			Fusion event groups are indicated by using specific conditions,
-//			Was EVGFLAGS_**.
-enum class EventGroupFlags : unsigned short
-{
-	None = 0,
-	// Indicates System: run this event once
-	Once = 0x1,
-	// Indicates a triggered event
-	NotAlways = 0x2,
-	// Indicates a non-triggered event - see NoMore
-	Repeat = 0x4,
-	// If NoMore is set, this event won't run. Used for System: Repeat X times event,
-	// or Run While Event Loops?
-	// TODO: Confirm what it is used for
-	NoMore = 0x8,
-	// Indicates presence of a Position > Swap with another object action on
-	// a OEFLAGS:: SPRITE object (e.g. Active)
-	Shuffle = 0x10,
-	// ? bookmark in editor?
-	// TODO: Confirm what it is used for
-	EditorMark = 0x20,
-	// Indicates this event has children events (C2.5+)
-	// @remarks Was UndoMark
-	HasChildren = 0x40,
-	// Event has a Break action
-	// @remarks Was ComplexGroup
-	Break = 0x80,
-	// ? Possibly profiler-related
-	// TODO: Confirm what it is used for
-	Breakpoint = 0x100,
-	// ?
-	// TODO: Confirm what it is used for
-	AlwaysClean = 0x200,
-	// Has an OR filtered or OR logical condition - see OrLogical
-	// Mixing those or multiple ORs is not recommended... in fact I would avoid OR entirely
-	OrInGroup = 0x400,
-	// Has a Movement > Stop or Movement > Bounce action in event
-	StopInGroup = 0x800,
-	// Has an OR (logical) condition
-	OrLogical = 0x1000,
-	// ? inside a group of events?
-	// TODO: Confirm what it is used for
-	Grouped = 0x2000,
-	// Deactivated in editor
-	// TODO: Do these even appear in runtime? Run Application only?
-	Inactive = 0x4000,
-	// Is a child event (CF2.5+)
-	HasParent = 0x8000,
-
-	Limited = Shuffle | NotAlways | Repeat | NoMore,
-	DefaultMask = Breakpoint | Grouped
-};
-enum_class_is_a_bitmask(EventGroupFlags);
-
 //#define		EVGFLAGS_2MANYACTIONS	0x400
 //#define		EVGFLAGS_NOTASSEMBLED	0x1000
 
@@ -772,6 +716,7 @@ enum_class_is_a_bitmask(EventGroupFlags);
 
 // Differs from eventV1 by union variable types
 struct event2 {
+	friend Edif::Runtime;
 	NO_DEFAULT_CTORS_OR_DTORS(event2);
 	short get_evtNum();
 	OINUM get_evtOi();
@@ -1097,6 +1042,9 @@ enum class OBJ {
 	SYS_OBJ,				// ?
 	LAST = SYS_OBJ,
 };
+
+// In non-Windows, CEventProgram is a distinct class; in Windows, it's just an eventGroup.
+using CEventProgram = EventGroupMP;
 
 // ------------------------------------------------------------
 // EXTENSION OBJECT DATA ZONE
@@ -1620,7 +1568,7 @@ DarkEdifInternalAccessProtected:
 
 	int		  		rh2ActionCount;		// Action counter
 	int		  		rh2ActionLoopCount;	// Action loops counter
-	void	(*rh2ActionEndRoutine)();	// End of action routine
+	void	(*rh2ActionEndRoutine)();	// End of action routine - used for Swap Position and Foreach
 
 	// Number of objects created since frame start. Increments per object instance create of any object; wraps at 16-bit back to 1, not 0.
 	// @remarks CreationCount starts as 0, but since Fusion b243, the wrap increment will be doubled to move from 65535 [-> 0] -> 1.
@@ -2154,6 +2102,10 @@ enum class GAMEFLAGS {
 	//FADE_IN = 0x80,
 	//FADE_OUT = 0x100,
 	INITIALISING = 0x200,
+	// Windows: Runtime is within the HandleRunObject ticks, as opposed to regular events, timer events, etc.
+	// Does not mean this is current object being Handled, as any Handled object could generate an event
+	// that calls into this object's A/C/E.
+	INSIDE_HANDLE = 0x0400
 };
 
 // A stand-in for the CRun class on other platforms, which may have items from CEventProgram
@@ -2166,6 +2118,7 @@ struct RunHeader {
 	int GetRH2EventCount();
 	// Gets the EventCountOR, used in object selection in OR-related events. DarkEdif-added function for cross-platform.
 	int GetRH4EventCountOR();
+	void SetRH4EventCountOR(int);
 	event2* GetRH4ActionStart();
 
 	// Reads the rh2.rh2ActionOn variable, used to indicate actions are being run (as opposed to conditions, or Handle, etc).
@@ -2184,7 +2137,8 @@ struct RunHeader {
 	// Sets the rh2.rh2ActionLoopCount variable, used in actions when looping object instances to run an action on each instance
 	void SetRH2ActionLoopCount(int newActLoopCount);
 
-	// Current Fusion event line, confusingly called event group. Can be null, during Handle().
+	// Current Fusion event line, confusingly called event group. Can be null, during a call to Handle(),
+	// but not an event generated within a Handle call. See GameFlags.
 	// @remarks Will also be null in unpatched runtimes that reset rhEventGroup by generated events;
 	//			DarkEdif exts save and restore during generating, but otherwise it's up to runtime.
 	EventGroupMP* get_EventGroup();
@@ -2211,6 +2165,7 @@ struct RunHeader {
 	EventGroupFlags GetEVGFlags();
 
 	void RollbackSelection();
+	CEventProgram* get_EventProgram();
 
 DarkEdifInternalAccessProtected:
 	friend DarkEdif::ObjectSelection;
@@ -2473,9 +2428,8 @@ DarkEdifInternalAccessProtected:
 	// 0 or 1; indicates this object was filtered/selected by conditions in the event.
 	// If 0, all the object instances should be considered selected; if 1, only the selected ones.
 	// Invalid if not an OR event! (check (EventGroup->Flags & EventGroupFlags::OrInGroup) != 0)
-	// This is useless for exts, as the runtime only uses it to temporarily mark objects
-	// before restoring their selection after running conditions, and before running the actions;
-	// so both during condition evaluation, and during actions, there's no reason to preserve it.
+	// Accumulates selections across OR branches. It can remain live while a later branch
+	// evaluates conditions, so nested generated events must preserve it when resuming that OR.
 	bool hoSelectedInOR;
 
 	// Ignore - padding
@@ -2557,6 +2511,11 @@ public:
 
 	// Reads the header object flags, which is a mix of flags for multiple purposes
 	HeaderObjectFlags get_Flags();
+	void set_Flags(HeaderObjectFlags);
+	int get_EventNumber() const;
+	void set_EventNumber(int);
+	EventParam* get_CurrentParam() const;
+	void set_CurrentParam(EventParam*);
 
 	// Reads the current frame's RunHeader/CRun data, which is live information for the frame.
 	RunHeader * get_AdRunHeader();
@@ -3325,10 +3284,6 @@ public:
 	//			While it often matches OiList index, it differs, particularly in later Fusion frames.
 	short get_Oi();
 
-	// The unique number of this object; the index of this OiList in the rhPtr global OiList. Same among instances.
-	// You shouldn't need this index, as most operations can be done on this object directly.
-	short GetOiListIndex(RunHeader*);
-
 	// The count of all object instances of this type, selected or not.
 	// @remarks This is a helper value, and won't prevent Object-NumNext iteration going beyond it.
 	int get_NObjects();
@@ -3351,29 +3306,35 @@ public:
 	short get_QualifierByIndex(std::size_t);
 
 	// When an ActionLoop is active, this is the next object number in the loop (-1, Object, NextSelected).
-	int get_oilNext();
+	int get_oilNext() const;
 
 	// When an ActionLoop is active, this is whether to iterate further or not.
-	bool get_oilNextFlag();
+	bool get_oilNextFlag() const;
 
 	// When an Action repeat or ActionLoop is active, this specifies which object to loop on.
 	// @remarks 0 indicates no 2nd object (gao2ndNone)
 	//			1 indicates to use one 2nd object (gao2ndOneOnly)
 	//			2 indicates to use the ListSelected->NextSelected current selected chain (gao2ndCurrent)
 	//			3 indicates to use the Object->NumNext chain (gao2ndAll)
-	decltype(oilCurrentRoutine) get_oilCurrentRoutine();
+	decltype(oilCurrentRoutine) get_oilCurrentRoutine() const;
 
 	// When an Action is active, this specifies which object is currently being iterated. -1 if invalid.
-	int get_oilCurrentOi();
+	int get_oilCurrentOi() const;
 
 	// When an Action is active, this applies oilCurrentRountine.
-	int get_oilActionCount();
+	int get_oilActionCount() const;
 
 	// When an ActionLoop is active (Action repeating in a fastloop), this applies oilCurrentRountine.
-	int get_oilActionLoopCount();
+	int get_oilActionLoopCount() const;
 
 	// Sets the number of selected, presumably after object selection linked list changes.
 	// @remarks This is a helper value, and won't prevent ListSelected-NextSelected loops going beyond it.
+	void set_oilNext(int);
+	void set_oilNextFlag(bool);
+	void set_oilCurrentRoutine(decltype(oilCurrentRoutine));
+	void set_oilCurrentOi(int);
+	void set_oilActionCount(int);
+	void set_oilActionLoopCount(int);
 	void set_NumOfSelected(int);
 
 	// Sets the first selected instance to a HeaderObject::Number, or -1 for no selection.
@@ -3477,6 +3438,7 @@ enum_class_is_a_bitmask(CreateObjectInfo::Flags);
 
 struct qualToOi {
 	NO_DEFAULT_CTORS_OR_DTORS(qualToOi);
+	friend Edif::Runtime;
 DarkEdifInternalAccessProtected:
 	short		CurrentOi,
 				Next;
@@ -3490,6 +3452,22 @@ DarkEdifInternalAccessProtected:
 	short		OiAndOiList[];
 
 public:
+	int get_qoiCurrentOi() const;
+	void set_qoiCurrentOi(int);
+	int get_qoiNext() const;
+	void set_qoiNext(int);
+	int get_qoiActionPos() const;
+	void set_qoiActionPos(int);
+	decltype(CurrentRountine) get_qoiCurrentRoutine() const;
+	void set_qoiCurrentRoutine(decltype(CurrentRountine));
+	int get_qoiActionCount() const;
+	void set_qoiActionCount(int);
+	int get_qoiActionLoopCount() const;
+	void set_qoiActionLoopCount(int);
+	bool get_qoiNextFlag() const;
+	void set_qoiNextFlag(bool);
+	bool get_qoiSelectedFlag() const;
+	void set_qoiSelectedFlag(bool);
 	short get_Oi(std::size_t idx);
 	short get_OiList(std::size_t idx);
 	// Returns all Oi from internal array
@@ -3586,6 +3564,7 @@ DarkEdifInternalAccessProtected:
 // Condition/action jumps
 struct CallTables
 {
+	friend Edif::Runtime;
 	NO_DEFAULT_CTORS_OR_DTORS(CallTables);
 DarkEdifInternalAccessProtected:
 	BOOL (** pConditions1)(event2* pe, HeaderObject * pHo);
@@ -5378,6 +5357,8 @@ struct CRunFrame {
 	// Gets the frame name
 	_Notnull_ FusionANSIWarning const TCHAR * get_name();
 
+	RunHeader* get_rhPtr();
+
 DarkEdifInternalAccessProtected:
 	friend Edif::Runtime;
 	// Header
@@ -5554,9 +5535,9 @@ struct CRunApp {
 	_Maybenull_ CRunAppMultiPlat* get_ParentApp();
 	// Returns number of Fusion frames
 	std::size_t GetNumFusionFrames();
-	// Gets current Fusion frame number (0-based)
+	// Gets current Fusion frame number (0-based); -1 during DarkEdif::EndAppCallback
 	int get_nCurrentFrame();
-	// Gets frame pointer
+	// Gets current frame; not usable during DarkEdif::EndAppCallback
 	CRunFrameMultiPlat * get_Frame();
 	// Gets application name
 	FusionANSIWarning const TCHAR * get_name();

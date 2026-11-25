@@ -456,6 +456,63 @@ enum class HeaderObjectFlags : std::uint16_t {
 };
 enum_class_is_a_bitmask(HeaderObjectFlags);
 
+
+// Fusion event's header flags.
+// @remarks Despite being named Event Group Flags, in Fusion user terms, it is an event.
+//			Fusion event groups are indicated by using specific conditions,
+//			Was EVGFLAGS_**.
+enum class EventGroupFlags : unsigned short
+{
+	None = 0,
+	// Indicates System: run this event once
+	Once = 0x1,
+	// Indicates a triggered event
+	NotAlways = 0x2,
+	// Indicates a non-triggered event - see NoMore
+	Repeat = 0x4,
+	// If NoMore is set, this event won't run. Used for System: Repeat X times event,
+	// or Run While Event Loops?
+	// TODO: Confirm what it is used for
+	NoMore = 0x8,
+	// Indicates presence of a Position > Swap with another object action on
+	// a OEFLAGS:: SPRITE object (e.g. Active)
+	Shuffle = 0x10,
+	// ? bookmark in editor?
+	// TODO: Confirm what it is used for
+	EditorMark = 0x20,
+	// Indicates this event has children events (C2.5+)
+	// @remarks Was UndoMark
+	HasChildren = 0x40,
+	// Event has a Break action
+	// @remarks Was ComplexGroup
+	Break = 0x80,
+	// ? Possibly profiler-related
+	// TODO: Confirm what it is used for
+	Breakpoint = 0x100,
+	// ?
+	// TODO: Confirm what it is used for
+	AlwaysClean = 0x200,
+	// Has an OR filtered or OR logical condition - see OrLogical
+	// Mixing those or multiple ORs is not recommended... in fact I would avoid OR entirely
+	OrInGroup = 0x400,
+	// Has a Movement > Stop or Movement > Bounce action in event
+	StopInGroup = 0x800,
+	// Has an OR (logical) condition
+	OrLogical = 0x1000,
+	// ? inside a group of events?
+	// TODO: Confirm what it is used for
+	Grouped = 0x2000,
+	// Deactivated in editor
+	// TODO: Do these even appear in runtime? Run Application only?
+	Inactive = 0x4000,
+	// Is a child event (CF2.5+)
+	HasParent = 0x8000,
+
+	Limited = Shuffle | NotAlways | Repeat | NoMore,
+	DefaultMask = Breakpoint | Grouped
+};
+enum_class_is_a_bitmask(EventGroupFlags);
+
 // Action and condition parameter type
 enum class Params : std::uint16_t {
 	Object = 1,						// ParamObject
