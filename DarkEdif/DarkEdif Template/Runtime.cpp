@@ -32,11 +32,14 @@ void FusionAPI StartApp(mv *mV, CRunApp* pApp)
 }*/
 
 /*
-// Called when the application ends or restarts. Also called for subapps.
+// Called when the application ends. Also called for subapps. NOT called for app restarts.
 // @remarks Introduced in MMF1.5, missing in MMF1.2 and below.
 void FusionAPI EndApp(mv *mV, CRunApp* pApp)
 {
 	#pragma DllExportHint
+
+	#error You will want to use DarkEdif::EndAppCallback instead, as EndApp is now being implemented there.
+
 	// Example
 	// -------
 	// Delete global data
@@ -57,7 +60,7 @@ void FusionAPI StartFrame(mv *mV, std::uint32_t dwReserved, int nFrameIndex)
 }*/
 
 /*
-// Called when the frame ends.
+// Called when the frame ends. NOT called for frame restarts.
 // @remarks Introduced in MMF1.5, missing in MMF1.2 and below.
 void FusionAPI EndFrame(mv *mV, std::uint32_t dwReserved, int nFrameIndex)
 {

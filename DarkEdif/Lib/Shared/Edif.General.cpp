@@ -6,6 +6,8 @@
 
 #include "Common.hpp"
 
+void (*DarkEdif::EndAppCallback)(CRunAppMultiPlat *, bool) = nullptr;
+
 #ifdef _WIN32
 
 // ============================================================================
@@ -67,6 +69,13 @@ int FusionAPI Free(mv *mV)
 	return 0; // No error
 }
 
+// Fusion calls this for the main application and sub-applications.
+void FusionAPI EndApp(mv*, CRunApp* const app)
+{
+#pragma DllExportHint
+	if (DarkEdif::EndAppCallback)
+		DarkEdif::EndAppCallback(app, app && app->get_ParentApp() != nullptr);
+}
 
 // ============================================================================
 // GENERAL INFO
@@ -410,6 +419,21 @@ std::int16_t FusionAPI ContinueRunObject(RUNDATA * rdPtr)
 
 #elif defined(__ANDROID__)
 
+// Called when the host activity finishes.
+ProjectFunc void endApp(JNIEnv*, jclass, jobject app, jboolean isSubApp)
+{
+	if (DarkEdif::EndAppCallback)
+	{
+		if (app)
+		{
+			CRunAppMultiPlat appWrapper(app, nullptr);
+			DarkEdif::EndAppCallback(&appWrapper, isSubApp != JNI_FALSE);
+		}
+		else
+			DarkEdif::EndAppCallback(nullptr, isSubApp != JNI_FALSE);
+	}
+}
+
 ProjectFunc jint getNumberOfConditions(JNIEnv *, jobject, jlong cptr)
 {
 	//raise(SIGTRAP);
@@ -716,6 +740,7 @@ std::string GetJavaExceptionStr()
 ProjectFunc jlong conditionJump(JNIEnv*, jobject, jlong extPtr, jint cndID, CCndExtension cnd);
 ProjectFunc void actionJump(JNIEnv*, jobject, jlong extPtr, jint actID, CActExtension act);
 ProjectFunc void expressionJump(JNIEnv*, jobject, jlong extPtr, jint expID, CNativeExpInstance exp);
+ProjectFunc void endApp(JNIEnv*, jclass, jobject run, jboolean isSubApp);
 
 #if DARKEDIF_DISPLAY_TYPE > DARKEDIF_DISPLAY_ANIMATIONS
 ProjectFunc void displayRunObject(JNIEnv*, jobject, jlong extPtr, jobject renderer);
@@ -780,6 +805,7 @@ ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, [[maybe_unused]] void * reserve
 		method(conditionJump, "(JILConditions/CCndExtension;)J"),
 		method(actionJump, "(JILActions/CActExtension;)V"),
 		method(expressionJump, "(JILExpressions/CNativeExpInstance;)V"),
+		method(endApp, "(LApplication/CRunApp;Z)V"),
 #if PAUSABLE_EXTENSION
 		method(pauseRunObject, "(J)V"),
 		method(continueRunObject, "(J)V"),
@@ -846,6 +872,13 @@ ProjectFunc void JNICALL JNI_OnUnload([[maybe_unused]] JavaVM * vm, [[maybe_unus
 #if MacBuild
 #include "MMF2Lib/CRunViewController.h"
 #endif
+
+// Called when the template's per-application storage is released.
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _endApp(CRunApp* app, bool isSubApp))
+{
+	if (DarkEdif::EndAppCallback)
+		DarkEdif::EndAppCallback((CRunAppMultiPlat*)app, isSubApp);
+}
 
 // Raw creation func
 ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _init())

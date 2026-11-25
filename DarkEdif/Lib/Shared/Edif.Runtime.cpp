@@ -230,6 +230,14 @@ CRunFrameMultiPlat* CRunAppMultiPlat::get_Frame()
 #elif defined(__APPLE__)
 	return (CRunFrameMultiPlat *)((CRunApp*)this)->frame;
 #elif defined(__ANDROID__)
+	// runtime is only unset if CRunAppMultiPlat wrapper was made in the EndApp callback,
+	// which is run when frame is already null.
+	if (!runtime)
+	{
+		LOGE(_T("Cannot read rhPtr during end of app.\n"));
+		return nullptr;
+	}
+
 	if (!frame)
 	{
 		const jfieldID fieldID = threadEnv->GetFieldID(meClass, "frame", "LApplication/CRunFrame;");

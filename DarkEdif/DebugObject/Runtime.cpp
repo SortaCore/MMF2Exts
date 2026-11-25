@@ -57,10 +57,3 @@ void Extension::LoadDataVariable()
 		CloseLock();
 	}
 }
-
-
-// Called when the application ends or restarts. Also called for subapps.
-void FusionAPI EndApp(mv *mV, CRunApp* pApp)
-{
-	#pragma DllExportHint
-}

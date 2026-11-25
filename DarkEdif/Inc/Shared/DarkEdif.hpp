@@ -70,7 +70,6 @@ namespace Edif {
 }
 
 namespace DarkEdif {
-
 	// SDK version and changes are documented in repo/DarkEdif/- MFAs and documentation/DarkEdif changelog.md
 	static const int SDKVersion = 20;
 #if EditorBuild
@@ -444,6 +443,11 @@ namespace DarkEdif {
 	// Used for things that are only initializable once a Fusion frame has fully loaded;
 	// for example, access to the app's image bank.
 	void LateInit(Extension* ext);
+
+	// Called when an app ends, including sub-apps where supported.
+	// When main app is ending, the app pointer may be partly deleted.
+	// Android does not support sub-app ending.
+	extern void (*EndAppCallback)(CRunAppMultiPlat * app, bool isSubApp);
 
 	// Removes the ending text if it exists, and returns true. If it doesn't exist, changes nothing and returns false.
 	bool RemoveSuffixIfExists(std::tstring_view &tstr, const std::tstring_view suffix, bool caseInsensitive = true);
