@@ -171,6 +171,22 @@ namespace Edif
 	};
 	extern SDKClass * SDK;
 
+	enum class RuntimeToExtCall {
+		Unset = 0,
+		Create = 1,
+		Destroy = 2,
+		Display = 4,
+		Handle = 8,
+		Pause = 0x10,
+		Continue = 0x20,
+		// May be set with other flags, e.g. Handle generates condition, which has a parameter that reads expression
+		// Expression might be standalone, e.g. used as param of an unrelated event
+		Expression = 0x40,
+		Action = 0x80,
+		Condition = 0x100,
+	};
+	enum_class_is_a_bitmask(RuntimeToExtCall);
+
 	class Runtime
 	{
 	protected:
@@ -204,6 +220,9 @@ namespace Edif
 		// call into another ext before ExpressionJump, rather than after.
 		// You should also be aware of generated events and object selection clobbering.
 		bool runtimeCopyHeapAlloc = false;
+
+		// Used to optimize event generating
+		RuntimeToExtCall curCall = RuntimeToExtCall::Create;
 
 #ifdef _WIN32
 		Runtime(Extension * ext);

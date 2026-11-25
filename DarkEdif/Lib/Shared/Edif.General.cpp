@@ -283,6 +283,8 @@ std::int16_t FusionAPI CreateRunObject(RUNDATA * rdPtr, EDITDATA * edPtr, Create
 	Extension* ext = new Extension((RunObject*)rdPtr, edPtr, cobPtr);
 	ForbiddenInternals2::SetExtension((RunObject*)rdPtr, ext);
 	ext->Runtime.ObjectSelection.pExtension = ext;
+	assert(ext->Runtime.curCall == Edif::RuntimeToExtCall::Create);
+	ext->Runtime.curCall = Edif::RuntimeToExtCall::Unset;
 	return 0;
 }
 
@@ -292,13 +294,14 @@ std::int16_t FusionAPI DestroyRunObject(RUNDATA * rdPtr, long fast)
 {
 	// fast is true if quickly clearing all frame objects at end of frame/app, otherwise false
 #pragma DllExportHint
-	Extension* ext = ((RunObject*)rdPtr)->GetExtension();
+	Extension* const ext = ((RunObject*)rdPtr)->GetExtension();
 #ifdef _DEBUG
 	// Something's wrong with the expected arrangement of RUNDATA, is pExtension not immediately following roa/rov and co?
 	if (((RunObject*)rdPtr)->GetExtension() != ext)
 		DarkEdif::MsgBox::Error(_T("DarkEdif - RUNDATA error"), _T("Expected RUNDATA::pExtension at %p, but was not present. Is RUNDATA in the wrong arrangement?"),
 			((RunObject*)rdPtr)->GetExtension());
 #endif
+	ext->Runtime.curCall = Edif::RuntimeToExtCall::Destroy;
 	delete ext;
 	ForbiddenInternals2::SetExtension((RunObject*)rdPtr, nullptr);
 
@@ -308,7 +311,12 @@ std::int16_t FusionAPI DestroyRunObject(RUNDATA * rdPtr, long fast)
 REFLAG FusionAPI HandleRunObject(RUNDATA * rdPtr)
 {
 #pragma DllExportHint
-	return ((RunObject*)rdPtr)->GetExtension()->Handle();
+	Extension* const ext = ((RunObject*)rdPtr)->GetExtension();
+	const Edif::RuntimeToExtCall oldCallFrom = ext->Runtime.curCall;
+	ext->Runtime.curCall = Edif::RuntimeToExtCall::Handle;
+	const REFLAG result = ext->Handle();
+	ext->Runtime.curCall = oldCallFrom;
+	return result;
 }
 
 
@@ -373,7 +381,13 @@ std::int16_t FusionAPI PauseRunObject(RUNDATA * rdPtr)
 	// Note: PauseRunObject is required, or runtime will crash when pausing.
 	// TODO: Does the return from PauseRunObject actually change anything?
 #if PAUSABLE_EXTENSION
+	Extension* const ext = ((RunObject*)rdPtr)->GetExtension();
+	const auto lastCall = ext->Runtime.curCall;
+	ext->Runtime.curCall = Edif::RuntimeToExtCall::Pause;
+
 	((RunObject*)rdPtr)->GetExtension()->FusionRuntimePaused();
+
+	ext->Runtime.curCall = lastCall;
 #endif
 	return 0;
 }
@@ -382,7 +396,13 @@ std::int16_t FusionAPI ContinueRunObject(RUNDATA * rdPtr)
 {
 #pragma DllExportHint
 #if PAUSABLE_EXTENSION
+	Extension* const ext = ((RunObject*)rdPtr)->GetExtension();
+	const auto lastCall = ext->Runtime.curCall;
+	ext->Runtime.curCall = Edif::RuntimeToExtCall::Continue;
+
 	((RunObject*)rdPtr)->GetExtension()->FusionRuntimeContinued();
+
+	ext->Runtime.curCall = lastCall;
 #endif
 	return 0;
 }
@@ -409,6 +429,7 @@ ProjectFunc jlong createRunObject(JNIEnv * env, jobject javaExtPtr, ByteBufferDi
 	CreateObjectInfo coiReal = COIInternals::MakeCreateObjectInfo(coi);
 	Extension * const ext = new Extension((EDITDATA *)edPtrReal, javaExtPtr, &coiReal);
 	ext->Runtime.ObjectSelection.pExtension = ext;
+	ext->Runtime.curCall = Edif::RuntimeToExtCall::Unset;
 	return (jlong)ext;
 }
 
@@ -416,14 +437,20 @@ ProjectFunc void destroyRunObject(JNIEnv *, jobject, jlong ext, jboolean fast)
 {
 	JNIExceptionCheck();
 	LOGV("Running " PROJECT_NAME " extension dtor in destroyRunObject...\n");
+	((Extension*)ext)->Runtime.curCall = Edif::RuntimeToExtCall::Destroy;
 	delete ((Extension *)ext);
 	JNIExceptionCheck();
 	LOGV("Ran " PROJECT_NAME " extension dtor OK.\n");
 }
 
-ProjectFunc REFLAG handleRunObject(JNIEnv *, jobject, jlong ext)
+ProjectFunc REFLAG handleRunObject(JNIEnv *, jobject, jlong extP)
 {
-	return ((Extension *)ext)->Handle();
+	Extension* const ext = (Extension*)extP;
+	const Edif::RuntimeToExtCall oldCallFrom = ext->Runtime.curCall;
+	ext->Runtime.curCall = Edif::RuntimeToExtCall::Handle;
+	const REFLAG result = ext->Handle();
+	ext->Runtime.curCall = oldCallFrom;
+	return result;
 }
 
 extern const char* getClassName(jclass myCls, bool fullpath);
@@ -466,14 +493,26 @@ Extension* RunObject::GetExtension()
 }
 
 #if PAUSABLE_EXTENSION
-ProjectFunc void pauseRunObject(JNIEnv *, jobject, jlong ext)
+ProjectFunc void pauseRunObject(JNIEnv *, jobject, jlong extP)
 {
-	((Extension *)ext)->FusionRuntimePaused();
+	Extension* const ext = (Extension *)extP;
+	const auto lastCall = ext->Runtime.curCall;
+	ext->Runtime.curCall = Edif::RuntimeToExtCall::Pause;
+
+	ext->FusionRuntimePaused();
+
+	ext->Runtime.curCall = lastCall;
 }
 
-ProjectFunc void continueRunObject(JNIEnv *, jobject, jlong ext)
+ProjectFunc void continueRunObject(JNIEnv *, jobject, jlong extP)
 {
-	((Extension *)ext)->FusionRuntimeContinued();
+	Extension* const ext = (Extension*)extP;
+	const auto lastCall = ext->Runtime.curCall;
+	ext->Runtime.curCall = Edif::RuntimeToExtCall::Continue;
+
+	ext->FusionRuntimeContinued();
+
+	ext->Runtime.curCall = lastCall;
 }
 #endif // PAUSABLE_EXTENSION
 
@@ -835,6 +874,7 @@ ProjectFunc void * PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _createRun
 	LOGV("Note: objCExtPtr is %p, edPtr %p.\n", objCExtPtr, edPtr);
 	Extension * cppExt = new Extension((EDITDATA *)edPtr, objCExtPtr, (CreateObjectInfo*)cobPtr);
 	cppExt->Runtime.ObjectSelection.pExtension = cppExt;
+	cppExt->Runtime.curCall = Edif::RuntimeToExtCall::Unset;
 #if MacBuild==0
 	DarkEdif::Internal_WindowHandle = ((CRunExtension*)objCExtPtr)->ho->hoAdRunHeader->rhApp->mainViewController;
 #else
@@ -844,20 +884,38 @@ ProjectFunc void * PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _createRun
 }
 ProjectFunc short PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _handleRunObject)(void * cppExt)
 {
-	return (short) ((Extension *)cppExt)->Handle();
+	Extension* const object = (Extension*)cppExt;
+	const Edif::RuntimeToExtCall oldCallFrom = object->Runtime.curCall;
+	object->Runtime.curCall = Edif::RuntimeToExtCall::Handle;
+	const short result = (short)object->Handle();
+	object->Runtime.curCall = oldCallFrom;
+	return result;
 }
 ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _destroyRunObject)(void * cppExt, bool bFast)
 {
+	((Extension*)cppExt)->Runtime.curCall = Edif::RuntimeToExtCall::Destroy;
 	delete ((Extension *)cppExt);
 }
 #if PAUSABLE_EXTENSION
 ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _pauseRunObject)(void* cppExt)
 {
+	Extension* const ext = (Extension*)cppExt;
+	const auto lastCall = ext->Runtime.curCall;
+	ext->Runtime.curCall = Edif::RuntimeToExtCall::Pause;
+
 	((Extension*)cppExt)->FusionRuntimePaused();
+
+	ext->Runtime.curCall = lastCall;
 }
 ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _continueRunObject)(void* cppExt)
 {
+	Extension* const ext = (Extension*)cppExt;
+	const auto lastCall = ext->Runtime.curCall;
+	ext->Runtime.curCall = Edif::RuntimeToExtCall::Continue;
+
 	((Extension*)cppExt)->FusionRuntimeContinued();
+
+	ext->Runtime.curCall = lastCall;
 }
 #endif // PAUSABLE_EXTENSION
 
@@ -915,6 +973,10 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _displayRunO
 	Extension* const ext = (Extension*)cppExtPtr;
 #endif
 
+	const auto lastCall = ext->Runtime.curCall;
+	assert(lastCall == Edif::RuntimeToExtCall::Unset);
+	ext->Runtime.curCall = Edif::RuntimeToExtCall::Display;
+
 	// Tick display if ext dev has manual drawing
 #if DARKEDIF_DISPLAY_TYPE == DARKEDIF_DISPLAY_MANUAL
 	ext->Display();
@@ -942,6 +1004,8 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _displayRunO
 	ext->surf->BlitToFrameWithExtEffects();
 #endif
 #endif // display type
+
+	ext->Runtime.curCall = lastCall;
 
 #ifdef _WIN32
 	// Although Windows returns a short, Yves confirmed the return value is ignored

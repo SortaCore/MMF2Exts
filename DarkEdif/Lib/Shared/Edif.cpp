@@ -1432,7 +1432,12 @@ ProjectFunc long PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _conditionJu
 		return ext->UnlinkedCondition(ID);
 	}
 
+	const auto lastCall = ext->Runtime.curCall;
+	ext->Runtime.curCall = Edif::RuntimeToExtCall::Condition;
+
 	long Result = ActionOrCondition(Function, ID, ext, Edif::SDK->ConditionInfos[ID], params, true);
+
+	ext->Runtime.curCall = lastCall;
 
 	LOGV(_T(PROJECT_NAME " Condition ID %i end on event %i, returning %li (%s).\n"), ID, DarkEdif::GetCurrentFusionEventNum(ext), Result, Result != 0 ? _T("TRUE") : _T("FALSE"));
 
@@ -1496,7 +1501,12 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _actionJump(
 		return actreturn;
 	}
 
+	const auto lastCall = ext->Runtime.curCall;
+	ext->Runtime.curCall = Edif::RuntimeToExtCall::Action;
+
 	ActionOrCondition(Function, ID, ext, Edif::SDK->ActionInfos[ID], params, false);
+
+	ext->Runtime.curCall = lastCall;
 
 	LOGV(PROJECT_NAME _T(" Action ID %i end.\n"), ID);
 #ifdef __ANDROID__
@@ -1640,6 +1650,10 @@ struct ExpressionManager_Windows : ACEParamReader {
 
 	void SetReturnType(ExpReturnType rt)
 	{
+		// Nested expressions may have changed either return-type bit. Publish our type only
+		// at the return boundary, without reverting destruction or other object-state changes.
+		rdPtr->rHo.hoFlags = static_cast<HeaderObjectFlags>(static_cast<std::uint16_t>(rdPtr->rHo.hoFlags) &
+			~static_cast<std::uint16_t>(HeaderObjectFlags::Float | HeaderObjectFlags::String));
 		if (rt == ExpReturnType::Float)
 			rdPtr->rHo.hoFlags |= HeaderObjectFlags::Float;
 		else if (rt == ExpReturnType::String)
@@ -1769,6 +1783,9 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _expressionJ
 		params.SetReturnType(ExpReturnType::Integer);
 		return params.SetValue((int)result);
 	}
+
+	const auto lastCall = ext->Runtime.curCall;
+	ext->Runtime.curCall |= Edif::RuntimeToExtCall::Expression; // deliberate OR
 
 	const ACEInfo * info = Edif::SDK->ExpressionInfos[ID];
 	ExpReturnType ExpressionRet = info->Flags.ef;
@@ -1905,6 +1922,7 @@ endFunc:
 	// expression func (e.g. from generating events) could change it to something else
 	params.SetReturnType(ExpressionRet);
 	LOGV(PROJECT_NAME _T(" Expression ID %i end.\n"), ID);
+	ext->Runtime.curCall = lastCall;
 	return Result;
 
 	// if you add back old ARM ASM, remember to increment paramInc
@@ -1936,6 +1954,8 @@ endFunc:
 			params.SetValue(*(float *)&Result);
 		else
 			DarkEdif::MsgBox::Error(_T("Expression ASM error"), _T("Error calling expression ID %i: Unrecognised return type."), ID);
+
+		ext->Runtime.curCall = lastCall;
 
 #if defined(DARKSCRIPT_EXTENSION) && defined(__ANDROID__)
 		threadEnv->PopLocalFrame(NULL);
