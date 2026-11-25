@@ -13,6 +13,13 @@ Also note that commit SHAs are based on time and code differences, so it is impo
 Changes until v20 release
 ----
 *v20 not released yet*
+- All platforms: Object selection is preserved across GenerateEvent calls
+- All platforms: Added DarkEdif::EndAppCallback for cleaning up ext data
+- All platforms: GenerateEvent/Destroy now checks it is being called from a safe context (e.g. not mid frame load)
+- All platforms: Added HeaderObject::Destroy() for destroying ext instances
+- Windows: Add FusionBuild variable for reading sub-build of Fusion - may be ported if possible later
+- Pre/PostBuildTool: Now v1.0.1.3; adds all plat EndApp, and Android GenerateEvent object selection preserving
+- Windows: Fix Windows qualifier iterating when "Fix qualifier limit error" is enabled.
 - GitHub downloads/forks are now tagged with commit hash to allow upgrade detecting
 - PreBuildTool: Now v1.0.1.2; expanded Mac codesign support, fixes newer Xcode compatibility
 - Windows: Added ordinal indexes for MMF1/2 functions for easier runtime linking
