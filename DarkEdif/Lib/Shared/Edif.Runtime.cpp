@@ -912,11 +912,12 @@ void HeaderObject::Destroy()
 		return;
 
 #ifdef _WIN32
-	// Use the exported action dispatcher, so the runtime owns disappearance movement,
-	// sprite collision changes and fade transitions.
-	// The returned descriptor and its dispatchers are retained for this DLL's lifetime.
-	static CallTables* const tables = reinterpret_cast<CallTables*>(
-		CallRunTimeFunction2(this, RFUNCTION::GET_CALL_TABLES, 0, 0));
+	// Run our own Object > Destroy action, which will trigger disappearing animation,
+	// movement, sprite collision changes and fade out transitions.
+
+	// Cache the call table, as it is shared amongst extensions
+	static CallTables* const tables =
+		reinterpret_cast<CallTables*>(CallRunTimeFunction2(this, RFUNCTION::GET_CALL_TABLES, 0, 0));
 	RunHeader* const rh = this->get_AdRunHeader();
 	objInfoList* const oil = this->get_OiList();
 	const int oldActionCount = oil->get_oilActionCount(),
@@ -925,8 +926,7 @@ void HeaderObject::Destroy()
 	const bool oldNextFlag = oil->get_oilNextFlag(), oldEnablePick = rh->rh2.rh2EnablePick,
 		oldActionLoop = rh->rh2.rh2ActionLoop;
 
-	// Matching generations make get_ActionObjects return this current instance
-	// without initializing or advancing the caller's selection/action chains.
+	// Update to our current event's action selection, and set only this object instance in the action
 	oil->set_oilActionCount(rh->GetRH2ActionCount());
 	oil->set_oilActionLoopCount(rh->GetRH2ActionLoopCount());
 	oil->set_oilCurrentOi(this->get_Number());
@@ -939,10 +939,13 @@ void HeaderObject::Destroy()
 	action->evtNum = 24; // Common Destroy (ACT_EXTDESTROY).
 	action->evtOi = this->get_Oi();
 	action->evtOiList = (short)rh->GetOIListIndexFromOi(action->evtOi);
-	// Dispatch slot is object type + NUMBEROF_SYSTEMTYPES: Active = 2 + 7.
+	// Call table slot is object type + NUMBEROF_SYSTEMTYPES: Active = 2 + 7.
 	// Its first 80 actions are the common actions, shared with extensions.
-	tables->pActions[9](action);
+	// This queues destroy for end of next event tick, but immediately sets HeaderObjectFlag::Destroyed.
+	// DestroyRunObject is triggered either at that tick, or after Disappearing animation finishes.
+	tables->pActions[2 + 7](action);
 
+	// Restore action object selection
 	oil->set_oilActionCount(oldActionCount);
 	oil->set_oilActionLoopCount(oldActionPass);
 	oil->set_oilCurrentOi(oldCurrent);
@@ -965,13 +968,16 @@ void HeaderObject::Destroy()
 	action.evtOi = object->hoOi;
 	action.evtOiList = (short)get_AdRunHeader()->GetOIListIndexFromOi(object->hoOi);
 	@try {
+		// Set our selection
 		oil->oilActionCount = evp->rh2ActionCount;
 		oil->oilActionLoopCount = evp->rh2ActionLoopCount;
 		oil->oilCurrentOi = object->hoNumber;
 		oil->oilNextFlag = NO;
+
 		actDisappear(&action, run);
 	}
 	@finally {
+		// Restore selection
 		oil->oilActionCount = oldActionCount;
 		oil->oilActionLoopCount = oldActionPass;
 		oil->oilCurrentOi = oldCurrent;
@@ -981,11 +987,8 @@ void HeaderObject::Destroy()
 		evp->repeatFlag = oldRepeat;
 	}
 #elif defined(__ANDROID__)
-	// The Java helper receives the target, not the extension that owns this wrapper.
-	const jmethodID method = threadEnv->GetStaticMethodID(runtime->javaExtPtrClass,
-		"darkedif_jni_destroyObject", "(LObjects/CObject;)V");
-	JNIExceptionCheck();
-	threadEnv->CallStaticVoidMethod(runtime->javaExtPtrClass, method, me);
+	// The Java wrapper handles destroying, as saving event context is faster on Java side
+	threadEnv->CallStaticVoidMethod(runtime->javaExtPtrClass, Edif::Runtime::destroyObjectMethodID, me);
 	JNIExceptionCheck();
 	Flags.reset(); // HeaderObjectFlags::Destroy is now set
 #else
@@ -2092,7 +2095,7 @@ void * Edif::Runtime::GetRunObjectFont() const
 
 #if defined(__ANDROID__)
 
-jmethodID Edif::Runtime::generateEventMethodID;
+jmethodID Edif::Runtime::generateEventMethodID, Edif::Runtime::destroyObjectMethodID;
 
 Edif::Runtime::Runtime(Extension* ext, jobject javaExtPtr2) : ext(ext),
 	javaExtPtr(javaExtPtr2, "Edif::Runtime::javaExtPtr from Edif::Runtime ctor"), ObjectSelection(NULL)
@@ -2131,6 +2134,8 @@ Edif::Runtime::Runtime(Extension* ext, jobject javaExtPtr2) : ext(ext),
 
 	if (!generateEventMethodID) {
 		generateEventMethodID = threadEnv->GetMethodID(javaExtPtrClass, "darkedif_jni_generateEvent", "(IZZ)V");
+		JNIExceptionCheck();
+		destroyObjectMethodID = threadEnv->GetStaticMethodID(javaExtPtrClass, "darkedif_jni_destroyObject", "(LObjects/CObject;)V");
 		JNIExceptionCheck();
 	}
 

@@ -289,6 +289,7 @@ inline namespace FusionInternals
 		RunHeader* get_AdRunHeader();
 		bool get_SelectedInOR();
 		HeaderObjectFlags get_Flags();
+		void Destroy();
 		void set_Flags(HeaderObjectFlags);
 		int get_EventNumber() const;
 		void set_EventNumber(int);

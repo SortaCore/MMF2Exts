@@ -717,6 +717,7 @@ struct EventBlockType {
 // Differs from eventV1 by union variable types
 struct event2 {
 	friend Edif::Runtime;
+	friend HeaderObject;
 	NO_DEFAULT_CTORS_OR_DTORS(event2);
 	short get_evtNum();
 	OINUM get_evtOi();
@@ -1522,6 +1523,7 @@ enum class JoystickBtn : uint8_t {
 };
 
 struct RunHeader2 {
+	friend HeaderObject;
 	NO_DEFAULT_CTORS_OR_DTORS(RunHeader2);
 	friend Edif::Runtime;
 	friend RunHeader;
@@ -2542,6 +2544,10 @@ public:
 	// Gets the fixed value by combining Number and CreationId; the result should never be 0 or -1, although can be negative
 	// @remarks This should be an unsigned int, but I'm leaving it as signed for consistency with runtime and other exts
 	int GetFixedValue();
+
+	// Destroys this object at end of frame tick or when its Disappearing animation finishes.
+	// Immediately sets HeaderObjectFlags::Destroyed.
+	void Destroy();
 
 	// Gets X coordinate of object, relative to top left of frame, without scroll compensation
 	int	get_X() const;
@@ -3565,6 +3571,7 @@ DarkEdifInternalAccessProtected:
 struct CallTables
 {
 	friend Edif::Runtime;
+	friend HeaderObject;
 	NO_DEFAULT_CTORS_OR_DTORS(CallTables);
 DarkEdifInternalAccessProtected:
 	BOOL (** pConditions1)(event2* pe, HeaderObject * pHo);

@@ -191,6 +191,7 @@ namespace Edif
 	{
 	protected:
 		friend RunHeader;
+		friend HeaderObject;
 		friend DarkEdif::Surface;
 		friend CRunFrameMultiPlat;
 
@@ -207,7 +208,7 @@ namespace Edif
 		global<jclass> javaCEventClass;
 		global<jobject> javaRhObject;
 		global<jclass> javaCRunClass;
-		static jmethodID generateEventMethodID;
+		static jmethodID generateEventMethodID, destroyObjectMethodID;
 #elif defined(__APPLE__)
 		void * objCExtPtr;
 #endif
@@ -321,6 +322,10 @@ namespace Edif
 #endif
 		void CallMovement(int ID, long Parameter);
 
+		// Deprecated. Marks self instance of the object to be destroyed at the end of next tick.
+		// Does not set HeaderObjectFlags::Destroyed, trigger Disappearing animation, etc;
+		// the common Destroy action correctly triggers Disappearing if this object has it.
+		[[deprecated("Use HeaderObject::Destroy() instead. Runtime::Destroy does not set hoFlags Destroyed, trigger disappearing animations, etc.")]]
 		void Destroy();
 
 		void GetApplicationDrive(TCHAR * Buffer);

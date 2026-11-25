@@ -780,6 +780,7 @@ struct HeaderObject {
 	short get_Oi();
 	bool get_SelectedInOR();
 	HeaderObjectFlags get_Flags();
+	void Destroy();
 	objInfoList * get_OiList();
 	RunHeader* get_AdRunHeader();
 	int	get_X() const;
