@@ -181,6 +181,11 @@ const TCHAR ** FusionAPI GetDependencies()
 
 		for (unsigned int i = 0; i < DependenciesJSON.u.array.length; ++i)
 		{
+			if (DependenciesJSON[i].type != json_string)
+				return DarkEdif::MsgBox::Error(_T("GetDependencies() error"), _T("DarkExt.json has non-string dependency at index %u."), i), nullptr;
+			// CF2.5 skips blank dependencies, MMF2 doesn't and reports "...\Data\Runtime contains invalid path"
+			if (DependenciesJSON[i].u.string.length == 0)
+				continue;
 			tstr = DarkEdif::UTF8ToTString(DependenciesJSON[i]);
 			_tcscpy_s(singletonPtr, std::size(singleton) - (singletonPtr - singleton), tstr.c_str());
 			Dependencies[Offset++] = singletonPtr;
