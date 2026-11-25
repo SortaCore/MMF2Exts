@@ -64,9 +64,8 @@ using namespace std::string_view_literals;
 		lhs = static_cast<EnumClassType>(static_cast<std::underlying_type<EnumClassType>::type>(lhs) & static_cast<std::underlying_type<EnumClassType>::type>(rhs)); \
 		return lhs; \
 	} \
-	EnumClassType constexpr static operator~(EnumClassType &en) { \
-		en = static_cast<EnumClassType>(~static_cast<std::underlying_type<EnumClassType>::type>(en)); \
-		return en; \
+	EnumClassType constexpr static operator~(EnumClassType en) { \
+		return static_cast<EnumClassType>(~static_cast<std::underlying_type<EnumClassType>::type>(en)); \
 	}
 
 
