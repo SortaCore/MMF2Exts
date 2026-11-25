@@ -546,12 +546,12 @@
 				 Make constexpr externally exported, which is C++ standard but not MSVC default.
 				 Make new operators throw on no memory, rather than return null. -->
 			<AdditionalOptions>$(_FusionSDKAdds) /Zc:__cplusplus /Zc:externConstexpr /Zc:throwingNew %(AdditionalOptions)</AdditionalOptions>
-			
+
 			<!-- In VS 2022, VS tools v14.35, we can add:
 				 Make sure a template name doesn't get reused as a local variable name.
 				 Check for optimized global data conflicting; MSVC by default disables some checks. -->
 			<AdditionalOptions Condition="'$(VCToolsVersion)' &gt;= '14.35'">%(AdditionalOptions) /Zc:templateScope /Zc:checkGwOdr</AdditionalOptions>
-			
+
 			<!-- Disable thread-safe initialization on XP. This will only create a problem if you have statics accessed from multiple threads
 				 that spawn at the same time. To conditionally write code for this, see __cpp_threadsafe_static_init or ThreadSafeStaticInitIsSafe. -->
 			<AdditionalOptions Condition="$(WindowsXPCompatibility)==1">/Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
@@ -723,6 +723,23 @@
 		BEGIN Android-only
 	################################# -->
 	<PropertyGroup Label="Configuration" Condition="'$(_TargetPlat)'=='Android'">
+		<!-- VS bug fix:
+			 VS2019 checks for both LLVM and the GCC toolchain to select the windows-x86_64
+			 toolchain (64-bit NDK) in its LLVM/GCC paths instead of windows (32-bit).
+			 But the GCC toolchain is removed in newer NDK (r18+), so this selection incorrectly falls back to assuming 32-bit NDK.
+			 This section repairs the paths and other variables from the incorrect choice. -->
+		<_FixAndroidHost Condition="'$(HostTag)'=='windows' AND !Exists('$(LLVMToolchainPrebuiltRoot)\bin\clang.exe') AND Exists('$(VS_NdkRoot)\toolchains\llvm\prebuilt\windows-x86_64\bin\clang.exe')">true</_FixAndroidHost>
+		<_OldAndroidLLVMRoot Condition="'$(_FixAndroidHost)'=='true'">$(LLVMToolchainPrebuiltRoot)</_OldAndroidLLVMRoot>
+		<HostTag Condition="'$(_FixAndroidHost)'=='true'">windows-x86_64</HostTag>
+		<LLVMToolchainPrebuiltRoot Condition="'$(_FixAndroidHost)'=='true'">$(VS_NdkRoot)\toolchains\llvm\prebuilt\$(HostTag)</LLVMToolchainPrebuiltRoot>
+		<ExecutablePath Condition="'$(_FixAndroidHost)'=='true'">$(ExecutablePath.Replace('$(_OldAndroidLLVMRoot)', '$(LLVMToolchainPrebuiltRoot)'))</ExecutablePath>
+		<Sysroot Condition="'$(_FixAndroidHost)'=='true'">$(Sysroot.Replace('$(_OldAndroidLLVMRoot)', '$(LLVMToolchainPrebuiltRoot)'))</Sysroot>
+		<SysrootLink Condition="'$(_FixAndroidHost)'=='true'">$(SysrootLink.Replace('$(_OldAndroidLLVMRoot)', '$(LLVMToolchainPrebuiltRoot)'))</SysrootLink>
+		<!-- Modern NDKs no longer provide GCC, and current Clang rejects -gcc-toolchain. -->
+		<GccToolchainPrebuiltPath Condition="'$(NDKVersion)' &gt;= '23.0' AND !Exists('$(GccToolchainPrebuiltPath)')"></GccToolchainPrebuiltPath>
+		<StlIncludeDirectories Condition="'$(NDKVersion)' &gt;= '19.0'">$(Sysroot)\usr\include\c++\v1</StlIncludeDirectories>
+		<StlLibraryPath Condition="'$(NDKVersion)' &gt;= '23.0'">$(Sysroot)\usr\lib\$(AndroidHeaderTriple)</StlLibraryPath>
+
 		<!-- Debug libraries on Debug config -->
 		<UseDebugLibraries>false</UseDebugLibraries>
 		<UseDebugLibraries Condition="$(DbgBuild)==1">true</UseDebugLibraries>
@@ -745,9 +762,10 @@
 			 and minimum on all arches in r26+.
 			 API depends on NDK that VS is using; see later code for API support check. -->
 		<AndroidAPILevel Condition="'$(AndroidAPILevel)'=='' AND ($(NDKVersion) &gt;= 26 OR '$(Platform)'=='ARM64' OR '$(Platform)'=='x64')">android-21</AndroidAPILevel>
+		<AndroidAPILevel Condition="'$(AndroidAPILevel)'=='android-19' AND $(NDKVersion) &gt;= 26">android-21</AndroidAPILevel>
 		<AndroidAPILevel Condition="'$(AndroidAPILevel)'==''">android-19</AndroidAPILevel>
 
-		<!-- This one sets the __ANDROID_API__ define to same as above.
+		<!-- Keep the numeric API in sync.
 			 Note if you get errors for missing stdout/stderr define, this is due to
 			 mismatch of API in library vs C define; those were changed between NDK versions,
 			 stdout/stderr moved from hidden function calls to real variables. -->
@@ -755,6 +773,13 @@
 
 		<!-- Sysroot link fix, pt 2, replaces VS assumed android API level with real one -->
 		<SysrootLink>$(_SysrootLinkFix.Replace('$evil$', '\$(AndroidAPILevel)\'))</SysrootLink>
+
+		<!-- Correct the ClangTarget API level to our new one -->
+		<ClangTarget Condition="'$(NDKVersion)' &gt;= '18.0'">$([System.Text.RegularExpressions.Regex]::Replace('$(ClangTarget)', '\d+$', '$(AndroidAPILevelNumber)'))</ClangTarget>
+
+		<!-- Fix NDK r26+ using wrong library include path (VS bug). Clang lib64 was merged into lib folder in NDK r26.
+			 https://developercommunity.visualstudio.com/t/Visual-Studio-2022-cannot-build-an-Andro/10692622 -->
+		<IncludePath Condition="'$(NDKVersion)' &gt;= '26.0'">$(IncludePath.Replace('\lib64\', '\lib\'))</IncludePath>
 
 		<!-- We should use _UseMultiProcessor, but on Windows, that prevents incremental linking.
 			 Not so on Android, so we use it all the time. -->
@@ -781,12 +806,15 @@
 
 			<!-- Not necessary in Release, but has minimal size changes. -->
 			<RuntimeTypeInfo>true</RuntimeTypeInfo>
-	 
-			<!-- Force C++ headers before C headers, or newer NDK breaks. -->
-			<ISystem>$(StlIncludeDirectories);$(ISystem)</ISystem>
 
-			<!-- Manually add includes -->
-			<AdditionalIncludeDirectories>$(Sysroot)\usr\include;$(StlIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+			<!-- Force libc++ headers before C headers, or r19+ NDK breaks (VS bug).
+				 https://developercommunity.visualstudio.com/t/Visual-Studio-2022-cannot-build-an-Andro/10692622 -->
+			<ISystem>$(StlIncludeDirectories);%(ISystem)</ISystem>
+			<AdditionalIncludeDirectories>$(StlIncludeDirectories);$(Sysroot)\usr\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+
+			<!-- VS adds the __ANDROID_API__ as a define in NDK r18+, which creates
+				redefine errors, as modern NDK's Clang sets that define itself from the target triple. -->
+			<PreprocessorDefinitions Condition="'$(NDKVersion)' &gt;= '18.0'">$([System.Text.RegularExpressions.Regex]::Replace('%(PreprocessorDefinitions)', '(^|;)__ANDROID_API__=[^;]*;?', '$1'))</PreprocessorDefinitions>
 
 			<!-- Don't export any functions by default, as Java doesn't need to see them.
 				 Char is signed in normal builds, but runs as unsigned on built APKs - override that.
@@ -800,8 +828,8 @@
 			<!-- Include math library (libm.so). -->
 			<LibraryDependencies>$(StlLibraryName);m;ESxRenderer;ES1Renderer;%(LibraryDependencies)</LibraryDependencies>
 			<!-- Include android_support library for x86 and ARM.
-				 Available in x86/ARM constantly, but only in ARM64/x64 for NDK17 and lower.
-				 Removed in NDK 26. -->
+				 Available in x86/ARM constantly, but only in ARM64/x64 for NDK r17 and lower.
+				 Removed in NDK r26. -->
 			<LibraryDependencies Condition="'$(NDKVersion)' &lt; '26.0' AND ($(Platform)=='ARM' OR $(Platform)=='x86' OR '$(NDKVersion)' &lt; '17.0')">$(StlLibraryName);android_support;%(LibraryDependencies)</LibraryDependencies>
 			<!-- This SO static object file will be moved by the DarkEdifPostBuildTool,
 				 so don't confuse VS by building this way. -->
@@ -1133,6 +1161,9 @@ https://forums.developer.apple.com/forums/thread/113746?answerId=349757022#34975
 	</UsingTask>
 	<!-- Requires RoslynCodeTaskFactory, added in MSBuild 15.8 (VS 2017 v15.8+) -->
 	<Target Name="Android API check" Condition="'$(MSBuildVersion)' &gt;= '15.8.0.0' and '$(_TargetPlat)'=='Android'" BeforeTargets="BeforeBuild;ClCompile">
+		<Message Importance="High" Text="DarkEdif Android build check: VS_NDKRoot &quot;$(VS_NDKRoot)&quot;" />
+		<Message Importance="High" Text="DarkEdif Android build check: Sysroot &quot;$(Sysroot)&quot;" />
+		<Message Importance="High" Text="DarkEdif Android build check: HostTag &quot;$(HostTag)&quot;" />
 		<PropertyGroup>
 			<MinNDKAPI>0</MinNDKAPI>
 			<MaxNDKAPI>50</MaxNDKAPI>
