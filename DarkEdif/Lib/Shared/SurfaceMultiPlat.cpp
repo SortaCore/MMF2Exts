@@ -987,10 +987,27 @@ void DarkEdif::Surface::IDGen() {
 		LOGF(_T("%sFailed to create Surface debug ID, error %d.\n"), debugID, errno);
 }
 #ifdef _WIN32
+using BlitExFn = BOOL(__thiscall*)(cSurface* self, cSurface& dest,
+	float dX, float dY, float scaleX, float scaleY, int sX, int sY, int sW, int sH,
+	LPPOINT center, float angle, BlitMode mode, BlitOp op, LPARAM effectParam, ULONG flags);
+BlitExFn cSurf_blitEx = nullptr;
+
 DarkEdif::Surface::Surface(RunHeader * rhPtr, cSurface* surf, bool isFrameSurface /* = false */) :
 	rhPtr(rhPtr), surf(surf), isFrameSurface(isFrameSurface)
 {
 	IDGen();
+
+	if (DarkEdif::IsHWAFloatAngles)
+	{
+		HMODULE mmfs2 = GetModuleHandle(_T("mmfs2.dll"));
+		// We are runtime-loading this DLL, but we also directly link to it in each ext, so we should have it
+		if (!mmfs2)
+			LOGF(_T("Didn't have mmfs2.dll"));
+		
+		cSurf_blitEx = reinterpret_cast<BlitExFn>(GetProcAddress(mmfs2, MAKEINTRESOURCEA(849)));
+		if (!cSurf_blitEx)
+			DarkEdif::MsgBox::Info(_T("!!"), _T("Didn't find a function"));
+	}
 
 	// sanity checks
 	if (!rhPtr && DarkEdif::RunMode == DarkEdif::MFXRunMode::BuiltEXE)
@@ -1306,9 +1323,7 @@ void DarkEdif::Surface::BlitToFrameWithExtEffects(Point pt /* = Point {}*/)
 	}
 	// If not a HWA-supporting ext SDK, or display mode is non-HWA:
 	// use software Blit() call instead of HWA-runtime BlitEx
-#if !FUSION_2_0_DRAWING_ONLY
 	if ((SurfaceDriver)frameSurf->GetDriver() < SurfaceDriver::Direct3D8)
-#endif
 	{
 		surf->Blit(*frameSurf,
 			// Dest position
@@ -1318,14 +1333,13 @@ void DarkEdif::Surface::BlitToFrameWithExtEffects(Point pt /* = Point {}*/)
 			// Blit mode: opaque or transparent
 			(BlitMode)blitMode);
 	}
-#if !FUSION_2_0_DRAWING_ONLY
 	else
 	{
 		Point center = Rect(pt, srcSize).GetCenter();
 		center.x += hotSpot.x;
 		center.y += hotSpot.y;
 
-		surf->BlitEx(*frameSurf,
+		cSurf_BlitEx(surf, *frameSurf,
 			// Dest position
 			static_cast<float>(pt.x),
 			static_cast<float>(pt.y),
@@ -1345,7 +1359,6 @@ void DarkEdif::Surface::BlitToFrameWithExtEffects(Point pt /* = Point {}*/)
 			static_cast<ULONG>(blitOptions)
 		);
 	}
-#endif // Non-HWA
 #elif defined(__ANDROID__)
 
 	// Right now the ctor for user-drawn surface inits this stuff - potentially,
@@ -2142,10 +2155,8 @@ bool DarkEdif::Surface::CopyWithRotate(Surface& dest, PointF destPoint,
 
 	bool ret = false;
 #ifdef _WIN32
-
-#if !FUSION_2_0_DRAWING_ONLY
-	// Not HWA: BlitEx not supported
-	if (dest.IsHWA())
+	// HWA surface: BlitEx supported
+	if (cSurf_blitEx && dest.IsHWA())
 	{
 		const SurfaceType surfType = (SurfaceType)dest.surf->GetType();
 
@@ -2167,12 +2178,11 @@ bool DarkEdif::Surface::CopyWithRotate(Surface& dest, PointF destPoint,
 		}
 
 		// BlitEx to HWA
-		ret = surf->BlitEx(*dest.surf, destPoint.x, destPoint.y, scale.x, scale.y, src.left, src.top, src.Width(), src.Height(),
+		ret = cSurf_blitEx(surf, *dest.surf, destPoint.x, destPoint.y, scale.x, scale.y, src.left, src.top, src.Width(), src.Height(),
 			(POINT*)&rotateCenter, angle, blitTransparent ? BlitMode::BMODE_TRANSP : BlitMode::BMODE_OPAQUE,
 			(BlitOp)blitOp, blitOpParam, (ULONG)blitFlags) != FALSE;
 	}
 	else // not HWA
-#endif // !FUSION_2_0_DRAWING_ONLY
 	{
 		// TODO: Check float equality with epsilon?
 		// e.g. A == B is (A - B < -FLT_EPSILON)
