@@ -121,11 +121,17 @@
 		<!-- These are Fusion SDK settings that are needed by the build process, not post-build. -->
 
 		<!-- MakePDBDuringReleaseBuild = true
-			 If set to true, will generate _Full and stripped PDB during Edittime and Runtime compilations.
+			 If set to true, will generate full and optionally _Stripped PDB during Edittime and Runtime compilations.
 			 Starting "(?im)" sets regex matching to case-insensitive, multiline. -->
 		<_MakePDBRegex><![CDATA[(?im)^MakePDBDuringReleaseBuild\s*=\s*true\s*?$]]></_MakePDBRegex>
 		<MakePDB Condition="$(MakePDB)==0 AND
 			$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_MakePDBRegex)).Success)">1</MakePDB>
+
+		<!-- MakeStrippedPDB = false
+			 If creating PDBs, will generate both full and _Stripped PDB. -->
+		<_MakeStrippedPDBRegex><![CDATA[(?im)^MakeStrippedPDB\s*=\s*true\s*?$]]></_MakeStrippedPDBRegex>
+		<MakeStrippedPDB Condition="($(MakePDB)==1 OR $(DbgBuild)==1) AND
+			$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_MakeStrippedPDBRegex)).Success)">1</MakeStrippedPDB>
 
 		<!-- WindowsXPCompatibility = true|false
 			 If set to true, uses Windows XP compatibility if available. -->
@@ -579,10 +585,10 @@
 			<OutputFile>$(MFXDir)\$(TargetName)$(TargetExt)</OutputFile>
 
 			<!-- Debug symbols: first, the full debug symbols with all code. -->
-			<ProgramDatabaseFile Condition="$(MakePDB)==1">$(MFXDir)\$(TargetName)_Full.pdb</ProgramDatabaseFile>
+			<ProgramDatabaseFile Condition="$(MakePDB)==1">$(MFXDir)\$(TargetName).pdb</ProgramDatabaseFile>
 			<!-- Next, stripped debug symbols with just function names/addresses.
 				 Good for releasing to developers without releasing code. -->
-			<StripPrivateSymbols Condition="$(MakePDB)==1">$(MFXDir)\$(TargetName).pdb</StripPrivateSymbols>
+			<StripPrivateSymbols Condition="$(MakeStrippedPDB)==1">$(MFXDir)\$(TargetName)_Stripped.pdb</StripPrivateSymbols>
 
 			<!-- Customise the amount of detail in the non-stripped PDB. -->
 			<!-- Full debug is for sharing/publishing -->
@@ -1025,7 +1031,7 @@ https://forums.developer.apple.com/forums/thread/113746?answerId=349757022#34975
 		 to the Edittime build but still in the MFX\Extensions folder. -->
 	<Target Name="Delete old PDBs" Condition="$(_TargetPlat)=='Windows'" BeforeTargets="ResourceCompile">
 		<Delete Files="$(MFXDir)\$(TargetName).pdb" />
-		<Delete Files="$(MFXDir)\$(TargetName)_Full.pdb" />
+		<Delete Files="$(MFXDir)\$(TargetName)_Stripped.pdb" />
 	</Target>
 
 	<!-- The iOS compiler for some reason insists on using project name instead of target name.
