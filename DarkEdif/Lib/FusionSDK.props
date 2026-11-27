@@ -35,6 +35,7 @@
 		<EditorBuild Condition="$(_TargetPlat)=='Windows' AND ($(DbgBuild)==1 OR $(Configuration.StartsWith('Edittime')))">1</EditorBuild>
 		<RuntimeBuild Condition="$(Configuration.StartsWith('Runtime')) OR $(_TargetPlat)!='Windows'">1</RuntimeBuild>
 		<UniBuild Condition="$(Configuration.EndsWith('Unicode'))">1</UniBuild>
+		<HwaBuild Condition="'$(_TargetPlat)'=='Windows' AND '$(HwaBuild)'==''">1</HwaBuild>
 
 		<!-- Unicode path feature -->
 		<UnicodeOrBlank></UnicodeOrBlank>
@@ -132,6 +133,14 @@
 		<_MakeStrippedPDBRegex><![CDATA[(?im)^MakeStrippedPDB\s*=\s*true\s*?$]]></_MakeStrippedPDBRegex>
 		<MakeStrippedPDB Condition="($(MakePDB)==1 OR $(DbgBuild)==1) AND
 			$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_MakeStrippedPDBRegex)).Success)">1</MakeStrippedPDB>
+
+		<!-- UseEditAndContinue = true
+			 If building in Debug (Unicode), allows the extension code to be modified live, without restarting the program.
+			 You must start Fusion Run Application/Frame, or a built unpacked Fusion EXE to use this. -->
+		<_UseEditAndContinueRegex><![CDATA[(?im)^UseEditAndContinue\s*=\s*false\s*?$]]></_UseEditAndContinueRegex>
+		<UseEditAndContinue>$(DbgBuild)</UseEditAndContinue>
+		<UseEditAndContinue Condition="$(DbgBuild)==0 OR
+			$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_UseEditAndContinueRegex)).Success)">0</UseEditAndContinue>
 
 		<!-- WindowsXPCompatibility = true|false
 			 If set to true, uses Windows XP compatibility if available. -->
@@ -409,10 +418,12 @@
 		<ClCompile>
 			<!-- All configs, all platforms -->
 			<!-- COXSDK is the general SDK term for all Fusion SDKs.
-				 HWABETA is access to HWA stuff. It's been HWABETA since introduction.
 				 Worth noting base SDK defines _WINDOWS, and rSDK additionally defines RSDK. -->
 			<!-- Due to access to C stuff, there's plenty of complaints about risky behaviour -->
-			<PreprocessorDefinitions>COXSDK;HWABETA;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+			<PreprocessorDefinitions>COXSDK;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+
+			<!-- HWA Fusion define, HWABETA. Used for MMF2 HWA and for CF2.5. -->
+			<PreprocessorDefinitions Condition="$(HwaBuild)==1">HWABETA;%(PreprocessorDefinitions)</PreprocessorDefinitions>
 
 			<!-- Indicates this is the SDK template. -->
 			<PreprocessorDefinitions Condition="$(IsTemplate)==1">IS_$(SDKType.ToUpper())_TEMPLATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -596,8 +607,8 @@
 			<!-- This one is bulkier, but faster to make and better for local debug -->
 			<GenerateDebugInformation Condition="$(MakePDB)==1 AND $(DbgBuild)==1">true</GenerateDebugInformation>
 
-			<!-- If debug build, add profiling information -->
-			<Profile Condition="$(DbgBuild)==1">true</Profile>
+			<!-- If debug build, add profiling information. This breaks incremental linking. -->
+			<Profile Condition="$(DbgBuild)==1 AND $(UseEditAndContinue)==0">true</Profile>
 
 			<!-- Support up to 4GB RAM addresses, not 2GB -->
 			<LargeAddressAware>true</LargeAddressAware>
@@ -660,7 +671,7 @@
 			<!-- This is enabled by debug anyway, but to make it explicit on the property page -->
 			<BufferSecurityCheck>true</BufferSecurityCheck>
 			<!-- Adds extra checks to prevent running non-function code as if it was a function -->
-			<ControlFlowGuard>Guard</ControlFlowGuard>
+			<ControlFlowGuard Condition="$(UseEditAndContinue)==0">Guard</ControlFlowGuard>
 			<!-- Allow user to edit their code mid-debug, only possible if not multiprocessor -->
 			<DebugInformationFormat Condition="$(_UseMultiProcessor)==0">EditAndContinue</DebugInformationFormat>
 			<DebugInformationFormat Condition="$(_UseMultiProcessor)==1">ProgramDatabase</DebugInformationFormat>
@@ -708,6 +719,43 @@
 			<EnableCOMDATFolding Condition="$(UseLinkTimeCodeGeneration)==1">true</EnableCOMDATFolding>
 		</Link>
 	</ItemDefinitionGroup>
+
+	<!-- Windows: debugger setup -->
+
+	<PropertyGroup Condition="'$(DbgBuild)|$(_TargetPlat)|$(Platform)'=='1|Windows|Win32'">
+		<!-- FusionDebugFlags = RunApp CF2.5 MMF2Std
+			 If the text contains RunApp, will assume you are using CopyRun.bat next to Fusion.
+			 Then choose any of (or multiple of) CF2.5, MMF2Std, MMF2Dev.
+			 If the text contains CF2.5, pressing Debug in Debug Unicode builds will create a CopyRun.bat next to Fusion.
+			 If the text contains MMF2 variant, pressing Debug in Debug builds will create a CopyRun.bat next to MMF2.
+			 If RunApp is by itself, will attempt to guess your Fusion to debug with. -->
+		<_FusionDebugFlagsRegex><![CDATA[(?im)^FusionDebugFlags\s*=\s*(.*)\s*?$]]></_FusionDebugFlagsRegex>
+		<FusionDebugFlags Condition="$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_FusionDebugFlagsRegex)).Success)">
+			$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_FusionDebugFlagsRegex)).Result('$1'))</FusionDebugFlags>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(DbgBuild)|$(_TargetPlat)|$(Platform)'=='1|Windows|Win32' AND '$(FusionDebugFlags)'!=''">
+		<!-- 32-bit Fusion will always need 32-bit registry.
+			 The CF2.5 Steam and Standalone use the same installpath registry key, so our best shot is looking at uninstaller.
+			 Using \ as default key to allow GetDirectoryName to work if blank -->
+		<CF25Dir Condition="'$(CF25Dir)'==''">$([System.IO.Path]::GetDirectoryName($([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Clickteam Fusion Developer 2.5', 'UninstallString', '\', RegistryView.Registry32))))</CF25Dir>
+		<CF25Dir Condition="'$(CF25Dir)'==''">$([System.IO.Path]::GetDirectoryName($([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Clickteam Fusion 2.5', 'UninstallString', '\', RegistryView.Registry32))))</CF25Dir>
+		<!-- Fall back to CF2.5 installpath. -->
+		<CF25Dir Condition="'$(CF25Dir)'==''">$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\Clickteam\Fusion Developer 2.5\Settings', 'installpath', '', RegistryView.Registry32))</CF25Dir>
+		<CF25Dir Condition="'$(CF25Dir)'==''">$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\Clickteam\Fusion 2.5\Settings', 'installpath', '', RegistryView.Registry32))</CF25Dir>
+		<!-- Then use MMF2 -->
+		<MMF2StdDir Condition="'$(MMF2StdDir)'==''">$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\Clickteam\Multimedia Fusion 2\Settings', 'StdPath', '', RegistryView.Registry32))</MMF2StdDir>
+		<MMF2DevDir Condition="'$(MMF2DevDir)'==''">$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\Clickteam\Multimedia Fusion Developer 2\Settings', 'ProPath', '', RegistryView.Registry32))</MMF2DevDir>
+
+		<DebugFusionExe Condition="$(DebugFusionExe)=='' AND $(FusionDebugFlags.Contains('Editor'))">mmf2.exe</DebugFusionExe>
+		<DebugFusionExe Condition="$(DebugFusionExe)=='' AND $(FusionDebugFlags.Contains('Editor')) AND $(UniBuild)==1">mmf2u.exe</DebugFusionExe>
+
+		<!-- Debug Unicode defaults to CF2.5, Debug defaults to MMF2. You can override with $(DebugFusionDir),
+			 or just don't specify the MMF2Std/Dev in the Flags. -->
+		<DebugFusionDir Condition="'$(DebugFusionDir)'=='' AND $(UniBuild)==1 AND Exists('$(CF25Dir)\$(DebugFusionExe)')">$(CF25Dir)</DebugFusionDir>
+		<DebugFusionDir Condition="'$(DebugFusionDir)'=='' AND $(FusionDebugFlags.Contains('MMF2Dev')) AND Exists('$(MMF2DevDir)\$(DebugFusionExe)')">$(MMF2DevDir)</DebugFusionDir>
+		<DebugFusionDir Condition="'$(DebugFusionDir)'=='' AND $(FusionDebugFlags.Contains('MMF2Std')) AND Exists('$(MMF2StdDir)\$(DebugFusionExe)')">$(MMF2StdDir)</DebugFusionDir>
+		<DebugFusionDir Condition="'$(DebugFusionDir)'=='' AND $(FusionDebugFlags.Contains('CF2.5')) AND Exists('$(CF25Dir)\$(DebugFusionExe)')">$(CF25Dir)</DebugFusionDir>
+	</PropertyGroup>
 
 <!--#################################
 		END Windows
@@ -1001,6 +1049,20 @@ https://forums.developer.apple.com/forums/thread/113746?answerId=349757022#34975
 		BEGIN VS build tasks
 	################################# -->
 
+	<!-- Write CopyRun.bat after the build, ready for Shift Run-Frame/Application to use. -->
+	<Target Name="CreateCopyRun" AfterTargets="Build" Condition="'$(DebugFusionDir)'!='' AND $(FusionDebugFlags.Contains('RunApp'))
+			AND '$(DesignTimeBuild)'!='true'">
+		<PropertyGroup>
+			<_CopyRunFile>$(DebugFusionDir)\CopyRun.bat</_CopyRunFile>
+			<_CopyRunMatches>false</_CopyRunMatches>
+			<_CopyRunMatches Condition="Exists('$(_CopyRunFile)')">$([System.IO.File]::ReadAllText('$(_CopyRunFile)').Contains('&quot;$(DebugAppDir)\&quot;'))</_CopyRunMatches>
+		</PropertyGroup>
+		<WriteLinesToFile File="$(_CopyRunFile)" Overwrite="true" Condition="!$(_CopyRunMatches)" ContinueOnError="WarnAndContinue"
+			Lines="@xcopy &quot;%~1\*.*&quot; &quot;$(_FusionSDKTempDir)\TestApp\&quot; /I /Y /E" />
+		<Error Condition="!$(_CopyRunMatches) AND !$(MSBuildLastTaskResult)"
+			Text="DarkEdif couldn't write to '$(_CopyRunFile)' for the F5 debugging. Create the file, and grant the built-in Users group Write permission on the file (Properties > Security > Edit), then rebuild." />
+	</Target>
+
 	<!-- Windows 8.1 SDK misses half its C++ standard library headers if you don't have the Visual Studio Windows Universal CRT SDK component.
 		 Windows 10 SDK+ doesn't have this bug.
 		 Windows 7.1 SDK from XP targeting pack does have it, but requires Universal CRT SDK as part of XP targeting. -->
@@ -1008,7 +1070,7 @@ https://forums.developer.apple.com/forums/thread/113746?answerId=349757022#34975
 		<Error Text="FusionSDK error: Windows 8.1 or lower SDK cannot work fully without the 'Universal CRT SDK' Visual Studio component." />
 	</Target>
 
-	<!-- Windows XP requires VS 2017 (15.0). Newer VS should call the older toolset; currently VS 2019-2022 doesn't. -->
+	<!-- Windows XP requires VS 2017 (15.0). Newer VS should call the older toolset; VS 2019-2026 doesn't but we patch above. -->
 	<Target Name="XP toolset check" Condition="$(WindowsXPCompatibility)==1 AND $(_TargetPlat)=='Windows' AND $(VisualStudioVersion) &gt;= 15.0" BeforeTargets="ClCompile">
 		<Error Text="FusionSDK error: You're using XP compatibility, but not correctly selecting XP toolset v141_xp. Contact DarkEdif creators." Condition="$(PlatformToolset)!='v141_xp'" />
 		<Error Text="FusionSDK error: You're using XP compatibility, but not using the VS 2017 XP toolset. Expected VS 2017 toolset v14.16.27023, got toolset v$(VCToolsVersion)." Condition="$(VCToolsVersion) &gt; 14.16.27023" />
