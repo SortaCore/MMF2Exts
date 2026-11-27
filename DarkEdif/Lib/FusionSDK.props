@@ -491,6 +491,9 @@
 	</PropertyGroup>
 
 	<PropertyGroup Label="Configuration" Condition="'$(_TargetPlat)'=='Windows'">
+		<!-- Hide MFX/MOX doesn't match DLL warning -->
+		<MSBuildWarningsAsMessages>MSB8012;$(MSBuildWarningsAsMessages)</MSBuildWarningsAsMessages>
+
 		<!-- Latest XP-compatible compiler. Pre-XP may still run on XP compiler, but is dubious.
 			 In a similar vein, the XP compiler may work on pre-XP, but also dubious.
 			 Both the CRT implementation, the Windows SDK and the compiler all alter code,
@@ -500,13 +503,13 @@
 		<PlatformToolset Condition="$(WindowsXPCompatibility)==1">v141_xp</PlatformToolset>
 		<!-- Prevent Windows XP not-being-supported-later warnings -->
 		<XPDeprecationWarning Condition="$(WindowsXPCompatibility)==1">false</XPDeprecationWarning>
-		<!-- Hide MFX/MOX doesn't match DLL warning -->
-		<MSBuildWarningsAsMessages>MSB8012;$(MSBuildWarningsAsMessages)</MSBuildWarningsAsMessages>
 
-		<!-- If not XP, then use the latest compiler. $(PlatformToolsetVersion) is not available,
-			 so the following "check for toolset" are copied from Microsoft.Cpp.Defaults.props;
+		<!-- If not XP, then use the latest compiler. $(PlatformToolset)
+			 and $(PlatformToolsetVersion) is not available in MSBuild's initial PropertyGroup parse,
+			 but it is available in the later ItemDefinitionGroup parse.
+			 This following "check for toolset" are copied from Microsoft.Cpp.Defaults.props;
 			 v141 = VS 2017, v142 = VS 2019, v143 = VS 2022, v144 = VS2026, v145 = VS2028.
-			 Note v100 (VS 2010) is MS's default. -->
+			 Note v100 (VS 2010) is MS's default fallback. -->
 		<PlatformToolset Condition="$(PlatformToolset)==''">v100</PlatformToolset>
 		<PlatformToolset Condition="$(PlatformToolset)=='v100' AND
 			Exists('$(VCTargetsPath)Platforms\Win32\PlatformToolsets\v145\Toolset.props')">v145</PlatformToolset>
@@ -518,6 +521,7 @@
 			Exists('$(VCTargetsPath)\Platforms\Win32\PlatformToolsets\v142\Toolset.props')">v142</PlatformToolset>
 		<PlatformToolset Condition="$(PlatformToolset)=='v100' AND
 			Exists('$(VCTargetsPath)\Platforms\Win32\PlatformToolsets\v141\Toolset.props')">v141</PlatformToolset>
+		<PlatformToolsetVersion Condition="'$(PlatformToolsetVersion)'==''">$(PlatformToolset.Substring(1,3))</PlatformToolsetVersion>
 
 		<!-- MFX is reverted to DLL by MS's second VS property sheet, necessitating a AfterVSDefs props file. -->
 		<TargetExt Condition="$(RunCodeAnalysis)!='true'">.mfx</TargetExt>
@@ -706,9 +710,10 @@
 			<BufferSecurityCheck>false</BufferSecurityCheck>
 			<!-- Optimise favouring a smaller size over faster speed, if set to -->
 			<Optimization Condition="$(FavorSizeOrSpeed.StartsWith('size'))">MinSpace</Optimization>
-			<!-- Speed is preferred over size; note VS 2017 (15.x) does not support Ob3. -->
-			<AdditionalOptions Condition="$(FavorSizeOrSpeed)=='speed' AND $(PlatformToolset)!='v141' AND $(VisualStudioVersion) &gt;= '16.0'">/Ob3 %(AdditionalOptions)</AdditionalOptions>
-			<InlineFunctionExpansion Condition="$(FavorSizeOrSpeed)=='speed' AND $(PlatformToolset)=='v141'">AnySuitable</InlineFunctionExpansion>
+			<!-- /Ob3 requires the VS 2019 compiler or newer, regardless of the VS version hosting the build.
+				 PlatformToolset is available since this is the second MSBuild parse; the first is Import/PropertyGroup only. -->
+			<AdditionalOptions Condition="$(FavorSizeOrSpeed)=='speed' AND $(PlatformToolsetVersion)&gt;141">/Ob3 %(AdditionalOptions)</AdditionalOptions>
+			<InlineFunctionExpansion Condition="$(FavorSizeOrSpeed)=='speed' AND $(PlatformToolsetVersion)&lt;=141">AnySuitable</InlineFunctionExpansion>
 			<InlineFunctionExpansion Condition="$(FavorSizeOrSpeed.StartsWith('size'))">OnlyExplicitInline</InlineFunctionExpansion>
 		</ClCompile>
 		<Link>
