@@ -24,6 +24,42 @@
 	<PropertyGroup Label="Configuration" Condition="$(WindowsXPCompatibility)==1 AND $(PlatformToolset)=='v100'">
 		<PlatformToolset>$(FusionSDKPlatformToolset)</PlatformToolset>
 	</PropertyGroup>
+	
+	<!-- These Windows debugger properties are unconditionally reset for the most part, so we set them later here. -->
+	
+	<!-- Debug in local Windows, using C/C++ native debugger -->
+	<PropertyGroup Condition="'$(DbgBuild)|$(_TargetPlat)|$(Platform)'=='1|Windows|Win32'">
+		<DebuggerFlavor Condition="'$(DebuggerFlavor)'==''">WindowsLocalDebugger</DebuggerFlavor>
+		<LocalDebuggerDebuggerType Condition="'$(LocalDebuggerDebuggerType)'=='' OR '$(LocalDebuggerDebuggerType)'=='Auto'">NativeOnly</LocalDebuggerDebuggerType>
+	</PropertyGroup>
+	<!-- If set to Editor, set the debugger to use mmf2[u].exe.
+		 When using Steam Fusion, the Steam DRM may auto-detach the debugger when a crash happens. -->
+	<PropertyGroup Condition="'$(DebugFusionDir)'!='' AND '$(LocalDebuggerCommand)'=='' AND $(FusionDebugFlags.Contains('Editor')) AND !$(FusionDebugFlags.Contains('RunApp'))">
+		<!-- Use Fusion root as the working directory for running edrt[ex].exe or mmf2[u].exe -->
+		<LocalDebuggerWorkingDirectory Condition="'$(LocalDebuggerWorkingDirectory)'=''">$(DebugFusionDir)</LocalDebuggerWorkingDirectory>
+		<LocalDebuggerCommand Condition="'$(LocalDebuggerCommand)==''">$(DebugFusionDir)\$(DebugFusionExe)</LocalDebuggerCommand>
+		<!-- Attach to existing mmf2(u).exe if possible. Note this prevents EditAndContinue from working. -->
+		<LocalDebuggerAttach Condition="'$(LocalDebuggerAttach)==''">true</LocalDebuggerAttach>
+	</PropertyGroup>
+	<!-- If set to Run App, set the debugger to use edrt[ex].exe; use Unicode one if Unicode,
+		 and switch to the HWA one if MMF2 non-Unicode and HWABuild is 1 (default) -->
+	<PropertyGroup Condition="'$(DebugFusionDir)'!='' AND '$(LocalDebuggerCommand)'=='' AND $(FusionDebugFlags.Contains('RunApp'))">
+		<!-- Use Fusion root as the working directory for running edrt[ex].exe or mmf2[u].exe -->
+		<LocalDebuggerWorkingDirectory Condition="'$(LocalDebuggerWorkingDirectory)'==''">$(DebugFusionDir)</LocalDebuggerWorkingDirectory>
+		<LocalDebuggerCommand Condition="'$(LocalDebuggerCommand)'==''">$(DebugFusionDir)\Data\Runtime$(UnicodeOrBlank)\edrt.exe</LocalDebuggerCommand>
+		<LocalDebuggerCommand Condition="'$(LocalDebuggerCommand)'=='' AND $(UniBuild)==0 AND $(HwaBuild)==1">$(DebugFusionDir)\Data\Runtime\Hwa\edrt.exe</LocalDebuggerCommand>
+		<!-- Default to using a temp dir within our Temp folder -->
+		<DebugAppDir Condition="'$(DebugAppDir)'==''">$(_FusionSDKTempDir)\TestApp</DebugAppDir>
+		<LocalDebuggerCommandArguments Condition="'$(LocalDebuggerCommandArguments)'==''">/f&quot;$(DebugAppDir)\App0.ccn&quot;</LocalDebuggerCommandArguments>
+	</PropertyGroup>
+	
+	<!-- Write the debug MFX into Extensions(\Unicode) in Fusion. -->
+	<ItemDefinitionGroup>
+		<Link>
+			<OutputFile Condition="'$(DebugFusionDir)'!='' AND ($(FusionDebugFlags.Contains('RunApp')) OR $(FusionDebugFlags.Contains('Editor')))">$(DebugFusionDir)\Extensions$(UnicodeOrBlank)\$(TargetName)$(TargetExt)</OutputFile>
+			<OutputFile Condition="'$(DebugAppDir)'!='' AND $(FusionDebugFlags.Contains('RunApp'))==0 AND $(FusionDebugFlags.Contains('Editor'))==0">$(DebugAppDir)\$(TargetName)$(TargetExt)</OutputFile>
+		</Link>
+	</ItemDefinitionGroup>
 
 	<!-- This only runs for the first Mac run; otherwise the Import of this file doesn't happen in vcxproj.
 		 Even though Android and Windows also import this file, they can't fulfil the GenerateXCodeProj dependency. -->
