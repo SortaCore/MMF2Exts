@@ -6,6 +6,13 @@
 //
 // ============================================================================
 
+#ifdef _WIN32
+    using sockopt_t = const char*;
+#else
+    using sockopt_t = const void*;
+#endif
+// Used like: (sockopt_t)&broadcastEnable
+
 void GlobalInfo::ClientThread(std::shared_ptr<Thread> self, std::unique_ptr<StructPassThru> params)
 {
 	Extension * ext = params->ext;
@@ -324,6 +331,7 @@ void GlobalInfo::ServerThread(std::shared_ptr<Thread> self, std::unique_ptr<Stru
 	// Address family 0 indicates IPv4 + IPv6, but that only works for client connections.
 	// We'll manipulate the server to give the same functionality.
 	bool isIPv6And4 = params->addressFamily == AF_UNSPEC;
+	
 	size_t sockaddrSize = sizeof(sockaddr_storage);
 	if (isIPv6And4)
 		addrInfo.ss_family = AF_INET6;
@@ -347,10 +355,6 @@ void GlobalInfo::ServerThread(std::shared_ptr<Thread> self, std::unique_ptr<Stru
 		self->HandleSockOpReturn("setsockopt(IPv6 only = no)", curReturn, true);
 	}
 
-	auto serverSocketSource = std::make_shared<SocketSource>(self, self->mainSockAddress, self->mainSockAddressSize);
-	self->sources.push_back(serverSocketSource);
-
-
 	ReportInfo(self->fusionSocketID, _T("Switching to non-blocking socket"));
 	{
 		// Set to non-blocking
@@ -360,6 +364,9 @@ void GlobalInfo::ServerThread(std::shared_ptr<Thread> self, std::unique_ptr<Stru
 	}
 	ReportInfo(self->fusionSocketID, _T("Socket prepared and set to non-blocking, now main loop start"));
 
+
+	bool isBroadcastMode = false; // or All-Nodes Address in INET6
+
 	if (addrInfo.ss_family == AF_INET6)
 	{
 		// sockaddr_in and sockaddr_in6 has port as second member
@@ -367,26 +374,76 @@ void GlobalInfo::ServerThread(std::shared_ptr<Thread> self, std::unique_ptr<Stru
 		((sockaddr_in6*)&addrInfo)->sin6_port = htons(params->port);
 		((sockaddr_in6*)&addrInfo)->sin6_addr = params->server_InAddr;
 		sockaddrSize = sizeof(sockaddr_in6);
+		
+		// we dont need BROADCAST here cuz its IPv6.
+		// if we wanna, we need to use the All-Nodes Multicast Address (ff02::1) instead. 
+		// but idk anybody that actually uses it, so forcing INET anyway is realistic
 	}
 	else if (addrInfo.ss_family == AF_INET) {
 		((sockaddr_in*)&addrInfo)->sin_port = htons(params->port);
 		((sockaddr_in*)&addrInfo)->sin_addr = *(in_addr*)&params->server_InAddr;
 		sockaddrSize = sizeof(sockaddr_in);
+		
+		// we gotta catch the invalid BROADCAST binding before Windows crashes!
+		// if we set Inaddr type to BROADCAST (255.255.255.255), 
+		// let's force bind interface to ANY (0.0.0.0) so we reclaim port 6121.
+		if (((sockaddr_in*)&addrInfo)->sin_addr.s_addr == INADDR_BROADCAST)
+		{
+			ReportInfo(self->fusionSocketID, _T("BROADCAST survived! :D"));
+			((sockaddr_in*)&addrInfo)->sin_addr.s_addr = INADDR_ANY;
+			isBroadcastMode = true;
+		}
+		
 	}
 
 	self->mainSockAddressSize = sockaddrSize;
 	if (memcpy_s(&self->mainSockAddress, sizeof(self->mainSockAddress), &addrInfo, sockaddrSize))
 		CreateError(self->fusionSocketID, _T("Failed to copy memory; error %d."), errno);
 
+	// Moved it here so we can safely perform the memory copying (memcpy_s) instead of making it uninitialized
+	auto serverSocketSource = std::make_shared<SocketSource>(self, self->mainSockAddress, self->mainSockAddressSize);
+	self->sources.push_back(serverSocketSource);
+
 	curReturn = bind(self->mainSocketFD,
 		(struct sockaddr*)&addrInfo, sockaddrSize);
 	if (!self->HandleSockOpReturn("bind()", curReturn, true))
 		return;
-	ReportInfo(self->fusionSocketID, _T("Starting to listen"));
-
-	curReturn = listen(self->mainSocketFD, 32);
-	if (!self->HandleSockOpReturn("listen()", curReturn, true))
-		return;
+	
+	// Branch based on socket type:
+	// - TCP servers needs both bind() and listen()
+	if (params->socketType == SOCK_STREAM)
+	{
+		ReportInfo(self->fusionSocketID, _T("Starting to listen (TCP)"));
+		curReturn = listen(self->mainSocketFD, 32);
+		if (!self->HandleSockOpReturn("listen()", curReturn, true))
+			return;
+	} 
+	// - UDP servers only needs bind, so we'll skip it 
+	else if (params->socketType == SOCK_DGRAM)
+	{
+		ReportInfo(self->fusionSocketID, _T("UDP socket bound successfully. Skipping listen()"));
+		
+		// if we're doing INADDR_BROADCAST
+		if (isBroadcastMode) 
+		{
+			int broadcastEnable = 1;
+			
+			curReturn = setsockopt(
+				self->mainSocketFD, 
+				SOL_SOCKET, 
+				SO_BROADCAST, 
+				(sockopt_t)&broadcastEnable, // Linux and macOS (POSIX systems) absolutely prefer 
+				                             // "(const void*)" instead of "(const char*)" on Windows.
+											 
+											 // This thingy 
+				sizeof(broadcastEnable)
+			);
+			// unlocks the socket's ability to broadcast out/receive broadcasted data
+			self->HandleSockOpReturn("setsockopt(SO_BROADCAST)", curReturn, true);
+			ReportInfo(self->fusionSocketID, _T("BROADCAST unlocked"));
+		}
+	
+	}
 
 	// Master set holds both server and all the client FD sockets, working_set is returned by listening to changes
 	fd_set master_set = {}, readFDs = {}, exceptFDs = {};
@@ -405,6 +462,7 @@ void GlobalInfo::ServerThread(std::shared_ptr<Thread> self, std::unique_ptr<Stru
 	std::shared_ptr<SocketSource> socketSource;
 	size_t newSockID = 0;
 	int max_sd = self->mainSocketFD;
+	
 	// Main receiving loop
 	int lastErr = 0;
 	while (true)
@@ -474,38 +532,126 @@ void GlobalInfo::ServerThread(std::shared_ptr<Thread> self, std::unique_ptr<Stru
 		{
 			if (FD_ISSET(i, &readFDs))
 			{
-				// Server socket was triggered - new incoming connection(s)
+				// Server socket was triggered - new incoming connection(s),
+				// this is where TCP/UDP stuff gets processed :p
 				if (i == self->mainSocketFD)
 				{
-					sockaddr_storage newSockAddr;
-					int new_sd;
-					do
+					// TCP!
+					if (params->socketType == SOCK_STREAM)
 					{
-						int sockaddr_len = sizeof(newSockAddr);
-						new_sd = accept(self->mainSocketFD, (sockaddr*)&newSockAddr, &sockaddr_len);
-						if (new_sd < 0)
+						sockaddr_storage newSockAddr;
+						int new_sd;
+						do
 						{
-							// Would block if no connection waiting - so ignore EWOULDBLOCK
-							if (errno != EWOULDBLOCK)
-								self->HandleSockOpReturn("accept()", curReturn, true);
-							break; // no connection waiting
+							int sockaddr_len = sizeof(newSockAddr);
+							new_sd = accept(self->mainSocketFD, (sockaddr*)&newSockAddr, &sockaddr_len);
+							if (new_sd < 0)
+							{
+								// Would block if no connection waiting - so ignore EWOULDBLOCK
+								if (errno != EWOULDBLOCK)
+									self->HandleSockOpReturn("accept()", curReturn, true);
+								break; // no connection waiting
+							}
+
+							auto newSockSource = std::make_shared<SocketSource>(self, newSockAddr, sockaddr_len);
+							newSockSource->peerSocketFD = new_sd;
+							newSockSource->peerSocketID = newSockID++;
+							ReportInfo(self->fusionSocketID, _T("New connection with peer sock ID %i was created."), newSockSource->peerSocketID);
+							self->lock.edif_lock();
+							self->sources.push_back(newSockSource);
+							self->lock.edif_unlock();
+
+							FD_SET(new_sd, &master_set);
+							if (new_sd > max_sd)
+								max_sd = new_sd;
+							AddEvent(EventToRun(self->fusionSocketID, newSockSource, Conditions::OnServerPeerConnected));
+						} while (new_sd != -1);
+
+						goto exceptCheck; // jump to next FD
+					}
+					// UDP!!!
+					else if (params->socketType == SOCK_DGRAM)
+					{
+						// --- UDP DATAGRAM SERVER LOOP ---
+						/*
+						if (FD_ISSET(self->mainSocketFD, &readFDs))
+						{
+							sockaddr_storage senderAddr;
+							int senderAddrLen = sizeof(senderAddr);
+
+							curReturn = recvfrom(self->mainSocketFD, recvbuf.get(), recvbufsize, 0,
+												 (struct sockaddr*)&senderAddr, &senderAddrLen);
+
+							if (curReturn > 0)
+							{
+								// ReportInfo(self->fusionSocketID, _T("UDP packet received: %i bytes."), curReturn);
+								
+								// Create or find a SocketSource matching this sender's address/port 
+								// so Fusion can track who sent it, then push the OnServerReceivedPacket event!
+								
+								++serverSocketSource->numPacketsIn;
+								serverSocketSource->bytesIn += curReturn;
+
+								EventToRun etr(self->fusionSocketID, serverSocketSource, Conditions::OnServerReceivedPacket);
+								etr.msg.assign(recvbuf.get(), curReturn);
+								// Attach senderAddr to etr if your EventToRun struct supports storing peer endpoints for reply actions
+								AddEvent(std::move(etr));
+							}
+							else if (curReturn == SOCKET_ERROR)
+							{
+								int err = WSAGetLastError();
+								if (err != WSAEWOULDBLOCK) {
+									self->HandleSockOpReturn("recvfrom()", err, true);
+								}
+							}
+							
+							goto exceptCheck; // jump to next FD
 						}
+						*/
+						
+						if (FD_ISSET(self->mainSocketFD, &readFDs))
+						{
+							sockaddr_storage senderAddr;
+							int senderAddrLen = sizeof(senderAddr);
+							bool isPeerlessUDP = false;
 
-						auto newSockSource = std::make_shared<SocketSource>(self, newSockAddr, sockaddr_len);
-						newSockSource->peerSocketFD = new_sd;
-						newSockSource->peerSocketID = newSockID++;
-						ReportInfo(self->fusionSocketID, _T("New connection with peer sock ID %i was created."), newSockSource->peerSocketID);
-						self->lock.edif_lock();
-						self->sources.push_back(newSockSource);
-						self->lock.edif_unlock();
+							curReturn = recvfrom(self->mainSocketFD, recvbuf.get(), recvbufsize, 0,
+												 (struct sockaddr*)&senderAddr, &senderAddrLen);
 
-						FD_SET(new_sd, &master_set);
-						if (new_sd > max_sd)
-							max_sd = new_sd;
-						AddEvent(EventToRun(self->fusionSocketID, newSockSource, Conditions::OnServerPeerConnected));
-					} while (new_sd != -1);
+							if (curReturn > 0)
+							{
+								ReportInfo(self->fusionSocketID, _T("UDP packet received: %i bytes."), curReturn);
+								
+								// Create or find a SocketSource matching this sender's address/port 
+								// so Fusion can track who sent it, then push the OnServerReceivedPacket event!
+								
 
-					goto exceptCheck; // jump to next FD
+								if (isPeerlessUDP)
+								{
+								//++udpPeerSource->numPacketsIn;
+								//udpPeerSource->bytesIn += curReturn;
+								}
+
+								++serverSocketSource->numPacketsIn;
+								serverSocketSource->bytesIn += curReturn;
+
+								EventToRun etr(self->fusionSocketID, serverSocketSource, Conditions::OnServerReceivedPacket);
+								etr.msg.assign(recvbuf.get(), curReturn);
+								// Attach senderAddr to etr if your EventToRun struct supports storing peer endpoints for reply actions
+								AddEvent(std::move(etr));
+							}
+							else if (curReturn == SOCKET_ERROR)
+							{
+								int err = WSAGetLastError();
+								if (err != WSAEWOULDBLOCK) {
+									self->HandleSockOpReturn("recvfrom()", err, true);
+								}
+							}
+							
+							goto exceptCheck; // jump to next FD
+						}
+						
+					}
 				}
 
 				// It's an existing connection; find it

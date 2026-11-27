@@ -19,7 +19,7 @@ void Thread::Shutdown()
 
 	if (isServer)
 	{
-		for each (auto & f in sources)
+		for (auto &f : sources)
 			closeSocket(f->peerSocketFD);
 	}
 
