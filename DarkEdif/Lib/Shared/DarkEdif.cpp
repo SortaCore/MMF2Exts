@@ -30,6 +30,9 @@ static const _json_value * DefaultLanguageIndex()
 		return &json_value_none;
 	}
 
+	if (Edif::SDK->json.type != json_object || Edif::SDK->json.u.object.length == 0)
+		return &json_value_none;
+
 	for (unsigned int i = 0; i < Edif::SDK->json.u.object.length; ++i)
 	{
 		auto& lang = Edif::SDK->json.u.object.values[i];
@@ -41,8 +44,10 @@ static const _json_value * DefaultLanguageIndex()
 		}
 	}
 
-	// Fallback on last object
+	// Fall back on the last entry only if it is an object.
 	auto& lang = Edif::SDK->json.u.object.values[Edif::SDK->json.u.object.length - 1];
+	if (!lang.value || lang.value->type != json_object)
+		return &json_value_none;
 	StoredCurrentLanguageName = DarkEdif::UTF8ToTString(lang.name);
 	return lang.value;
 }
