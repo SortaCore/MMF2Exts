@@ -42,7 +42,7 @@
 // A lot of ANSI text-based functions are renamed to have an A suffix and a W counterpart,
 // but the LIB always uses ordinal index, so this doesn't matter.
 // Vitalize! 4 is basically MMF2 Unicode, as its dll defines and skips the same ordinal ranges.
-// 
+//
 // * CF2.5 has HWA and Unicode always available.
 // CF2.5 starts with build 280.27 (Dec 2013), containing ordinals 1-1096.
 // CF2.5 build 292.2 (Apr 2019) adds 1097-1138 ordinals: fxFill added to cSurface, cSurfaceImplementation and CFillData;
@@ -74,19 +74,21 @@
 #error Incorrect Fusion target build or project configuration; if targeting CF2.5, _UNICODE and HWABETA defines are expected.
 #endif
 
-// VS 2017-2022 is fine, but VS 2026 is borked and creates unnecessary deprecation warnings on declaration,
-// not on use: https://developercommunity.visualstudio.com/t/MSVC-emits-spurious-warning-C4996-on-dep/11131112
-#if _MSC_VER >= 1950
-#define FUSION_FUNC_NOT_AVAILABLE(ord, x) /* no op */
-#else // earlier than VS 2026
-#define FUSION_FUNC_NOT_AVAILABLE(ord, x) [[deprecated("The function is not available in your target build, requires " x ". Use runtime linking to ordinal " ord " instead.")]]
-#endif // Earlier than VS 2026
-
-#ifndef DARKEDIF_INTERNAL_INCLUDE
-#define FusionAPISwitch(ord, func, build) [[deprecated("This function is better suited by " #func ", which is " #build ". Ordinal " #ord ".")]]
-#else
-#define FusionAPISwitch(ord, func, build) /* no op */
-#endif
+// VS 2017 (and older VS 2026) can warn on override declarations,
+// rather than at calls into them - a VS bug.
+// FUSION_FUNC_NOT_AVAILABLE creates a deprecation warning for all user code,
+// FusionAPISwitch is a recommendation.
+#if defined(_MSC_VER) && _MSC_VER < 1927
+	#define FUSION_FUNC_NOT_AVAILABLE(ord, x) /* no op */
+	#define FusionAPISwitch(ord, func, build) /* no op */
+#else // _MSC_VER >= 1927
+	#define FUSION_FUNC_NOT_AVAILABLE(ord, x) [[deprecated("The function is not available in your target build, requires " x ". Use runtime linking to ordinal " ord " instead.")]]
+	#ifdef DARKEDIF_INTERNAL_INCLUDE
+		#define FusionAPISwitch(ord, func, build) /* no op */
+	#else // !DARKEDIF_INTERNAL_INCLUDE
+		#define FusionAPISwitch(ord, func, build) [[deprecated("This function is better suited by " #func ", which is " #build ". Ordinal " #ord ".")]]
+	#endif // DARKEDIF_INTERNAL_INCLUDE
+#endif // _MSC_VER >= 1927
 
 // Target ANSI: best we can use here is MMF2 base or MMF2 HWA
 #ifndef _UNICODE
@@ -312,7 +314,7 @@ class __single_inheritance Extension;
 // Lore:
 // https://www.reddit.com/r/directx/comments/gjk2w9/comment/fqmjmol/
 // https://stackoverflow.com/a/7212562
-// 
+//
 // For XP+ compatibility, install v14.27 ATL (or MFC) variant specifically:
 //   C++ v14.27 ATL for v142 build tools (x86 & x64), or
 //   C++ v14.27 MFC for v142 build tools (x86 & x64) - bigger and slower.
@@ -320,11 +322,11 @@ class __single_inheritance Extension;
 //   C++ ATL for latest vXX build tools (x86 & x64), or
 //   C++ MFC for latest vXX build tools (x86 & x64) - bigger and slower.
 // Or you can use even newer tech like WGL, ymmv.
-// 
+//
 // For Direct3D 11, you can enable the debug runtime using DxCpl.exe.
 // For Direct3D 9, the runtime cannot be set to debug mode in Windows 10+.
 // If you were to use earlier windows, there is a directx.cpl to enable it.
-// 
+//
 // DirectX display, used by MMF2 only, is even less tested in DarkEdif,
 // although it's noted that crashes on exit in Run App in last MMF2 HWA beta v258.2.
 #ifdef FUSION_INTERNAL_ACCESS
